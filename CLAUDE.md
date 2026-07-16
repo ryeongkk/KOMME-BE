@@ -2,6 +2,15 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## Collaboration workflow
+
+When the user proposes a feature idea or requirement, do not edit code immediately.
+
+1. First explain: the feature's purpose/requirements, a recommended plan and flow, the code approach, impact on the existing structure, viable alternatives with trade-offs, and expected edge cases/test scope.
+2. Present the necessary choices and wait for the user's decision.
+3. Only modify files once the user explicitly says to execute (e.g. "작성해줘", "만들어줘", "구현해줘", "수정해줘", "적용해줘").
+4. Requests like "분석해줘", "어떻게 하면 좋을까?", "방향을 알려줘" mean read/analyze only — no file changes.
+
 ## Project
 
 KOMME-BE is a Spring Boot 4.0.7 (Java 21) REST API backend, built with Gradle. Root package: `com.komme`.
