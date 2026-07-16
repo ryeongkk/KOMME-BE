@@ -12,8 +12,7 @@ public class GeneralException extends RuntimeException{
     public GeneralException(
             BaseStatus errorStatus
     ) {
-        super(errorStatus.getMessage());
-        validateErrorStatus(errorStatus);
+        super(validated(errorStatus).getMessage());
         this.errorStatus = errorStatus;
     }
 
@@ -21,18 +20,16 @@ public class GeneralException extends RuntimeException{
     public GeneralException(
             BaseStatus errorStatus, Throwable cause
     ) {
-        super(errorStatus.getMessage(), cause);
-        validateErrorStatus(errorStatus);
+        super(validated(errorStatus).getMessage(), cause);
         this.errorStatus = errorStatus;
     }
 
     // 전달된 에러 상태가 null인지 검증
-    private static void validateErrorStatus(
-            BaseStatus errorStatus
-    ){
-        if(errorStatus == null){
+    private static BaseStatus validated(BaseStatus errorStatus) {
+        if (errorStatus == null) {
             throw new IllegalArgumentException("errorStatus must not be null");
         }
+        return errorStatus;
     }
 
 }
