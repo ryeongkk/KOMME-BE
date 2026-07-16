@@ -1,4 +1,4 @@
-package com.komme.common.base;
+package com.komme.common.base.status;
 
 import org.springframework.http.HttpStatus;
 
