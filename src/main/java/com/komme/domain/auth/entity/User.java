@@ -43,7 +43,7 @@ public class User extends BaseEntity {
     @Column(length = 255)
     private String providerId;
 
-    // 사용자 엔티티를 생성한다.
+    // 사용자 엔티티 생성
     @Builder
     private User(
             String email,

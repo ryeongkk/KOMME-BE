@@ -34,7 +34,7 @@ public class ApiResponse<T> {
                 .body(new ApiResponse<>(true, successStatus.getCode(), successStatus.getMessage(), null));
     }
 
-    // 데이터를 포하한 성공 응답 요청
+    // 데이터를 포함한 성공 응답 생성
     public static <T> ResponseEntity<ApiResponse<T>> success(
             BaseStatus successStatus, T data
     ) {
