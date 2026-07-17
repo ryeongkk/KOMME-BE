@@ -18,9 +18,9 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.core.ValueOperations;
+import org.springframework.mail.MailSendException;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
-import org.springframework.mail.MailSendException;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -38,6 +38,9 @@ class EmailVerificationServiceTests {
     private static final String EMAIL = "user@example.com";
     private static final String CODE_KEY = "auth:email-verification:code:" + EMAIL;
     private static final String VERIFIED_KEY = "auth:email-verification:verified:" + EMAIL;
+    private static final String ATTEMPT_KEY = "auth:email-verification:attempt:" + EMAIL;
+    private static final String LOCK_KEY = "auth:email-verification:lock:" + EMAIL;
+    private static final String COOLDOWN_KEY = "auth:email-verification:cooldown:" + EMAIL;
     private static final Duration CODE_EXPIRATION = Duration.ofMinutes(5);
     private static final Duration VERIFIED_EXPIRATION = Duration.ofMinutes(30);
 
@@ -63,14 +66,20 @@ class EmailVerificationServiceTests {
                 redisTemplate,
                 mailSender,
                 new AuthMailProperties("sender@example.com"),
-                new EmailVerificationProperties(CODE_EXPIRATION, VERIFIED_EXPIRATION)
+                new EmailVerificationProperties(
+                        CODE_EXPIRATION,
+                        VERIFIED_EXPIRATION,
+                        5,
+                        Duration.ofMinutes(1),
+                        Duration.ofMinutes(5)
+                )
         );
     }
 
     // 인증 코드 Redis 저장 및 이메일 전송 검증
     @Test
     void sendVerificationCodeStoresCodeAndSendsEmail() {
-        prepareValueOperations();
+        prepareSendOperations();
         EmailVerificationSendRequest request = new EmailVerificationSendRequest(
                 "  USER@Example.com  "
         );
@@ -110,7 +119,7 @@ class EmailVerificationServiceTests {
     // 이메일 발송 실패 시 Redis 코드 삭제 검증
     @Test
     void sendVerificationCodeDeletesCodeWhenMailFails() {
-        prepareValueOperations();
+        prepareSendOperations();
         doThrow(new MailSendException("mail failed"))
                 .when(mailSender)
                 .send(any(SimpleMailMessage.class));
@@ -123,6 +132,27 @@ class EmailVerificationServiceTests {
                 .isEqualTo(AuthErrorStatus.EMAIL_SEND_FAILED);
 
         verify(redisTemplate).delete(CODE_KEY);
+        verify(redisTemplate).delete(COOLDOWN_KEY);
+    }
+
+    // 재전송 cooldown 중 인증 코드 전송 거부 검증
+    @Test
+    void sendVerificationCodeRejectsCooldownRequest() {
+        prepareValueOperations();
+        when(valueOperations.setIfAbsent(
+                COOLDOWN_KEY,
+                "true",
+                Duration.ofMinutes(1)
+        )).thenReturn(false);
+
+        assertThatThrownBy(() -> emailVerificationService.sendVerificationCode(
+                new EmailVerificationSendRequest(EMAIL)
+        ))
+                .isInstanceOf(GeneralException.class)
+                .extracting(exception -> ((GeneralException) exception).getErrorStatus())
+                .isEqualTo(AuthErrorStatus.EMAIL_SEND_TOO_FREQUENTLY);
+
+        verify(mailSender, never()).send(any(SimpleMailMessage.class));
     }
 
     // 인증 코드 확인 성공과 인증 완료 플래그 저장 검증
@@ -158,6 +188,7 @@ class EmailVerificationServiceTests {
     void confirmVerificationCodeRejectsInvalidCode() {
         prepareValueOperations();
         when(valueOperations.get(CODE_KEY)).thenReturn("654321");
+        when(valueOperations.increment(ATTEMPT_KEY)).thenReturn(1L);
 
         assertThatThrownBy(() -> emailVerificationService.confirmVerificationCode(
                 new EmailVerificationConfirmRequest(EMAIL, "123456")
@@ -165,6 +196,26 @@ class EmailVerificationServiceTests {
                 .isInstanceOf(GeneralException.class)
                 .extracting(exception -> ((GeneralException) exception).getErrorStatus())
                 .isEqualTo(AuthErrorStatus.INVALID_VERIFICATION_CODE);
+        verify(redisTemplate).expire(ATTEMPT_KEY, CODE_EXPIRATION);
+    }
+
+    // 인증 코드 최대 실패 횟수 초과 잠금 검증
+    @Test
+    void confirmVerificationCodeLocksEmailAfterMaxAttempts() {
+        prepareValueOperations();
+        when(valueOperations.get(CODE_KEY)).thenReturn("654321");
+        when(valueOperations.increment(ATTEMPT_KEY)).thenReturn(5L);
+
+        assertThatThrownBy(() -> emailVerificationService.confirmVerificationCode(
+                new EmailVerificationConfirmRequest(EMAIL, "123456")
+        ))
+                .isInstanceOf(GeneralException.class)
+                .extracting(exception -> ((GeneralException) exception).getErrorStatus())
+                .isEqualTo(AuthErrorStatus.EMAIL_VERIFICATION_LOCKED);
+
+        verify(redisTemplate).delete(CODE_KEY);
+        verify(redisTemplate).delete(ATTEMPT_KEY);
+        verify(valueOperations).set(LOCK_KEY, "true", Duration.ofMinutes(5));
     }
 
     // 이메일 인증 완료 여부 검증
@@ -181,5 +232,15 @@ class EmailVerificationServiceTests {
     // Redis 문자열 연산 Mock 구성
     private void prepareValueOperations() {
         when(redisTemplate.opsForValue()).thenReturn(valueOperations);
+    }
+
+    // 인증 코드 전송 Redis Mock 구성
+    private void prepareSendOperations() {
+        prepareValueOperations();
+        when(valueOperations.setIfAbsent(
+                COOLDOWN_KEY,
+                "true",
+                Duration.ofMinutes(1)
+        )).thenReturn(true);
     }
 }

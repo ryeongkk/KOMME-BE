@@ -26,6 +26,9 @@ auth:
   email-verification:
     code-expiration: ${EMAIL_VERIFICATION_CODE_EXPIRATION}
     verified-expiration: ${EMAIL_VERIFICATION_VERIFIED_EXPIRATION}
+    max-attempts: ${EMAIL_VERIFICATION_MAX_ATTEMPTS}
+    resend-cooldown: ${EMAIL_VERIFICATION_RESEND_COOLDOWN}
+    lock-expiration: ${EMAIL_VERIFICATION_LOCK_EXPIRATION}
   jwt:
     secret: ${JWT_SECRET}
     access-token-expiration: ${JWT_ACCESS_TOKEN_EXPIRATION}

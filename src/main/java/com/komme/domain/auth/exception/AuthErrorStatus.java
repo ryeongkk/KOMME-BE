@@ -21,6 +21,8 @@ public enum AuthErrorStatus implements BaseStatus {
     EMAIL_NOT_VERIFIED(HttpStatus.FORBIDDEN, "AUTH_403_1", "이메일 인증이 필요합니다."),
     EMAIL_ALREADY_EXISTS(HttpStatus.CONFLICT, "AUTH_409_1", "이미 가입된 이메일입니다."),
     NICKNAME_ALREADY_EXISTS(HttpStatus.CONFLICT, "AUTH_409_2", "이미 사용 중인 닉네임입니다."),
+    EMAIL_VERIFICATION_LOCKED(HttpStatus.TOO_MANY_REQUESTS, "AUTH_429_1", "인증 코드 입력 횟수를 초과했습니다."),
+    EMAIL_SEND_TOO_FREQUENTLY(HttpStatus.TOO_MANY_REQUESTS, "AUTH_429_2", "잠시 후 인증 이메일을 다시 요청해 주세요."),
     EMAIL_SEND_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "AUTH_500_1", "인증 이메일 전송에 실패했습니다.");
 
     private final HttpStatus httpStatus;

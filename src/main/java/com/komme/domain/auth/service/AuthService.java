@@ -26,6 +26,9 @@ import java.time.Instant;
 import java.util.Locale;
 import java.util.Set;
 
+import org.hibernate.exception.ConstraintViolationException;
+
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -50,7 +53,7 @@ public class AuthService {
         validateSignUp(data);
         User user = createLocalUser(request.password(), data);
 
-        userRepository.saveAndFlush(user);
+        saveUser(user);
         emailVerificationService.deleteVerifiedEmail(data.email());
     }
 
@@ -138,6 +141,46 @@ public class AuthService {
                 data.preferredLanguage(),
                 data.serviceInterests()
         );
+    }
+
+    // 사용자 저장 및 unique 제약조건 오류 변환 기능
+    private void saveUser(User user) {
+        try {
+            userRepository.saveAndFlush(user);
+        } catch (DataIntegrityViolationException exception) {
+            throw convertUniqueConstraintException(exception);
+        }
+    }
+
+    // unique 제약조건 기반 도메인 예외 변환 기능
+    private RuntimeException convertUniqueConstraintException(
+            DataIntegrityViolationException exception
+    ) {
+        String constraintName = findConstraintName(exception);
+
+        if ("uk_user_email".equalsIgnoreCase(constraintName)) {
+            return new GeneralException(AuthErrorStatus.EMAIL_ALREADY_EXISTS, exception);
+        }
+
+        if ("uk_user_nickname".equalsIgnoreCase(constraintName)) {
+            return new GeneralException(AuthErrorStatus.NICKNAME_ALREADY_EXISTS, exception);
+        }
+
+        return exception;
+    }
+
+    // 예외 원인 체인의 Hibernate 제약조건명 조회 기능
+    private String findConstraintName(Throwable throwable) {
+        Throwable cause = throwable;
+
+        while (cause != null) {
+            if (cause instanceof ConstraintViolationException constraintViolationException) {
+                return constraintViolationException.getConstraintName();
+            }
+            cause = cause.getCause();
+        }
+
+        return null;
     }
 
     // 가입된 이메일 여부 확인 기능

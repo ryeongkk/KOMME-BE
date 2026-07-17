@@ -114,6 +114,22 @@ public final class AuthApiExamples {
             }
             """;
 
+    public static final String EMAIL_VERIFICATION_LOCKED = """
+            {
+              "isSuccess": false,
+              "code": "AUTH_429_1",
+              "message": "인증 코드 입력 횟수를 초과했습니다."
+            }
+            """;
+
+    public static final String EMAIL_SEND_TOO_FREQUENTLY = """
+            {
+              "isSuccess": false,
+              "code": "AUTH_429_2",
+              "message": "잠시 후 인증 이메일을 다시 요청해 주세요."
+            }
+            """;
+
     public static final String EMAIL_SEND_FAILED = """
             {
               "isSuccess": false,

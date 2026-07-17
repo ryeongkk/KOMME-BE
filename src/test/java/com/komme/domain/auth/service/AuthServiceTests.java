@@ -26,12 +26,14 @@ import java.util.Collection;
 import java.util.Optional;
 import java.util.Set;
 
+import org.hibernate.exception.ConstraintViolationException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.redis.core.SetOperations;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.core.ValueOperations;
@@ -134,6 +136,36 @@ class AuthServiceTests {
                 .isEqualTo(AuthErrorStatus.NICKNAME_ALREADY_EXISTS);
 
         verify(userRepository, never()).saveAndFlush(any(User.class));
+    }
+
+    // 동시 요청 이메일 unique 충돌 도메인 오류 변환 검증
+    @Test
+    void signUpMapsEmailUniqueConstraintViolation() {
+        when(passwordEncoder.encode("password1")).thenReturn("encoded-password");
+        DataIntegrityViolationException exception = createUniqueConstraintException(
+                "uk_user_email"
+        );
+        when(userRepository.saveAndFlush(any(User.class))).thenThrow(exception);
+
+        assertThatThrownBy(() -> authService.signUp(createSignUpRequest()))
+                .isInstanceOf(GeneralException.class)
+                .extracting(error -> ((GeneralException) error).getErrorStatus())
+                .isEqualTo(AuthErrorStatus.EMAIL_ALREADY_EXISTS);
+    }
+
+    // 동시 요청 닉네임 unique 충돌 도메인 오류 변환 검증
+    @Test
+    void signUpMapsNicknameUniqueConstraintViolation() {
+        when(passwordEncoder.encode("password1")).thenReturn("encoded-password");
+        DataIntegrityViolationException exception = createUniqueConstraintException(
+                "uk_user_nickname"
+        );
+        when(userRepository.saveAndFlush(any(User.class))).thenThrow(exception);
+
+        assertThatThrownBy(() -> authService.signUp(createSignUpRequest()))
+                .isInstanceOf(GeneralException.class)
+                .extracting(error -> ((GeneralException) error).getErrorStatus())
+                .isEqualTo(AuthErrorStatus.NICKNAME_ALREADY_EXISTS);
     }
 
     // 로그인 토큰 발급과 Refresh Token 저장 검증
@@ -332,6 +364,17 @@ class AuthServiceTests {
         when(user.getProvider()).thenReturn(Provider.LOCAL);
         when(user.getPassword()).thenReturn("encoded-password");
         return user;
+    }
+
+    // Hibernate unique 제약조건 예외 생성
+    private DataIntegrityViolationException createUniqueConstraintException(
+            String constraintName
+    ) {
+        ConstraintViolationException cause = org.mockito.Mockito.mock(
+                ConstraintViolationException.class
+        );
+        when(cause.getConstraintName()).thenReturn(constraintName);
+        return new DataIntegrityViolationException("unique constraint", cause);
     }
 
     // Redis 문자열과 Set 연산 Mock 구성

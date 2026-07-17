@@ -54,6 +54,20 @@ public interface AuthControllerDocs {
             content = @Content(examples = @ExampleObject(value = AuthApiExamples.EMAIL_ALREADY_EXISTS))
     )
     @io.swagger.v3.oas.annotations.responses.ApiResponse(
+            responseCode = "429",
+            description = "인증 잠금 또는 재전송 요청 간격 미충족",
+            content = @Content(examples = {
+                    @ExampleObject(
+                            name = "인증 잠금",
+                            value = AuthApiExamples.EMAIL_VERIFICATION_LOCKED
+                    ),
+                    @ExampleObject(
+                            name = "재전송 요청 간격 미충족",
+                            value = AuthApiExamples.EMAIL_SEND_TOO_FREQUENTLY
+                    )
+            })
+    )
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(
             responseCode = "500",
             description = "인증 이메일 전송 실패",
             content = @Content(examples = @ExampleObject(value = AuthApiExamples.EMAIL_SEND_FAILED))
@@ -89,6 +103,13 @@ public interface AuthControllerDocs {
                             value = AuthApiExamples.EXPIRED_VERIFICATION_CODE
                     )
             })
+    )
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+            responseCode = "429",
+            description = "인증 코드 입력 횟수 초과",
+            content = @Content(
+                    examples = @ExampleObject(value = AuthApiExamples.EMAIL_VERIFICATION_LOCKED)
+            )
     )
     @PostMapping("/email-verifications/confirm")
     ResponseEntity<ApiResponse<Void>> confirmEmailVerification(
