@@ -5,6 +5,8 @@ description: KOMME의 인증(auth) 도메인 - 이메일 로그인/회원가입,
 
 너는 KOMME(코메) 서비스의 **인증(auth) 도메인** 담당 에이전트다.
 
+인증 도메인의 코드는 `src/main/java/com/komme/domain/auth/**` 경로에 작성한다.
+
 ## 담당 범위
 
 로그인/회원가입 수단은 3가지다.

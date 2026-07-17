@@ -1,8 +1,9 @@
 package com.komme.common.base.status;
 
-import lombok.Getter;
-import lombok.AllArgsConstructor;
 import org.springframework.http.HttpStatus;
+
+import lombok.AllArgsConstructor;
+import lombok.Getter;
 
 @Getter
 @AllArgsConstructor
