@@ -3,6 +3,7 @@ package com.komme.domain.auth.controller.docs;
 import com.komme.common.response.ApiResponse;
 import com.komme.domain.auth.dto.request.EmailVerificationConfirmRequest;
 import com.komme.domain.auth.dto.request.EmailVerificationSendRequest;
+import com.komme.domain.auth.dto.request.SignUpRequest;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -39,5 +40,19 @@ public interface AuthControllerDocs {
     @PostMapping("/email-verifications/confirm")
     ResponseEntity<ApiResponse<Void>> confirmEmailVerification(
             @Valid @RequestBody EmailVerificationConfirmRequest request
+    );
+
+    // 이메일 회원가입 API
+    @Operation(
+            summary = "이메일 회원가입",
+            description = "인증이 완료된 이메일과 비밀번호, 닉네임으로 LOCAL 계정을 생성합니다."
+    )
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "회원가입 성공")
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "회원가입 입력값 오류")
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "이메일 인증 필요")
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "409", description = "이메일 또는 닉네임 중복")
+    @PostMapping("/signup")
+    ResponseEntity<ApiResponse<Void>> signUp(
+            @Valid @RequestBody SignUpRequest request
     );
 }

@@ -78,6 +78,18 @@ public class EmailVerificationService {
         redisTemplate.delete(verificationCodeKey);
     }
 
+    // 이메일 인증 완료 여부 검증 기능
+    public void validateVerifiedEmail(String email) {
+        if (!Boolean.TRUE.equals(redisTemplate.hasKey(createVerifiedEmailKey(email)))) {
+            throw new GeneralException(AuthErrorStatus.EMAIL_NOT_VERIFIED);
+        }
+    }
+
+    // 이메일 인증 완료 플래그 삭제 기능
+    public void deleteVerifiedEmail(String email) {
+        redisTemplate.delete(createVerifiedEmailKey(email));
+    }
+
     // 가입된 이메일 여부 확인 기능
     private void validateEmailNotRegistered(String email) {
         if (userRepository.existsByEmail(email)) {

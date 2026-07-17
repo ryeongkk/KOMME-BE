@@ -5,6 +5,8 @@ import com.komme.common.response.ApiResponse;
 import com.komme.domain.auth.controller.docs.AuthControllerDocs;
 import com.komme.domain.auth.dto.request.EmailVerificationConfirmRequest;
 import com.komme.domain.auth.dto.request.EmailVerificationSendRequest;
+import com.komme.domain.auth.dto.request.SignUpRequest;
+import com.komme.domain.auth.service.AuthService;
 import com.komme.domain.auth.service.EmailVerificationService;
 
 import org.springframework.http.ResponseEntity;
@@ -18,6 +20,7 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class AuthController implements AuthControllerDocs {
 
+    private final AuthService authService;
     private final EmailVerificationService emailVerificationService;
 
     // 이메일 인증 코드 전송 API
@@ -35,6 +38,13 @@ public class AuthController implements AuthControllerDocs {
             EmailVerificationConfirmRequest request
     ) {
         emailVerificationService.confirmVerificationCode(request);
+        return ApiResponse.success(SuccessStatus.COMMON_SUCCESS_STATUS);
+    }
+
+    // 이메일 회원가입 API
+    @Override
+    public ResponseEntity<ApiResponse<Void>> signUp(SignUpRequest request) {
+        authService.signUp(request);
         return ApiResponse.success(SuccessStatus.COMMON_SUCCESS_STATUS);
     }
 }
