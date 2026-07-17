@@ -71,8 +71,11 @@ class JwtProviderTests {
     @Test
     void parseTokenRejectsTamperedToken() {
         IssuedToken accessToken = jwtProvider.issueAccessToken(USER_ID);
-        String tamperedToken = accessToken.value().substring(0, accessToken.value().length() - 1)
-                + "x";
+        String[] tokenParts = accessToken.value().split("\\.");
+        char firstPayloadCharacter = tokenParts[1].charAt(0);
+        tokenParts[1] = (firstPayloadCharacter == 'A' ? "B" : "A")
+                + tokenParts[1].substring(1);
+        String tamperedToken = String.join(".", tokenParts);
 
         assertThatThrownBy(() -> jwtProvider.parseAccessToken(tamperedToken))
                 .isInstanceOf(GeneralException.class)

@@ -22,7 +22,6 @@ class UserTests {
         assertThat(user.getPassword()).isEqualTo("encoded-password");
         assertThat(user.getNickname()).isEqualTo("nickname");
         assertThat(user.getProvider()).isEqualTo(Provider.LOCAL);
-        assertThat(user.getProviderId()).isNull();
         assertThat(user.getNationality()).isEqualTo("KR");
         assertThat(user.getGender()).isEqualTo(Gender.FEMALE);
         assertThat(user.getPreferredLanguage()).isEqualTo(Language.ENGLISH);
@@ -37,6 +36,21 @@ class UserTests {
         user.changePassword("new-encoded-password");
 
         assertThat(user.getPassword()).isEqualTo("new-encoded-password");
+    }
+
+    // OAuth 사용자 최소 프로필 생성값 검증
+    @Test
+    void createOAuthCreatesMinimalProfileUser() {
+        User user = User.createOAuth("apple@example.com", Provider.APPLE);
+
+        assertThat(user.getEmail()).isEqualTo("apple@example.com");
+        assertThat(user.getProvider()).isEqualTo(Provider.APPLE);
+        assertThat(user.getPassword()).isNull();
+        assertThat(user.getNickname()).isNull();
+        assertThat(user.getNationality()).isNull();
+        assertThat(user.getGender()).isNull();
+        assertThat(user.getPreferredLanguage()).isNull();
+        assertThat(user.getServiceInterests()).isEmpty();
     }
 
     // 테스트 LOCAL 사용자 생성

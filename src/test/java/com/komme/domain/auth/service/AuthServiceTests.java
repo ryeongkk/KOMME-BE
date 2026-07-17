@@ -14,7 +14,6 @@ import com.komme.domain.auth.enums.Provider;
 import com.komme.domain.auth.enums.ServiceInterest;
 import com.komme.domain.auth.exception.AuthErrorStatus;
 import com.komme.domain.auth.jwt.JwtProvider;
-import com.komme.domain.auth.jwt.JwtProvider.IssuedToken;
 import com.komme.domain.auth.jwt.JwtProvider.TokenClaims;
 import com.komme.domain.auth.jwt.JwtRedisKeys;
 import com.komme.domain.auth.repository.UserRepository;
@@ -71,6 +70,9 @@ class AuthServiceTests {
     private StringRedisTemplate redisTemplate;
 
     @Mock
+    private AuthTokenService authTokenService;
+
+    @Mock
     private ValueOperations<String, String> valueOperations;
 
     @Mock
@@ -86,7 +88,10 @@ class AuthServiceTests {
                 emailVerificationService,
                 passwordEncoder,
                 jwtProvider,
-                redisTemplate
+                authTokenService,
+                new RefreshTokenStore(redisTemplate, userRepository),
+                new AccessTokenBlacklistStore(redisTemplate),
+                new AuthConstraintExceptionMapper()
         );
     }
 
@@ -171,15 +176,12 @@ class AuthServiceTests {
     // 로그인 토큰 발급과 Refresh Token 저장 검증
     @Test
     void loginIssuesAndStoresTokens() {
-        prepareRedisOperations();
         User user = createLocalUserMock();
         when(user.getId()).thenReturn(USER_ID);
         when(userRepository.findByEmail(EMAIL)).thenReturn(Optional.of(user));
         when(passwordEncoder.matches("password1", "encoded-password")).thenReturn(true);
-        when(jwtProvider.issueAccessToken(USER_ID))
-                .thenReturn(new IssuedToken("access-token", "access-id", ACCESS_EXPIRATION));
-        when(jwtProvider.issueRefreshToken(USER_ID))
-                .thenReturn(new IssuedToken("refresh-token", "refresh-id", REFRESH_EXPIRATION));
+        when(authTokenService.issueLoginTokens(USER_ID))
+                .thenReturn(LoginResponse.of("access-token", "refresh-token"));
 
         LoginResponse response = authService.login(
                 new LoginRequest(" USER@example.com ", "password1")
@@ -187,16 +189,7 @@ class AuthServiceTests {
 
         assertThat(response.accessToken()).isEqualTo("access-token");
         assertThat(response.refreshToken()).isEqualTo("refresh-token");
-        verify(valueOperations).set(
-                JwtRedisKeys.refreshToken("refresh-id"),
-                USER_ID.toString(),
-                REFRESH_EXPIRATION
-        );
-        verify(setOperations).add(JwtRedisKeys.userRefreshTokens(USER_ID), "refresh-id");
-        verify(redisTemplate).expire(
-                JwtRedisKeys.userRefreshTokens(USER_ID),
-                REFRESH_EXPIRATION
-        );
+        verify(authTokenService).issueLoginTokens(USER_ID);
     }
 
     // 잘못된 로그인 비밀번호 거부 검증
@@ -228,10 +221,8 @@ class AuthServiceTests {
         when(valueOperations.getAndDelete(JwtRedisKeys.refreshToken("old-refresh-id")))
                 .thenReturn(USER_ID.toString());
         when(userRepository.existsById(USER_ID)).thenReturn(true);
-        when(jwtProvider.issueAccessToken(USER_ID))
-                .thenReturn(new IssuedToken("new-access-token", "new-access-id", ACCESS_EXPIRATION));
-        when(jwtProvider.issueRefreshToken(USER_ID))
-                .thenReturn(new IssuedToken("new-refresh-token", "new-refresh-id", REFRESH_EXPIRATION));
+        when(authTokenService.issueLoginTokens(USER_ID))
+                .thenReturn(LoginResponse.of("new-access-token", "new-refresh-token"));
 
         TokenReissueResponse response = authService.reissueToken(
                 new TokenReissueRequest("old-refresh-token")
@@ -243,11 +234,7 @@ class AuthServiceTests {
                 JwtRedisKeys.userRefreshTokens(USER_ID),
                 "old-refresh-id"
         );
-        verify(valueOperations).set(
-                JwtRedisKeys.refreshToken("new-refresh-id"),
-                USER_ID.toString(),
-                REFRESH_EXPIRATION
-        );
+        verify(authTokenService).issueLoginTokens(USER_ID);
     }
 
     // 비밀번호 변경과 전체 Refresh Token 폐기 검증

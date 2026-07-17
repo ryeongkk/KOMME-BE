@@ -3,6 +3,7 @@ package com.komme.domain.auth.jwt;
 import com.komme.common.exception.GeneralException;
 import com.komme.domain.auth.exception.AuthErrorStatus;
 import com.komme.domain.auth.jwt.JwtProvider.TokenClaims;
+import com.komme.domain.auth.service.AccessTokenBlacklistStore;
 
 import java.time.Instant;
 
@@ -16,7 +17,6 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 
@@ -34,7 +34,7 @@ class JwtAuthenticationFilterTests {
     private JwtProvider jwtProvider;
 
     @Mock
-    private StringRedisTemplate redisTemplate;
+    private AccessTokenBlacklistStore accessTokenBlacklistStore;
 
     @Mock
     private HttpServletRequest request;
@@ -50,7 +50,10 @@ class JwtAuthenticationFilterTests {
     // JWT 인증 필터 테스트 환경 구성
     @BeforeEach
     void setUp() {
-        jwtAuthenticationFilter = new JwtAuthenticationFilter(jwtProvider, redisTemplate);
+        jwtAuthenticationFilter = new JwtAuthenticationFilter(
+                jwtProvider,
+                accessTokenBlacklistStore
+        );
     }
 
     // SecurityContext 정리 기능
@@ -65,8 +68,7 @@ class JwtAuthenticationFilterTests {
         TokenClaims tokenClaims = createTokenClaims();
         when(request.getHeader("Authorization")).thenReturn("Bearer " + ACCESS_TOKEN);
         when(jwtProvider.parseAccessToken(ACCESS_TOKEN)).thenReturn(tokenClaims);
-        when(redisTemplate.hasKey(JwtRedisKeys.accessTokenBlacklist("access-id")))
-                .thenReturn(false);
+
 
         jwtAuthenticationFilter.doFilterInternal(request, response, filterChain);
 
@@ -83,8 +85,9 @@ class JwtAuthenticationFilterTests {
         TokenClaims tokenClaims = createTokenClaims();
         when(request.getHeader("Authorization")).thenReturn("Bearer " + ACCESS_TOKEN);
         when(jwtProvider.parseAccessToken(ACCESS_TOKEN)).thenReturn(tokenClaims);
-        when(redisTemplate.hasKey(JwtRedisKeys.accessTokenBlacklist("access-id")))
-                .thenReturn(true);
+        org.mockito.Mockito.doThrow(new GeneralException(AuthErrorStatus.INVALID_TOKEN))
+                .when(accessTokenBlacklistStore)
+                .validateNotBlacklisted(tokenClaims);
 
         jwtAuthenticationFilter.doFilterInternal(request, response, filterChain);
 

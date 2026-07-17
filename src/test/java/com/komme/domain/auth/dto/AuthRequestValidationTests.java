@@ -4,6 +4,8 @@ import com.komme.domain.auth.dto.request.EmailVerificationConfirmRequest;
 import com.komme.domain.auth.dto.request.EmailVerificationSendRequest;
 import com.komme.domain.auth.dto.request.LoginRequest;
 import com.komme.domain.auth.dto.request.LogoutRequest;
+import com.komme.domain.auth.dto.request.OAuthAppleLoginRequest;
+import com.komme.domain.auth.dto.request.OAuthGoogleLoginRequest;
 import com.komme.domain.auth.dto.request.PasswordChangeRequest;
 import com.komme.domain.auth.dto.request.SignUpRequest;
 import com.komme.domain.auth.dto.request.TokenReissueRequest;
@@ -107,6 +109,22 @@ class AuthRequestValidationTests {
         LoginRequest request = new LoginRequest("invalid-email", "");
 
         assertThat(propertyNames(validator.validate(request))).contains("email", "password");
+    }
+
+    // Apple 로그인 요청 identity token 필수값 검증
+    @Test
+    void oAuthAppleLoginRequestRejectsBlankIdentityToken() {
+        OAuthAppleLoginRequest request = new OAuthAppleLoginRequest("");
+
+        assertThat(propertyNames(validator.validate(request))).contains("identityToken");
+    }
+
+    // Google 로그인 요청 ID token 필수값 검증
+    @Test
+    void oAuthGoogleLoginRequestRejectsBlankIdToken() {
+        OAuthGoogleLoginRequest request = new OAuthGoogleLoginRequest("");
+
+        assertThat(propertyNames(validator.validate(request))).contains("idToken");
     }
 
     // 토큰 요청 필수값 검증
