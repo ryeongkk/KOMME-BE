@@ -89,7 +89,8 @@ class AuthServiceTests {
                 passwordEncoder,
                 jwtProvider,
                 authTokenService,
-                new AuthTokenStore(redisTemplate, userRepository)
+                new RefreshTokenStore(redisTemplate, userRepository),
+                new AccessTokenBlacklistStore(redisTemplate)
         );
     }
 

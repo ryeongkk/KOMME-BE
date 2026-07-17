@@ -21,13 +21,11 @@ import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.core.ValueOperations;
 
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
-class AuthTokenStoreTests {
+class RefreshTokenStoreTests {
 
     private static final Long USER_ID = 1L;
 
@@ -45,14 +43,14 @@ class AuthTokenStoreTests {
 
     // Refresh Token 저장값 불일치 거부 검증
     @Test
-    void validateAndConsumeRefreshTokenRejectsInvalidStoredUser() {
+    void validateAndConsumeRejectsInvalidStoredUser() {
         prepareValueOperations();
         prepareSetOperations();
-        TokenClaims claims = createClaims();
+        TokenClaims claims = createClaims("refresh-id");
         when(valueOperations.getAndDelete(JwtRedisKeys.refreshToken("refresh-id")))
                 .thenReturn("different-user");
 
-        assertThatThrownBy(() -> createStore().validateAndConsumeRefreshToken(claims))
+        assertThatThrownBy(() -> createStore().validateAndConsume(claims))
                 .isInstanceOf(GeneralException.class)
                 .extracting(exception -> ((GeneralException) exception).getErrorStatus())
                 .isEqualTo(AuthErrorStatus.INVALID_TOKEN);
@@ -61,44 +59,24 @@ class AuthTokenStoreTests {
     // 사용자 전체 Refresh Token 삭제 검증
     @Test
     @SuppressWarnings("unchecked")
-    void invalidateAllRefreshTokensDeletesTokenKeys() {
+    void invalidateAllDeletesTokenKeys() {
         prepareSetOperations();
         when(setOperations.members(JwtRedisKeys.userRefreshTokens(USER_ID)))
                 .thenReturn(Set.of("refresh-id-1", "refresh-id-2"));
 
-        createStore().invalidateAllRefreshTokens(USER_ID);
+        createStore().invalidateAll(USER_ID);
 
         ArgumentCaptor<Collection<String>> keysCaptor = ArgumentCaptor.forClass(Collection.class);
         verify(redisTemplate).delete(keysCaptor.capture());
         verify(redisTemplate).delete(JwtRedisKeys.userRefreshTokens(USER_ID));
     }
 
-    // Access Token 블랙리스트 등록 검증
-    @Test
-    void blacklistAccessTokenStoresRemainingExpiration() {
-        prepareValueOperations();
-        TokenClaims claims = createClaims("access-id");
-
-        createStore().blacklistAccessToken(claims);
-
-        verify(valueOperations).set(
-                eq(JwtRedisKeys.accessTokenBlacklist("access-id")),
-                eq("true"),
-                any(Duration.class)
-        );
-    }
-
-    // Auth Token Store 생성
-    private AuthTokenStore createStore() {
-        return new AuthTokenStore(redisTemplate, userRepository);
+    // Refresh Token Store 생성
+    private RefreshTokenStore createStore() {
+        return new RefreshTokenStore(redisTemplate, userRepository);
     }
 
     // Refresh Token 테스트 Claim 생성
-    private TokenClaims createClaims() {
-        return createClaims("refresh-id");
-    }
-
-    // 토큰 식별자 기반 테스트 Claim 생성
     private TokenClaims createClaims(String tokenId) {
         return new TokenClaims(
                 USER_ID,

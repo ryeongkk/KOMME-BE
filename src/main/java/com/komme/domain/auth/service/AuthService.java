@@ -40,7 +40,8 @@ public class AuthService {
     private final PasswordEncoder passwordEncoder;
     private final JwtProvider jwtProvider;
     private final AuthTokenService authTokenService;
-    private final AuthTokenStore authTokenStore;
+    private final RefreshTokenStore refreshTokenStore;
+    private final AccessTokenBlacklistStore accessTokenBlacklistStore;
 
     // 이메일 인증 기반 LOCAL 사용자 가입 기능
     @Transactional
@@ -65,7 +66,7 @@ public class AuthService {
     // Refresh Token 기반 토큰 재발급 기능
     public TokenReissueResponse reissueToken(TokenReissueRequest request) {
         TokenClaims tokenClaims = jwtProvider.parseRefreshToken(request.refreshToken());
-        authTokenStore.validateAndConsumeRefreshToken(tokenClaims);
+        refreshTokenStore.validateAndConsume(tokenClaims);
 
         LoginResponse loginResponse = authTokenService.issueLoginTokens(tokenClaims.userId());
         return TokenReissueResponse.of(
@@ -80,7 +81,7 @@ public class AuthService {
         User user = findLocalUser(userId);
         validateCurrentPassword(request.currentPassword(), user.getPassword());
         user.changePassword(passwordEncoder.encode(request.newPassword()));
-        authTokenStore.invalidateAllRefreshTokens(userId);
+        refreshTokenStore.invalidateAll(userId);
     }
 
     // 현재 기기 토큰 로그아웃 기능
@@ -96,8 +97,8 @@ public class AuthService {
             throw new GeneralException(AuthErrorStatus.INVALID_TOKEN);
         }
 
-        authTokenStore.validateAndConsumeRefreshToken(refreshTokenClaims);
-        authTokenStore.blacklistAccessToken(accessTokenClaims);
+        refreshTokenStore.validateAndConsume(refreshTokenClaims);
+        accessTokenBlacklistStore.blacklist(accessTokenClaims);
     }
 
     // 회원가입 입력값 정규화 기능

@@ -2,12 +2,11 @@ package com.komme.domain.auth.service;
 
 import com.komme.common.exception.GeneralException;
 import com.komme.domain.auth.exception.AuthErrorStatus;
+import com.komme.domain.auth.jwt.JwtProvider.IssuedToken;
 import com.komme.domain.auth.jwt.JwtProvider.TokenClaims;
 import com.komme.domain.auth.jwt.JwtRedisKeys;
 import com.komme.domain.auth.repository.UserRepository;
 
-import java.time.Duration;
-import java.time.Instant;
 import java.util.Set;
 
 import org.springframework.data.redis.core.StringRedisTemplate;
@@ -17,13 +16,30 @@ import lombok.RequiredArgsConstructor;
 
 @Component
 @RequiredArgsConstructor
-public class AuthTokenStore {
+public class RefreshTokenStore {
 
     private final StringRedisTemplate redisTemplate;
     private final UserRepository userRepository;
 
+    // Refresh Token Redis 저장 기능
+    public void save(Long userId, IssuedToken refreshToken) {
+        redisTemplate.opsForValue().set(
+                JwtRedisKeys.refreshToken(refreshToken.id()),
+                userId.toString(),
+                refreshToken.expiration()
+        );
+        redisTemplate.opsForSet().add(
+                JwtRedisKeys.userRefreshTokens(userId),
+                refreshToken.id()
+        );
+        redisTemplate.expire(
+                JwtRedisKeys.userRefreshTokens(userId),
+                refreshToken.expiration()
+        );
+    }
+
     // Refresh Token 검증 및 소비 기능
-    public void validateAndConsumeRefreshToken(TokenClaims tokenClaims) {
+    public void validateAndConsume(TokenClaims tokenClaims) {
         String savedUserId = redisTemplate.opsForValue().getAndDelete(
                 JwtRedisKeys.refreshToken(tokenClaims.tokenId())
         );
@@ -39,7 +55,7 @@ public class AuthTokenStore {
     }
 
     // 사용자 전체 Refresh Token 폐기 기능
-    public void invalidateAllRefreshTokens(Long userId) {
+    public void invalidateAll(Long userId) {
         String userRefreshTokensKey = JwtRedisKeys.userRefreshTokens(userId);
         Set<String> tokenIds = redisTemplate.opsForSet().members(userRefreshTokensKey);
 
@@ -52,21 +68,5 @@ public class AuthTokenStore {
         }
 
         redisTemplate.delete(userRefreshTokensKey);
-    }
-
-    // Access Token 남은 만료시간 기반 블랙리스트 등록 기능
-    public void blacklistAccessToken(TokenClaims accessTokenClaims) {
-        Duration remainingExpiration = Duration.between(
-                Instant.now(),
-                accessTokenClaims.expiresAt()
-        );
-
-        if (!remainingExpiration.isNegative() && !remainingExpiration.isZero()) {
-            redisTemplate.opsForValue().set(
-                    JwtRedisKeys.accessTokenBlacklist(accessTokenClaims.tokenId()),
-                    "true",
-                    remainingExpiration
-            );
-        }
     }
 }
