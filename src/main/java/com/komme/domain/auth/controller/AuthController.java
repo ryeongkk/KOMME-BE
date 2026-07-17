@@ -5,7 +5,9 @@ import com.komme.common.response.ApiResponse;
 import com.komme.domain.auth.controller.docs.AuthControllerDocs;
 import com.komme.domain.auth.dto.request.EmailVerificationConfirmRequest;
 import com.komme.domain.auth.dto.request.EmailVerificationSendRequest;
+import com.komme.domain.auth.dto.request.LoginRequest;
 import com.komme.domain.auth.dto.request.SignUpRequest;
+import com.komme.domain.auth.dto.response.LoginResponse;
 import com.komme.domain.auth.service.AuthService;
 import com.komme.domain.auth.service.EmailVerificationService;
 
@@ -46,5 +48,12 @@ public class AuthController implements AuthControllerDocs {
     public ResponseEntity<ApiResponse<Void>> signUp(SignUpRequest request) {
         authService.signUp(request);
         return ApiResponse.success(SuccessStatus.COMMON_SUCCESS_STATUS);
+    }
+
+    // 이메일 로그인 API
+    @Override
+    public ResponseEntity<ApiResponse<LoginResponse>> login(LoginRequest request) {
+        LoginResponse response = authService.login(request);
+        return ApiResponse.success(SuccessStatus.COMMON_SUCCESS_STATUS, response);
     }
 }

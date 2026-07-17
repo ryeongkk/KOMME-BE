@@ -1,11 +1,16 @@
 package com.komme.domain.auth.service;
 
 import com.komme.common.exception.GeneralException;
+import com.komme.domain.auth.dto.request.LoginRequest;
 import com.komme.domain.auth.dto.request.SignUpRequest;
+import com.komme.domain.auth.dto.response.LoginResponse;
 import com.komme.domain.auth.entity.User;
 import com.komme.domain.auth.enums.Gender;
+import com.komme.domain.auth.enums.Provider;
 import com.komme.domain.auth.enums.ServiceInterest;
 import com.komme.domain.auth.exception.AuthErrorStatus;
+import com.komme.domain.auth.jwt.JwtProvider;
+import com.komme.domain.auth.jwt.JwtProvider.IssuedToken;
 import com.komme.domain.auth.repository.UserRepository;
 import com.komme.domain.auth.util.EmailNormalizer;
 import com.komme.i18n.enums.Language;
@@ -13,6 +18,7 @@ import com.komme.i18n.enums.Language;
 import java.util.Locale;
 import java.util.Set;
 
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -23,9 +29,13 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class AuthService {
 
+    private static final String REFRESH_TOKEN_KEY_PREFIX = "auth:refresh-token:";
+
     private final UserRepository userRepository;
     private final EmailVerificationService emailVerificationService;
     private final PasswordEncoder passwordEncoder;
+    private final JwtProvider jwtProvider;
+    private final StringRedisTemplate redisTemplate;
 
     // 이메일 인증 기반 LOCAL 사용자 가입 기능
     @Transactional
@@ -36,6 +46,22 @@ public class AuthService {
 
         userRepository.saveAndFlush(user);
         emailVerificationService.deleteVerifiedEmail(data.email());
+    }
+
+    // 이메일 기반 LOCAL 사용자 로그인 기능
+    public LoginResponse login(LoginRequest request) {
+        String email = EmailNormalizer.normalize(request.email());
+        User user = findLocalUser(email);
+        validatePassword(request.password(), user.getPassword());
+
+        IssuedToken accessToken = jwtProvider.issueAccessToken(user.getId());
+        IssuedToken refreshToken = jwtProvider.issueRefreshToken(user.getId());
+        saveRefreshToken(user.getId(), refreshToken);
+
+        return LoginResponse.of(
+                accessToken.value(),
+                refreshToken.value()
+        );
     }
 
     // 회원가입 입력값 정규화 기능
@@ -82,6 +108,39 @@ public class AuthService {
         if (userRepository.existsByNickname(nickname)) {
             throw new GeneralException(AuthErrorStatus.NICKNAME_ALREADY_EXISTS);
         }
+    }
+
+    // 이메일 기반 LOCAL 사용자 조회 기능
+    private User findLocalUser(String email) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new GeneralException(AuthErrorStatus.INVALID_CREDENTIALS));
+
+        if (user.getProvider() != Provider.LOCAL) {
+            throw new GeneralException(AuthErrorStatus.INVALID_CREDENTIALS);
+        }
+
+        return user;
+    }
+
+    // 로그인 비밀번호 검증 기능
+    private void validatePassword(String rawPassword, String encodedPassword) {
+        if (!passwordEncoder.matches(rawPassword, encodedPassword)) {
+            throw new GeneralException(AuthErrorStatus.INVALID_CREDENTIALS);
+        }
+    }
+
+    // Refresh Token 식별자 Redis 저장 기능
+    private void saveRefreshToken(Long userId, IssuedToken refreshToken) {
+        redisTemplate.opsForValue().set(
+                createRefreshTokenKey(refreshToken.id()),
+                userId.toString(),
+                refreshToken.expiration()
+        );
+    }
+
+    // Refresh Token Redis 키 생성
+    private String createRefreshTokenKey(String tokenId) {
+        return REFRESH_TOKEN_KEY_PREFIX + tokenId;
     }
 
     private record NormalizedSignUpData(
