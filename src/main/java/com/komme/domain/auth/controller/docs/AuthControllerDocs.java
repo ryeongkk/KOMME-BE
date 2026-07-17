@@ -5,7 +5,9 @@ import com.komme.domain.auth.dto.request.EmailVerificationConfirmRequest;
 import com.komme.domain.auth.dto.request.EmailVerificationSendRequest;
 import com.komme.domain.auth.dto.request.LoginRequest;
 import com.komme.domain.auth.dto.request.SignUpRequest;
+import com.komme.domain.auth.dto.request.TokenReissueRequest;
 import com.komme.domain.auth.dto.response.LoginResponse;
+import com.komme.domain.auth.dto.response.TokenReissueResponse;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -154,5 +156,42 @@ public interface AuthControllerDocs {
     @PostMapping("/login")
     ResponseEntity<ApiResponse<LoginResponse>> login(
             @Valid @RequestBody LoginRequest request
+    );
+
+    // 토큰 재발급 API
+    @Operation(
+            summary = "토큰 재발급",
+            description = "유효한 Refresh Token을 검증하고 새로운 Access Token과 Refresh Token을 발급합니다. 기존 Refresh Token은 즉시 폐기됩니다."
+    )
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+            responseCode = "200",
+            description = "토큰 재발급 성공",
+            content = @Content(
+                    schema = @Schema(implementation = TokenReissueResponse.class),
+                    examples = @ExampleObject(value = AuthApiExamples.TOKEN_REISSUE_SUCCESS)
+            )
+    )
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+            responseCode = "400",
+            description = "Refresh Token 누락",
+            content = @Content(examples = @ExampleObject(value = AuthApiExamples.BAD_REQUEST))
+    )
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+            responseCode = "401",
+            description = "유효하지 않거나 만료된 Refresh Token",
+            content = @Content(examples = {
+                    @ExampleObject(
+                            name = "유효하지 않은 토큰",
+                            value = AuthApiExamples.INVALID_TOKEN
+                    ),
+                    @ExampleObject(
+                            name = "만료된 토큰",
+                            value = AuthApiExamples.EXPIRED_TOKEN
+                    )
+            })
+    )
+    @PostMapping("/tokens/reissue")
+    ResponseEntity<ApiResponse<TokenReissueResponse>> reissueToken(
+            @Valid @RequestBody TokenReissueRequest request
     );
 }

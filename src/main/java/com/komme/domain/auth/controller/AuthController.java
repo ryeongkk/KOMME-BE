@@ -7,7 +7,9 @@ import com.komme.domain.auth.dto.request.EmailVerificationConfirmRequest;
 import com.komme.domain.auth.dto.request.EmailVerificationSendRequest;
 import com.komme.domain.auth.dto.request.LoginRequest;
 import com.komme.domain.auth.dto.request.SignUpRequest;
+import com.komme.domain.auth.dto.request.TokenReissueRequest;
 import com.komme.domain.auth.dto.response.LoginResponse;
+import com.komme.domain.auth.dto.response.TokenReissueResponse;
 import com.komme.domain.auth.service.AuthService;
 import com.komme.domain.auth.service.EmailVerificationService;
 
@@ -54,6 +56,15 @@ public class AuthController implements AuthControllerDocs {
     @Override
     public ResponseEntity<ApiResponse<LoginResponse>> login(LoginRequest request) {
         LoginResponse response = authService.login(request);
+        return ApiResponse.success(SuccessStatus.COMMON_SUCCESS_STATUS, response);
+    }
+
+    // 토큰 재발급 API
+    @Override
+    public ResponseEntity<ApiResponse<TokenReissueResponse>> reissueToken(
+            TokenReissueRequest request
+    ) {
+        TokenReissueResponse response = authService.reissueToken(request);
         return ApiResponse.success(SuccessStatus.COMMON_SUCCESS_STATUS, response);
     }
 }

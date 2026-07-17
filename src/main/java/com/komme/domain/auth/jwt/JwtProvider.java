@@ -1,5 +1,7 @@
 package com.komme.domain.auth.jwt;
 
+import com.komme.common.exception.GeneralException;
+import com.komme.domain.auth.exception.AuthErrorStatus;
 import com.komme.domain.auth.properties.JwtProperties;
 
 import java.nio.charset.StandardCharsets;
@@ -10,6 +12,9 @@ import java.util.UUID;
 
 import javax.crypto.SecretKey;
 
+import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.ExpiredJwtException;
+import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
 
@@ -45,6 +50,29 @@ public class JwtProvider {
         );
     }
 
+    // Refresh Token Claim 검증 및 조회 기능
+    public TokenClaims parseRefreshToken(String token) {
+        Claims claims = parseClaims(token);
+        String tokenType = claims.get(TOKEN_TYPE_CLAIM, String.class);
+
+        if (!REFRESH_TOKEN_TYPE.equals(tokenType)) {
+            throw new GeneralException(AuthErrorStatus.INVALID_TOKEN);
+        }
+
+        try {
+            Long userId = Long.valueOf(claims.getSubject());
+            String tokenId = claims.getId();
+
+            if (tokenId == null || tokenId.isBlank()) {
+                throw new GeneralException(AuthErrorStatus.INVALID_TOKEN);
+            }
+
+            return new TokenClaims(userId, tokenId);
+        } catch (NumberFormatException exception) {
+            throw new GeneralException(AuthErrorStatus.INVALID_TOKEN, exception);
+        }
+    }
+
     // JWT 발급 기능
     private IssuedToken issueToken(Long userId, String tokenType, Duration expiration) {
         Instant issuedAt = Instant.now();
@@ -63,6 +91,21 @@ public class JwtProvider {
         return new IssuedToken(token, tokenId, expiration);
     }
 
+    // JWT 서명과 만료 검증 및 Claim 조회 기능
+    private Claims parseClaims(String token) {
+        try {
+            return Jwts.parser()
+                    .verifyWith(createSigningKey())
+                    .build()
+                    .parseSignedClaims(token)
+                    .getPayload();
+        } catch (ExpiredJwtException exception) {
+            throw new GeneralException(AuthErrorStatus.EXPIRED_TOKEN, exception);
+        } catch (JwtException | IllegalArgumentException exception) {
+            throw new GeneralException(AuthErrorStatus.INVALID_TOKEN, exception);
+        }
+    }
+
     // JWT 서명 키 생성 기능
     private SecretKey createSigningKey() {
         return Keys.hmacShaKeyFor(
@@ -74,6 +117,12 @@ public class JwtProvider {
             String value,
             String id,
             Duration expiration
+    ) {
+    }
+
+    public record TokenClaims(
+            Long userId,
+            String tokenId
     ) {
     }
 }

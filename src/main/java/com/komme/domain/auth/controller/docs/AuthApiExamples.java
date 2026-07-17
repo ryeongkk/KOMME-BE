@@ -22,6 +22,18 @@ public final class AuthApiExamples {
             }
             """;
 
+    public static final String TOKEN_REISSUE_SUCCESS = """
+            {
+              "isSuccess": true,
+              "code": "COM_200",
+              "message": "성공적으로 처리되었습니다.",
+              "data": {
+                "accessToken": "eyJhbGciOiJIUzI1NiJ9...",
+                "refreshToken": "eyJhbGciOiJIUzI1NiJ9..."
+              }
+            }
+            """;
+
     public static final String BAD_REQUEST = """
             {
               "isSuccess": false,
@@ -51,6 +63,22 @@ public final class AuthApiExamples {
               "isSuccess": false,
               "code": "AUTH_401_1",
               "message": "이메일 또는 비밀번호가 올바르지 않습니다."
+            }
+            """;
+
+    public static final String INVALID_TOKEN = """
+            {
+              "isSuccess": false,
+              "code": "AUTH_401_2",
+              "message": "유효하지 않은 토큰입니다."
+            }
+            """;
+
+    public static final String EXPIRED_TOKEN = """
+            {
+              "isSuccess": false,
+              "code": "AUTH_401_3",
+              "message": "만료된 토큰입니다."
             }
             """;
 

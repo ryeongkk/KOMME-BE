@@ -3,7 +3,9 @@ package com.komme.domain.auth.service;
 import com.komme.common.exception.GeneralException;
 import com.komme.domain.auth.dto.request.LoginRequest;
 import com.komme.domain.auth.dto.request.SignUpRequest;
+import com.komme.domain.auth.dto.request.TokenReissueRequest;
 import com.komme.domain.auth.dto.response.LoginResponse;
+import com.komme.domain.auth.dto.response.TokenReissueResponse;
 import com.komme.domain.auth.entity.User;
 import com.komme.domain.auth.enums.Gender;
 import com.komme.domain.auth.enums.Provider;
@@ -11,6 +13,7 @@ import com.komme.domain.auth.enums.ServiceInterest;
 import com.komme.domain.auth.exception.AuthErrorStatus;
 import com.komme.domain.auth.jwt.JwtProvider;
 import com.komme.domain.auth.jwt.JwtProvider.IssuedToken;
+import com.komme.domain.auth.jwt.JwtProvider.TokenClaims;
 import com.komme.domain.auth.repository.UserRepository;
 import com.komme.domain.auth.util.EmailNormalizer;
 import com.komme.i18n.enums.Language;
@@ -62,6 +65,18 @@ public class AuthService {
                 accessToken.value(),
                 refreshToken.value()
         );
+    }
+
+    // Refresh Token 기반 토큰 재발급 기능
+    public TokenReissueResponse reissueToken(TokenReissueRequest request) {
+        TokenClaims tokenClaims = jwtProvider.parseRefreshToken(request.refreshToken());
+        validateAndConsumeRefreshToken(tokenClaims);
+
+        IssuedToken accessToken = jwtProvider.issueAccessToken(tokenClaims.userId());
+        IssuedToken refreshToken = jwtProvider.issueRefreshToken(tokenClaims.userId());
+        saveRefreshToken(tokenClaims.userId(), refreshToken);
+
+        return TokenReissueResponse.of(accessToken.value(), refreshToken.value());
     }
 
     // 회원가입 입력값 정규화 기능
@@ -136,6 +151,18 @@ public class AuthService {
                 userId.toString(),
                 refreshToken.expiration()
         );
+    }
+
+    // Refresh Token Redis 저장값 검증 및 소비 기능
+    private void validateAndConsumeRefreshToken(TokenClaims tokenClaims) {
+        String savedUserId = redisTemplate.opsForValue().getAndDelete(
+                createRefreshTokenKey(tokenClaims.tokenId())
+        );
+
+        if (!tokenClaims.userId().toString().equals(savedUserId)
+                || !userRepository.existsById(tokenClaims.userId())) {
+            throw new GeneralException(AuthErrorStatus.INVALID_TOKEN);
+        }
     }
 
     // Refresh Token Redis 키 생성
