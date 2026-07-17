@@ -88,8 +88,8 @@ class AuthServiceTests {
                 emailVerificationService,
                 passwordEncoder,
                 jwtProvider,
-                redisTemplate,
-                authTokenService
+                authTokenService,
+                new AuthTokenStore(redisTemplate, userRepository)
         );
     }
 
