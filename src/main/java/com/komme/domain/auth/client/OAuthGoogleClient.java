@@ -25,7 +25,7 @@ public class OAuthGoogleClient {
     private static final String RS256_ALGORITHM = "RS256";
 
     private final GoogleJwksProvider googleJwksProvider;
-    private final GooglePublicKeyFactory googlePublicKeyFactory;
+    private final OAuthPublicKeyFactory oAuthPublicKeyFactory;
     private final GoogleProperties googleProperties;
 
     // Google identity token 검증 및 사용자 정보 조회 기능
@@ -63,8 +63,8 @@ public class OAuthGoogleClient {
             throw new IllegalArgumentException("Unsupported Google token header");
         }
 
-        GoogleJwk googleJwk = googleJwksProvider.getSigningJwk(protectedHeader.getKeyId());
-        return googlePublicKeyFactory.create(googleJwk);
+        OAuthJwk oAuthJwk = googleJwksProvider.getSigningJwk(protectedHeader.getKeyId());
+        return oAuthPublicKeyFactory.create(oAuthJwk);
     }
 
     // Google 발급자 Claim 검증 기능

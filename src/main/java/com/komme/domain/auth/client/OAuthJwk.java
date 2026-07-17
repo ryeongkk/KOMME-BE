@@ -1,6 +1,6 @@
 package com.komme.domain.auth.client;
 
-public record AppleJwk(
+public record OAuthJwk(
         String kty,
         String kid,
         String use,

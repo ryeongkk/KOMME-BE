@@ -49,7 +49,7 @@ class OAuthGoogleClientTests {
         GoogleProperties properties = new GoogleProperties(CLIENT_ID, Duration.ofHours(1));
         oAuthGoogleClient = new OAuthGoogleClient(
                 new GoogleJwksProvider(createGoogleWebClient(), properties),
-                new GooglePublicKeyFactory(),
+                new OAuthPublicKeyFactory(),
                 properties
         );
     }

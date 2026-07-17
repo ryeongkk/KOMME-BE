@@ -42,8 +42,8 @@ class AppleJwksProviderTests {
         AtomicInteger requestCount = new AtomicInteger();
         AppleJwksProvider provider = createProvider(createSuccessWebClient(requestCount));
 
-        AppleJwk firstKey = provider.getSigningJwk(KEY_ID);
-        AppleJwk secondKey = provider.getSigningJwk(KEY_ID);
+        OAuthJwk firstKey = provider.getSigningJwk(KEY_ID);
+        OAuthJwk secondKey = provider.getSigningJwk(KEY_ID);
 
         assertThat(firstKey).isEqualTo(secondKey);
         assertThat(requestCount).hasValue(1);

@@ -12,16 +12,16 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-class ApplePublicKeyFactoryTests {
+class OAuthPublicKeyFactoryTests {
 
-    // Apple JWK RSA 공개키 변환 검증
+    // OAuth JWK RSA 공개키 변환 검증
     @Test
     void createConvertsJwkToRsaPublicKey() throws Exception {
         KeyPairGenerator generator = KeyPairGenerator.getInstance("RSA");
         generator.initialize(2048);
         KeyPair keyPair = generator.generateKeyPair();
         RSAPublicKey expectedKey = (RSAPublicKey) keyPair.getPublic();
-        AppleJwk appleJwk = new AppleJwk(
+        OAuthJwk oAuthJwk = new OAuthJwk(
                 "RSA",
                 "key-id",
                 "sig",
@@ -30,7 +30,7 @@ class ApplePublicKeyFactoryTests {
                 encodeUnsigned(expectedKey.getPublicExponent())
         );
 
-        PublicKey publicKey = new ApplePublicKeyFactory().create(appleJwk);
+        PublicKey publicKey = new OAuthPublicKeyFactory().create(oAuthJwk);
 
         assertThat(publicKey).isEqualTo(expectedKey);
     }

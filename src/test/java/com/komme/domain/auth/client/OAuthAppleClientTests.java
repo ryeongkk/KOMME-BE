@@ -103,7 +103,7 @@ class OAuthAppleClientTests {
         );
         return new OAuthAppleClient(
                 new AppleJwksProvider(webClient, appleProperties),
-                new ApplePublicKeyFactory(),
+                new OAuthPublicKeyFactory(),
                 appleProperties
         );
     }

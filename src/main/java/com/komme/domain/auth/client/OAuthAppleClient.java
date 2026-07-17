@@ -24,7 +24,7 @@ public class OAuthAppleClient {
     private static final String RS256_ALGORITHM = "RS256";
 
     private final AppleJwksProvider appleJwksProvider;
-    private final ApplePublicKeyFactory applePublicKeyFactory;
+    private final OAuthPublicKeyFactory oAuthPublicKeyFactory;
     private final AppleProperties appleProperties;
 
     // Apple identity token 검증 및 사용자 정보 조회 기능
@@ -60,8 +60,8 @@ public class OAuthAppleClient {
             throw new IllegalArgumentException("Unsupported Apple token header");
         }
 
-        AppleJwk appleJwk = appleJwksProvider.getSigningJwk(protectedHeader.getKeyId());
-        return applePublicKeyFactory.create(appleJwk);
+        OAuthJwk oAuthJwk = appleJwksProvider.getSigningJwk(protectedHeader.getKeyId());
+        return oAuthPublicKeyFactory.create(oAuthJwk);
     }
 
     // Apple 사용자 식별자 필수값 검증 기능
