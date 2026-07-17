@@ -51,12 +51,27 @@ public class OAuthAccountService {
         }
 
         String normalizedEmail = EmailNormalizer.normalize(email);
-        User user = userRepository.findByEmail(normalizedEmail)
-                .orElseGet(() -> userRepository.saveAndFlush(
-                        User.createOAuth(normalizedEmail, provider)
-                ));
+        User user = findOrCreateUser(provider, normalizedEmail);
         saveOAuthAccount(user, provider, providerId);
         return user;
+    }
+
+    // OAuth 이메일 기반 사용자 조회 또는 생성 기능
+    private User findOrCreateUser(Provider provider, String email) {
+        return userRepository.findByEmail(email)
+                .orElseGet(() -> createOAuthUser(provider, email));
+    }
+
+    // OAuth 최소 프로필 사용자 저장 기능
+    private User createOAuthUser(Provider provider, String email) {
+        try {
+            return userRepository.saveAndFlush(User.createOAuth(email, provider));
+        } catch (DataIntegrityViolationException exception) {
+            throw new GeneralException(
+                    AuthErrorStatus.EMAIL_ALREADY_EXISTS,
+                    exception
+            );
+        }
     }
 
     // OAuth 계정 연결 저장 기능

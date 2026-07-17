@@ -22,6 +22,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.dao.DataIntegrityViolationException;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -157,6 +158,25 @@ class OAuthServiceTests {
 
         assertThat(response.accessToken()).isEqualTo("access-token");
         verify(authTokenService).issueLoginTokens(USER_ID);
+    }
+
+    // 동시 OAuth 이메일 생성 충돌 도메인 오류 변환 검증
+    @Test
+    void loginWithGoogleMapsConcurrentEmailConflict() {
+        when(oAuthGoogleClient.verifyIdentityToken("google-id-token"))
+                .thenReturn(new OAuthIdentity(APPLE_SUBJECT, EMAIL));
+        when(userRepository.findByEmail(EMAIL)).thenReturn(Optional.empty());
+        when(userRepository.saveAndFlush(any(User.class)))
+                .thenThrow(new DataIntegrityViolationException("duplicate email"));
+
+        assertThatThrownBy(() -> oAuthService.loginWithGoogle(
+                new OAuthGoogleLoginRequest("google-id-token")
+        ))
+                .isInstanceOf(GeneralException.class)
+                .extracting(exception -> ((GeneralException) exception).getErrorStatus())
+                .isEqualTo(AuthErrorStatus.EMAIL_ALREADY_EXISTS);
+
+        verify(authTokenService, never()).issueLoginTokens(any());
     }
 
     // Apple identity token 검증 결과 구성
