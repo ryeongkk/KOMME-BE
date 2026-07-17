@@ -90,7 +90,8 @@ class AuthServiceTests {
                 jwtProvider,
                 authTokenService,
                 new RefreshTokenStore(redisTemplate, userRepository),
-                new AccessTokenBlacklistStore(redisTemplate)
+                new AccessTokenBlacklistStore(redisTemplate),
+                new AuthConstraintExceptionMapper()
         );
     }
 

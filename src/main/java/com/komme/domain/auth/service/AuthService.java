@@ -22,8 +22,6 @@ import com.komme.i18n.enums.Language;
 import java.util.Locale;
 import java.util.Set;
 
-import org.hibernate.exception.ConstraintViolationException;
-
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -42,6 +40,7 @@ public class AuthService {
     private final AuthTokenService authTokenService;
     private final RefreshTokenStore refreshTokenStore;
     private final AccessTokenBlacklistStore accessTokenBlacklistStore;
+    private final AuthConstraintExceptionMapper authConstraintExceptionMapper;
 
     // 이메일 인증 기반 LOCAL 사용자 가입 기능
     @Transactional
@@ -138,39 +137,8 @@ public class AuthService {
         try {
             userRepository.saveAndFlush(user);
         } catch (DataIntegrityViolationException exception) {
-            throw convertUniqueConstraintException(exception);
+            throw authConstraintExceptionMapper.map(exception, null);
         }
-    }
-
-    // unique 제약조건 기반 도메인 예외 변환 기능
-    private RuntimeException convertUniqueConstraintException(
-            DataIntegrityViolationException exception
-    ) {
-        String constraintName = findConstraintName(exception);
-
-        if ("uk_user_email".equalsIgnoreCase(constraintName)) {
-            return new GeneralException(AuthErrorStatus.EMAIL_ALREADY_EXISTS, exception);
-        }
-
-        if ("uk_user_nickname".equalsIgnoreCase(constraintName)) {
-            return new GeneralException(AuthErrorStatus.NICKNAME_ALREADY_EXISTS, exception);
-        }
-
-        return exception;
-    }
-
-    // 예외 원인 체인의 Hibernate 제약조건명 조회 기능
-    private String findConstraintName(Throwable throwable) {
-        Throwable cause = throwable;
-
-        while (cause != null) {
-            if (cause instanceof ConstraintViolationException constraintViolationException) {
-                return constraintViolationException.getConstraintName();
-            }
-            cause = cause.getCause();
-        }
-
-        return null;
     }
 
     // 가입된 이메일 여부 확인 기능
@@ -192,11 +160,7 @@ public class AuthService {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new GeneralException(AuthErrorStatus.INVALID_CREDENTIALS));
 
-        if (user.getProvider() != Provider.LOCAL) {
-            throw new GeneralException(AuthErrorStatus.INVALID_CREDENTIALS);
-        }
-
-        return user;
+        return validateLocalUser(user, AuthErrorStatus.INVALID_CREDENTIALS);
     }
 
     // 로그인 비밀번호 검증 기능
@@ -211,8 +175,13 @@ public class AuthService {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new GeneralException(AuthErrorStatus.INVALID_TOKEN));
 
+        return validateLocalUser(user, AuthErrorStatus.INVALID_TOKEN);
+    }
+
+    // LOCAL 사용자 여부 검증 기능
+    private User validateLocalUser(User user, AuthErrorStatus errorStatus) {
         if (user.getProvider() != Provider.LOCAL) {
-            throw new GeneralException(AuthErrorStatus.INVALID_TOKEN);
+            throw new GeneralException(errorStatus);
         }
 
         return user;

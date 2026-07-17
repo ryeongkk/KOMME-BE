@@ -67,7 +67,11 @@ class OAuthServiceTests {
         oAuthService = new OAuthService(
                 oAuthAppleClient,
                 oAuthGoogleClient,
-                new OAuthAccountService(oAuthAccountRepository, userRepository),
+                new OAuthAccountService(
+                        oAuthAccountRepository,
+                        userRepository,
+                        new AuthConstraintExceptionMapper()
+                ),
                 authTokenService,
                 userRepository
         );

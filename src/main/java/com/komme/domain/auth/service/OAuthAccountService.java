@@ -9,6 +9,8 @@ import com.komme.domain.auth.repository.OAuthAccountRepository;
 import com.komme.domain.auth.repository.UserRepository;
 import com.komme.domain.auth.util.EmailNormalizer;
 
+import java.util.Optional;
+
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -21,27 +23,22 @@ public class OAuthAccountService {
 
     private final OAuthAccountRepository oAuthAccountRepository;
     private final UserRepository userRepository;
+    private final AuthConstraintExceptionMapper authConstraintExceptionMapper;
 
     // OAuth identity 기반 사용자 조회 및 연결 기능
     @Transactional
     public User resolveUser(Provider provider, String providerId, String email) {
-        User linkedUser = findLinkedUser(provider, providerId);
-
-        if (linkedUser != null) {
-            return linkedUser;
-        }
-
-        return linkOrCreateUser(provider, providerId, email);
+        return findLinkedUser(provider, providerId)
+                .orElseGet(() -> linkOrCreateUser(provider, providerId, email));
     }
 
     // OAuth 계정 연결 사용자 조회 기능
-    private User findLinkedUser(Provider provider, String providerId) {
+    private Optional<User> findLinkedUser(Provider provider, String providerId) {
         return oAuthAccountRepository.findByProviderAndProviderId(
                         provider,
                         providerId
                 )
-                .map(OAuthAccount::getUser)
-                .orElse(null);
+                .map(OAuthAccount::getUser);
     }
 
     // 이메일 기반 기존 사용자 연결 또는 OAuth 사용자 생성 기능
@@ -67,9 +64,9 @@ public class OAuthAccountService {
         try {
             return userRepository.saveAndFlush(User.createOAuth(email, provider));
         } catch (DataIntegrityViolationException exception) {
-            throw new GeneralException(
-                    AuthErrorStatus.EMAIL_ALREADY_EXISTS,
-                    exception
+            throw authConstraintExceptionMapper.map(
+                    exception,
+                    AuthErrorStatus.EMAIL_ALREADY_EXISTS
             );
         }
     }
@@ -81,9 +78,9 @@ public class OAuthAccountService {
                     OAuthAccount.create(user, provider, providerId)
             );
         } catch (DataIntegrityViolationException exception) {
-            throw new GeneralException(
-                    AuthErrorStatus.OAUTH_ACCOUNT_ALREADY_LINKED,
-                    exception
+            throw authConstraintExceptionMapper.map(
+                    exception,
+                    AuthErrorStatus.OAUTH_ACCOUNT_ALREADY_LINKED
             );
         }
     }
