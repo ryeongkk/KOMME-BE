@@ -6,6 +6,8 @@ KOMME-BE is a Java 21, Spring Boot 4 REST API built with Gradle. Production code
 
 Add features under `course`, `spot`, `tourapi`, `i18n`, or `auth`. Consult `.claude/rules/<domain>/rule.md` before changing a domain. Keep cross-cutting code in `common`.
 
+For authentication-related changes, keep the package layout grouped by responsibility (`entity`, `enums`, `repository`, `dto/request`, `dto/response`, `service`, `controller/docs`, `jwt`, and `properties`). Keep domain enums in the owning domain's `enums` package.
+
 ## Build, Test, and Development Commands
 
 Use the checked-in Gradle wrapper.
@@ -20,6 +22,18 @@ The context test requires a configured test DataSource. Supply test database set
 ## Coding Style & Naming Conventions
 
 Use four-space indentation, one public type per file, PascalCase classes, camelCase members, and lowercase packages. Use Lombok consistently. No formatter or linter is configured, so match nearby code.
+
+Use Lombok `@RequiredArgsConstructor` for constructor-based dependency injection. Do not hand-write service/controller constructors or use field injection. Avoid fully qualified class names in method bodies; import project classes using consistent package ordering and keep imports readable.
+
+Place a one-line Korean comment immediately above every written method. Comments should describe the method as a concise noun phrase ending in terms such as `~기능`, `~생성`, or `~검증`; do not use sentence-style endings.
+
+Keep methods short and give repeated or independently meaningful logic a private/helper method or a dedicated component. Prefer reusable domain factories and behavior methods over duplicating entity construction in services.
+
+For entities, use `BaseEntity`, the standard JPA entity annotations, a protected no-args constructor, and a private builder constructor when a builder is useful. Expose creation through named static factory methods (for example, `createLocal` or `createOAuth`); services should call those factories instead of invoking builders directly.
+
+Separate request and response DTOs into `dto/request` and `dto/response`. Controllers should expose documentation through a `controller/docs` interface and implement that interface in the concrete controller. Document request fields, success responses, and domain-specific error responses in Swagger.
+
+Keep status enum entries ordered by HTTP response code in ascending order (for example, 400 before 401, then 409 and 500).
 
 JPA entities should extend `BaseEntity`. Controllers should return `ResponseEntity<ApiResponse<T>>` through `ApiResponse` factory methods. Represent domain failures with `GeneralException` and a domain-specific enum implementing `BaseStatus`; avoid ad hoc response bodies and exception types.
 
@@ -41,4 +55,4 @@ Change files only after an explicit instruction such as “작성해줘,” “�
 
 ## Security & Configuration
 
-Never commit secrets to `application.yaml`. Use environment variables or ignored configuration and safe test credentials.
+Keep shared non-secret defaults in `application.yaml`. Put local development values in the ignored `application-local.yaml`, and keep production configuration in `application-prod.yaml` using environment-variable placeholders such as `${MAIL_HOST}`. Never commit secrets to tracked configuration; use ignored local configuration, environment variables, or safe test credentials.
