@@ -1,6 +1,7 @@
 package com.komme.common.exception;
 
 import com.komme.common.base.status.BaseStatus;
+
 import lombok.Getter;
 
 @Getter

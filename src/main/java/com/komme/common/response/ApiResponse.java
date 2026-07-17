@@ -1,13 +1,15 @@
 package com.komme.common.response;
 
+import com.komme.common.base.status.BaseStatus;
+
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
-import com.komme.common.base.status.BaseStatus;
+import org.springframework.http.ResponseEntity;
+
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import org.springframework.http.ResponseEntity;
 
 @Getter
 @NoArgsConstructor
@@ -32,7 +34,7 @@ public class ApiResponse<T> {
                 .body(new ApiResponse<>(true, successStatus.getCode(), successStatus.getMessage(), null));
     }
 
-    // 데이터를 포하한 성공 응답 요청
+    // 데이터를 포함한 성공 응답 생성
     public static <T> ResponseEntity<ApiResponse<T>> success(
             BaseStatus successStatus, T data
     ) {

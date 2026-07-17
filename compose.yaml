@@ -1,0 +1,38 @@
+services:
+  mysql:
+    image: mysql:8.4
+    container_name: komme-mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_DATABASE: komme
+      MYSQL_USER: komme
+      MYSQL_PASSWORD: komme-local-password
+      MYSQL_ROOT_PASSWORD: komme-local-root-password
+      TZ: Asia/Seoul
+    ports:
+      - "3306:3306"
+    volumes:
+      - komme-mysql-data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-pkomme-local-root-password"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  redis:
+    image: redis:7.4-alpine
+    container_name: komme-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - komme-redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+volumes:
+  komme-mysql-data:
+  komme-redis-data:

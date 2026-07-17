@@ -1,1 +1,5 @@
-spring.application.name=KOMME-BE-TEMP
+spring:
+  application:
+    name: KOMME-BE
+  profiles:
+    active: local
