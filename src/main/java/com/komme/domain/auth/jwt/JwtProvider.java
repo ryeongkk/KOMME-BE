@@ -50,12 +50,22 @@ public class JwtProvider {
         );
     }
 
+    // Access Token Claim 검증 및 조회 기능
+    public TokenClaims parseAccessToken(String token) {
+        return parseToken(token, ACCESS_TOKEN_TYPE);
+    }
+
     // Refresh Token Claim 검증 및 조회 기능
     public TokenClaims parseRefreshToken(String token) {
+        return parseToken(token, REFRESH_TOKEN_TYPE);
+    }
+
+    // 토큰 종류 검증 및 Claim 조회 기능
+    private TokenClaims parseToken(String token, String expectedTokenType) {
         Claims claims = parseClaims(token);
         String tokenType = claims.get(TOKEN_TYPE_CLAIM, String.class);
 
-        if (!REFRESH_TOKEN_TYPE.equals(tokenType)) {
+        if (!expectedTokenType.equals(tokenType)) {
             throw new GeneralException(AuthErrorStatus.INVALID_TOKEN);
         }
 

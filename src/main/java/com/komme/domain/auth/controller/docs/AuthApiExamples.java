@@ -58,6 +58,14 @@ public final class AuthApiExamples {
             }
             """;
 
+    public static final String INVALID_CURRENT_PASSWORD = """
+            {
+              "isSuccess": false,
+              "code": "AUTH_400_3",
+              "message": "현재 비밀번호가 올바르지 않습니다."
+            }
+            """;
+
     public static final String INVALID_CREDENTIALS = """
             {
               "isSuccess": false,

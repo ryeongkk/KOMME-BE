@@ -119,4 +119,9 @@ public class User extends BaseEntity {
                 .serviceInterests(serviceInterests)
                 .build();
     }
+
+    // 비밀번호 변경 기능
+    public void changePassword(String encodedPassword) {
+        this.password = encodedPassword;
+    }
 }

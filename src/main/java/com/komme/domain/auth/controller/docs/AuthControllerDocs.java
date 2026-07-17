@@ -4,19 +4,24 @@ import com.komme.common.response.ApiResponse;
 import com.komme.domain.auth.dto.request.EmailVerificationConfirmRequest;
 import com.komme.domain.auth.dto.request.EmailVerificationSendRequest;
 import com.komme.domain.auth.dto.request.LoginRequest;
+import com.komme.domain.auth.dto.request.PasswordChangeRequest;
 import com.komme.domain.auth.dto.request.SignUpRequest;
 import com.komme.domain.auth.dto.request.TokenReissueRequest;
 import com.komme.domain.auth.dto.response.LoginResponse;
 import com.komme.domain.auth.dto.response.TokenReissueResponse;
 
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 
@@ -193,5 +198,41 @@ public interface AuthControllerDocs {
     @PostMapping("/tokens/reissue")
     ResponseEntity<ApiResponse<TokenReissueResponse>> reissueToken(
             @Valid @RequestBody TokenReissueRequest request
+    );
+
+    // 비밀번호 변경 API
+    @Operation(
+            summary = "비밀번호 변경",
+            description = "현재 비밀번호를 확인하고 새로운 비밀번호로 변경합니다. 성공 시 모든 Refresh Token이 폐기됩니다.",
+            security = @SecurityRequirement(name = "bearerAuth")
+    )
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+            responseCode = "200",
+            description = "비밀번호 변경 성공",
+            content = @Content(examples = @ExampleObject(value = AuthApiExamples.SUCCESS_WITHOUT_DATA))
+    )
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+            responseCode = "400",
+            description = "입력값 오류 또는 현재 비밀번호 불일치",
+            content = @Content(examples = {
+                    @ExampleObject(name = "입력값 오류", value = AuthApiExamples.BAD_REQUEST),
+                    @ExampleObject(
+                            name = "현재 비밀번호 불일치",
+                            value = AuthApiExamples.INVALID_CURRENT_PASSWORD
+                    )
+            })
+    )
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+            responseCode = "401",
+            description = "Access Token 누락, 만료 또는 오류",
+            content = @Content(examples = {
+                    @ExampleObject(name = "유효하지 않은 토큰", value = AuthApiExamples.INVALID_TOKEN),
+                    @ExampleObject(name = "만료된 토큰", value = AuthApiExamples.EXPIRED_TOKEN)
+            })
+    )
+    @PatchMapping("/password")
+    ResponseEntity<ApiResponse<Void>> changePassword(
+            @Parameter(hidden = true) @AuthenticationPrincipal Long userId,
+            @Valid @RequestBody PasswordChangeRequest request
     );
 }

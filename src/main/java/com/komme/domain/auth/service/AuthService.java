@@ -2,6 +2,7 @@ package com.komme.domain.auth.service;
 
 import com.komme.common.exception.GeneralException;
 import com.komme.domain.auth.dto.request.LoginRequest;
+import com.komme.domain.auth.dto.request.PasswordChangeRequest;
 import com.komme.domain.auth.dto.request.SignUpRequest;
 import com.komme.domain.auth.dto.request.TokenReissueRequest;
 import com.komme.domain.auth.dto.response.LoginResponse;
@@ -33,6 +34,7 @@ import lombok.RequiredArgsConstructor;
 public class AuthService {
 
     private static final String REFRESH_TOKEN_KEY_PREFIX = "auth:refresh-token:";
+    private static final String USER_REFRESH_TOKENS_KEY_PREFIX = "auth:user-refresh-tokens:";
 
     private final UserRepository userRepository;
     private final EmailVerificationService emailVerificationService;
@@ -77,6 +79,15 @@ public class AuthService {
         saveRefreshToken(tokenClaims.userId(), refreshToken);
 
         return TokenReissueResponse.of(accessToken.value(), refreshToken.value());
+    }
+
+    // 로그인 사용자 비밀번호 변경 기능
+    @Transactional
+    public void changePassword(Long userId, PasswordChangeRequest request) {
+        User user = findLocalUser(userId);
+        validateCurrentPassword(request.currentPassword(), user.getPassword());
+        user.changePassword(passwordEncoder.encode(request.newPassword()));
+        invalidateAllRefreshTokens(userId);
     }
 
     // 회원가입 입력값 정규화 기능
@@ -151,12 +162,24 @@ public class AuthService {
                 userId.toString(),
                 refreshToken.expiration()
         );
+        redisTemplate.opsForSet().add(
+                createUserRefreshTokensKey(userId),
+                refreshToken.id()
+        );
+        redisTemplate.expire(
+                createUserRefreshTokensKey(userId),
+                refreshToken.expiration()
+        );
     }
 
     // Refresh Token Redis 저장값 검증 및 소비 기능
     private void validateAndConsumeRefreshToken(TokenClaims tokenClaims) {
         String savedUserId = redisTemplate.opsForValue().getAndDelete(
                 createRefreshTokenKey(tokenClaims.tokenId())
+        );
+        redisTemplate.opsForSet().remove(
+                createUserRefreshTokensKey(tokenClaims.userId()),
+                tokenClaims.tokenId()
         );
 
         if (!tokenClaims.userId().toString().equals(savedUserId)
@@ -168,6 +191,46 @@ public class AuthService {
     // Refresh Token Redis 키 생성
     private String createRefreshTokenKey(String tokenId) {
         return REFRESH_TOKEN_KEY_PREFIX + tokenId;
+    }
+
+    // 사용자별 Refresh Token 목록 Redis 키 생성
+    private String createUserRefreshTokensKey(Long userId) {
+        return USER_REFRESH_TOKENS_KEY_PREFIX + userId;
+    }
+
+    // 사용자 ID 기반 LOCAL 사용자 조회 기능
+    private User findLocalUser(Long userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new GeneralException(AuthErrorStatus.INVALID_TOKEN));
+
+        if (user.getProvider() != Provider.LOCAL) {
+            throw new GeneralException(AuthErrorStatus.INVALID_TOKEN);
+        }
+
+        return user;
+    }
+
+    // 현재 비밀번호 검증 기능
+    private void validateCurrentPassword(String currentPassword, String encodedPassword) {
+        if (!passwordEncoder.matches(currentPassword, encodedPassword)) {
+            throw new GeneralException(AuthErrorStatus.INVALID_CURRENT_PASSWORD);
+        }
+    }
+
+    // 사용자 전체 Refresh Token 폐기 기능
+    private void invalidateAllRefreshTokens(Long userId) {
+        String userRefreshTokensKey = createUserRefreshTokensKey(userId);
+        Set<String> tokenIds = redisTemplate.opsForSet().members(userRefreshTokensKey);
+
+        if (tokenIds != null && !tokenIds.isEmpty()) {
+            redisTemplate.delete(
+                    tokenIds.stream()
+                            .map(this::createRefreshTokenKey)
+                            .toList()
+            );
+        }
+
+        redisTemplate.delete(userRefreshTokensKey);
     }
 
     private record NormalizedSignUpData(

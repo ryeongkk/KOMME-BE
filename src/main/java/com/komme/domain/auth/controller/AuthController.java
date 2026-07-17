@@ -6,6 +6,7 @@ import com.komme.domain.auth.controller.docs.AuthControllerDocs;
 import com.komme.domain.auth.dto.request.EmailVerificationConfirmRequest;
 import com.komme.domain.auth.dto.request.EmailVerificationSendRequest;
 import com.komme.domain.auth.dto.request.LoginRequest;
+import com.komme.domain.auth.dto.request.PasswordChangeRequest;
 import com.komme.domain.auth.dto.request.SignUpRequest;
 import com.komme.domain.auth.dto.request.TokenReissueRequest;
 import com.komme.domain.auth.dto.response.LoginResponse;
@@ -66,5 +67,15 @@ public class AuthController implements AuthControllerDocs {
     ) {
         TokenReissueResponse response = authService.reissueToken(request);
         return ApiResponse.success(SuccessStatus.COMMON_SUCCESS_STATUS, response);
+    }
+
+    // 비밀번호 변경 API
+    @Override
+    public ResponseEntity<ApiResponse<Void>> changePassword(
+            Long userId,
+            PasswordChangeRequest request
+    ) {
+        authService.changePassword(userId, request);
+        return ApiResponse.success(SuccessStatus.COMMON_SUCCESS_STATUS);
     }
 }
