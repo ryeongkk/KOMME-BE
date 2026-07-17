@@ -1,9 +1,8 @@
 package com.komme.domain.auth.service;
 
 import com.komme.domain.auth.client.OAuthAppleClient;
-import com.komme.domain.auth.client.OAuthAppleClient.AppleIdentity;
+import com.komme.domain.auth.client.OAuthIdentity;
 import com.komme.domain.auth.client.OAuthGoogleClient;
-import com.komme.domain.auth.client.OAuthGoogleClient.GoogleIdentity;
 import com.komme.domain.auth.dto.request.OAuthAppleLoginRequest;
 import com.komme.domain.auth.dto.request.OAuthGoogleLoginRequest;
 import com.komme.domain.auth.dto.response.LoginResponse;
@@ -24,7 +23,7 @@ public class OAuthService {
 
     // Apple identity token 로그인 흐름 조율 기능
     public LoginResponse loginWithApple(OAuthAppleLoginRequest request) {
-        AppleIdentity identity = oAuthAppleClient.verifyIdentityToken(request.identityToken());
+        OAuthIdentity identity = oAuthAppleClient.verifyIdentityToken(request.identityToken());
         Long userId = oAuthAccountService.resolveUser(
                 Provider.APPLE,
                 identity.subject(),
@@ -35,7 +34,7 @@ public class OAuthService {
 
     // Google identity token 로그인 흐름 조율 기능
     public LoginResponse loginWithGoogle(OAuthGoogleLoginRequest request) {
-        GoogleIdentity identity = oAuthGoogleClient.verifyIdentityToken(request.idToken());
+        OAuthIdentity identity = oAuthGoogleClient.verifyIdentityToken(request.idToken());
         Long userId = oAuthAccountService.resolveUser(
                 Provider.GOOGLE,
                 identity.subject(),

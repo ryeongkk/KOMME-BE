@@ -1,7 +1,6 @@
 package com.komme.domain.auth.client;
 
 import com.komme.common.exception.GeneralException;
-import com.komme.domain.auth.client.OAuthGoogleClient.GoogleIdentity;
 import com.komme.domain.auth.exception.AuthErrorStatus;
 import com.komme.domain.auth.properties.GoogleProperties;
 
@@ -49,15 +48,15 @@ class OAuthGoogleClientTests {
         GoogleProperties properties = new GoogleProperties(CLIENT_ID, Duration.ofHours(1));
         oAuthGoogleClient = new OAuthGoogleClient(
                 new GoogleJwksProvider(createGoogleWebClient(), properties),
-                new OAuthPublicKeyFactory(),
-                properties
+                properties,
+                new OAuthIdentityTokenVerifier(new OAuthPublicKeyFactory())
         );
     }
 
     // 유효한 Google identity token 사용자 정보 추출 검증
     @Test
     void verifyIdentityTokenReturnsVerifiedIdentity() {
-        GoogleIdentity identity = oAuthGoogleClient.verifyIdentityToken(
+        OAuthIdentity identity = oAuthGoogleClient.verifyIdentityToken(
                 createIdentityToken(CLIENT_ID, "https://accounts.google.com", true)
         );
 

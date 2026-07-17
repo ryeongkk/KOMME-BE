@@ -2,9 +2,8 @@ package com.komme.domain.auth.service;
 
 import com.komme.common.exception.GeneralException;
 import com.komme.domain.auth.client.OAuthAppleClient;
-import com.komme.domain.auth.client.OAuthAppleClient.AppleIdentity;
+import com.komme.domain.auth.client.OAuthIdentity;
 import com.komme.domain.auth.client.OAuthGoogleClient;
-import com.komme.domain.auth.client.OAuthGoogleClient.GoogleIdentity;
 import com.komme.domain.auth.dto.request.OAuthAppleLoginRequest;
 import com.komme.domain.auth.dto.request.OAuthGoogleLoginRequest;
 import com.komme.domain.auth.dto.response.LoginResponse;
@@ -145,7 +144,7 @@ class OAuthServiceTests {
         User user = createUserMock();
         OAuthAccount account = OAuthAccount.create(user, Provider.GOOGLE, APPLE_SUBJECT);
         when(oAuthGoogleClient.verifyIdentityToken("google-id-token"))
-                .thenReturn(new GoogleIdentity(APPLE_SUBJECT, EMAIL));
+                .thenReturn(new OAuthIdentity(APPLE_SUBJECT, EMAIL));
         when(oAuthAccountRepository.findByProviderAndProviderId(
                 Provider.GOOGLE,
                 APPLE_SUBJECT
@@ -163,7 +162,7 @@ class OAuthServiceTests {
     // Apple identity token 검증 결과 구성
     private void prepareIdentity(String email) {
         when(oAuthAppleClient.verifyIdentityToken(IDENTITY_TOKEN))
-                .thenReturn(new AppleIdentity(APPLE_SUBJECT, email));
+                .thenReturn(new OAuthIdentity(APPLE_SUBJECT, email));
     }
 
     // 로그인 토큰 응답 구성

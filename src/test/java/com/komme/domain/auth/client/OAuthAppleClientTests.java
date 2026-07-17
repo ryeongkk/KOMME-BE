@@ -1,7 +1,6 @@
 package com.komme.domain.auth.client;
 
 import com.komme.common.exception.GeneralException;
-import com.komme.domain.auth.client.OAuthAppleClient.AppleIdentity;
 import com.komme.domain.auth.exception.AuthErrorStatus;
 import com.komme.domain.auth.properties.AppleProperties;
 
@@ -54,7 +53,7 @@ class OAuthAppleClientTests {
     void verifyIdentityTokenReturnsVerifiedIdentity() {
         String identityToken = createIdentityToken(CLIENT_ID, true);
 
-        AppleIdentity identity = oAuthAppleClient.verifyIdentityToken(identityToken);
+        OAuthIdentity identity = oAuthAppleClient.verifyIdentityToken(identityToken);
 
         assertThat(identity.subject()).isEqualTo(SUBJECT);
         assertThat(identity.email()).isEqualTo(EMAIL);
@@ -103,8 +102,8 @@ class OAuthAppleClientTests {
         );
         return new OAuthAppleClient(
                 new AppleJwksProvider(webClient, appleProperties),
-                new OAuthPublicKeyFactory(),
-                appleProperties
+                appleProperties,
+                new OAuthIdentityTokenVerifier(new OAuthPublicKeyFactory())
         );
     }
 
