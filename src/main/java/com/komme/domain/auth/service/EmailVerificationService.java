@@ -1,6 +1,7 @@
 package com.komme.domain.auth.service;
 
 import com.komme.common.exception.GeneralException;
+import com.komme.domain.auth.dto.request.EmailVerificationConfirmRequest;
 import com.komme.domain.auth.dto.request.EmailVerificationSendRequest;
 import com.komme.domain.auth.exception.AuthErrorStatus;
 import com.komme.domain.auth.properties.AuthMailProperties;
@@ -16,34 +17,23 @@ import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.stereotype.Service;
 
+import lombok.RequiredArgsConstructor;
+
 @Service
+@RequiredArgsConstructor
 public class EmailVerificationService {
 
     private static final String VERIFICATION_CODE_KEY_PREFIX = "auth:email-verification:code:";
+    private static final String VERIFIED_EMAIL_KEY_PREFIX = "auth:email-verification:verified:";
+    private static final String VERIFIED_EMAIL_VALUE = "true";
     private static final int VERIFICATION_CODE_BOUND = 1_000_000;
 
     private final UserRepository userRepository;
     private final StringRedisTemplate redisTemplate;
     private final JavaMailSender mailSender;
-    private final SecureRandom secureRandom;
+    private final SecureRandom secureRandom = new SecureRandom();
     private final AuthMailProperties mailProperties;
     private final EmailVerificationProperties emailVerificationProperties;
-
-    // 이메일 인증 서비스 의존성과 설정값 주입
-    public EmailVerificationService(
-            UserRepository userRepository,
-            StringRedisTemplate redisTemplate,
-            JavaMailSender mailSender,
-            AuthMailProperties mailProperties,
-            EmailVerificationProperties emailVerificationProperties
-    ) {
-        this.userRepository = userRepository;
-        this.redisTemplate = redisTemplate;
-        this.mailSender = mailSender;
-        this.secureRandom = new SecureRandom();
-        this.mailProperties = mailProperties;
-        this.emailVerificationProperties = emailVerificationProperties;
-    }
 
     // 이메일 인증 코드 전송 및 Redis 저장 기능
     public void sendVerificationCode(EmailVerificationSendRequest request) {
@@ -66,6 +56,28 @@ public class EmailVerificationService {
         }
     }
 
+    // 이메일 인증 코드 확인 및 인증 완료 플래그 저장 기능
+    public void confirmVerificationCode(EmailVerificationConfirmRequest request) {
+        String email = EmailNormalizer.normalize(request.email());
+        String verificationCodeKey = createVerificationCodeKey(email);
+        String savedVerificationCode = redisTemplate.opsForValue().get(verificationCodeKey);
+
+        if (savedVerificationCode == null) {
+            throw new GeneralException(AuthErrorStatus.EXPIRED_VERIFICATION_CODE);
+        }
+
+        if (!savedVerificationCode.equals(request.verificationCode())) {
+            throw new GeneralException(AuthErrorStatus.INVALID_VERIFICATION_CODE);
+        }
+
+        redisTemplate.opsForValue().set(
+                createVerifiedEmailKey(email),
+                VERIFIED_EMAIL_VALUE,
+                emailVerificationProperties.getVerifiedExpiration()
+        );
+        redisTemplate.delete(verificationCodeKey);
+    }
+
     // 가입된 이메일 여부 확인 기능
     private void validateEmailNotRegistered(String email) {
         if (userRepository.existsByEmail(email)) {
@@ -81,6 +93,11 @@ public class EmailVerificationService {
     // 이메일별 인증 코드 Redis 키 생성
     private String createVerificationCodeKey(String email) {
         return VERIFICATION_CODE_KEY_PREFIX + email;
+    }
+
+    // 이메일별 인증 완료 Redis 키 생성
+    private String createVerifiedEmailKey(String email) {
+        return VERIFIED_EMAIL_KEY_PREFIX + email;
     }
 
     // Gmail SMTP 인증 코드 전송 기능

@@ -17,8 +17,15 @@ public class EmailVerificationProperties {
     @NotNull
     private final Duration codeExpiration;
 
+    @NotNull
+    private final Duration verifiedExpiration;
+
     // 이메일 인증 설정값 생성
-    public EmailVerificationProperties(Duration codeExpiration) {
+    public EmailVerificationProperties(
+            Duration codeExpiration,
+            Duration verifiedExpiration
+    ) {
         this.codeExpiration = codeExpiration;
+        this.verifiedExpiration = verifiedExpiration;
     }
 }
