@@ -2,6 +2,7 @@ package com.komme.domain.auth.service;
 
 import com.komme.common.exception.GeneralException;
 import com.komme.domain.auth.dto.request.LoginRequest;
+import com.komme.domain.auth.dto.request.LogoutRequest;
 import com.komme.domain.auth.dto.request.PasswordChangeRequest;
 import com.komme.domain.auth.dto.request.SignUpRequest;
 import com.komme.domain.auth.dto.request.TokenReissueRequest;
@@ -15,10 +16,13 @@ import com.komme.domain.auth.exception.AuthErrorStatus;
 import com.komme.domain.auth.jwt.JwtProvider;
 import com.komme.domain.auth.jwt.JwtProvider.IssuedToken;
 import com.komme.domain.auth.jwt.JwtProvider.TokenClaims;
+import com.komme.domain.auth.jwt.JwtRedisKeys;
 import com.komme.domain.auth.repository.UserRepository;
 import com.komme.domain.auth.util.EmailNormalizer;
 import com.komme.i18n.enums.Language;
 
+import java.time.Duration;
+import java.time.Instant;
 import java.util.Locale;
 import java.util.Set;
 
@@ -32,9 +36,6 @@ import lombok.RequiredArgsConstructor;
 @Service
 @RequiredArgsConstructor
 public class AuthService {
-
-    private static final String REFRESH_TOKEN_KEY_PREFIX = "auth:refresh-token:";
-    private static final String USER_REFRESH_TOKENS_KEY_PREFIX = "auth:user-refresh-tokens:";
 
     private final UserRepository userRepository;
     private final EmailVerificationService emailVerificationService;
@@ -88,6 +89,18 @@ public class AuthService {
         validateCurrentPassword(request.currentPassword(), user.getPassword());
         user.changePassword(passwordEncoder.encode(request.newPassword()));
         invalidateAllRefreshTokens(userId);
+    }
+
+    // 현재 기기 토큰 로그아웃 기능
+    public void logout(TokenClaims accessTokenClaims, LogoutRequest request) {
+        TokenClaims refreshTokenClaims = jwtProvider.parseRefreshToken(request.refreshToken());
+
+        if (!accessTokenClaims.userId().equals(refreshTokenClaims.userId())) {
+            throw new GeneralException(AuthErrorStatus.INVALID_TOKEN);
+        }
+
+        validateAndConsumeRefreshToken(refreshTokenClaims);
+        blacklistAccessToken(accessTokenClaims);
     }
 
     // 회원가입 입력값 정규화 기능
@@ -158,16 +171,16 @@ public class AuthService {
     // Refresh Token 식별자 Redis 저장 기능
     private void saveRefreshToken(Long userId, IssuedToken refreshToken) {
         redisTemplate.opsForValue().set(
-                createRefreshTokenKey(refreshToken.id()),
+                JwtRedisKeys.refreshToken(refreshToken.id()),
                 userId.toString(),
                 refreshToken.expiration()
         );
         redisTemplate.opsForSet().add(
-                createUserRefreshTokensKey(userId),
+                JwtRedisKeys.userRefreshTokens(userId),
                 refreshToken.id()
         );
         redisTemplate.expire(
-                createUserRefreshTokensKey(userId),
+                JwtRedisKeys.userRefreshTokens(userId),
                 refreshToken.expiration()
         );
     }
@@ -175,10 +188,10 @@ public class AuthService {
     // Refresh Token Redis 저장값 검증 및 소비 기능
     private void validateAndConsumeRefreshToken(TokenClaims tokenClaims) {
         String savedUserId = redisTemplate.opsForValue().getAndDelete(
-                createRefreshTokenKey(tokenClaims.tokenId())
+                JwtRedisKeys.refreshToken(tokenClaims.tokenId())
         );
         redisTemplate.opsForSet().remove(
-                createUserRefreshTokensKey(tokenClaims.userId()),
+                JwtRedisKeys.userRefreshTokens(tokenClaims.userId()),
                 tokenClaims.tokenId()
         );
 
@@ -186,16 +199,6 @@ public class AuthService {
                 || !userRepository.existsById(tokenClaims.userId())) {
             throw new GeneralException(AuthErrorStatus.INVALID_TOKEN);
         }
-    }
-
-    // Refresh Token Redis 키 생성
-    private String createRefreshTokenKey(String tokenId) {
-        return REFRESH_TOKEN_KEY_PREFIX + tokenId;
-    }
-
-    // 사용자별 Refresh Token 목록 Redis 키 생성
-    private String createUserRefreshTokensKey(Long userId) {
-        return USER_REFRESH_TOKENS_KEY_PREFIX + userId;
     }
 
     // 사용자 ID 기반 LOCAL 사용자 조회 기능
@@ -219,18 +222,34 @@ public class AuthService {
 
     // 사용자 전체 Refresh Token 폐기 기능
     private void invalidateAllRefreshTokens(Long userId) {
-        String userRefreshTokensKey = createUserRefreshTokensKey(userId);
+        String userRefreshTokensKey = JwtRedisKeys.userRefreshTokens(userId);
         Set<String> tokenIds = redisTemplate.opsForSet().members(userRefreshTokensKey);
 
         if (tokenIds != null && !tokenIds.isEmpty()) {
             redisTemplate.delete(
                     tokenIds.stream()
-                            .map(this::createRefreshTokenKey)
+                            .map(JwtRedisKeys::refreshToken)
                             .toList()
             );
         }
 
         redisTemplate.delete(userRefreshTokensKey);
+    }
+
+    // Access Token 남은 만료시간 기반 블랙리스트 등록 기능
+    private void blacklistAccessToken(TokenClaims accessTokenClaims) {
+        Duration remainingExpiration = Duration.between(
+                Instant.now(),
+                accessTokenClaims.expiresAt()
+        );
+
+        if (!remainingExpiration.isNegative() && !remainingExpiration.isZero()) {
+            redisTemplate.opsForValue().set(
+                    JwtRedisKeys.accessTokenBlacklist(accessTokenClaims.tokenId()),
+                    "true",
+                    remainingExpiration
+            );
+        }
     }
 
     private record NormalizedSignUpData(

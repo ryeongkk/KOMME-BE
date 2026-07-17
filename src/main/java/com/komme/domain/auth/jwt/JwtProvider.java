@@ -77,7 +77,11 @@ public class JwtProvider {
                 throw new GeneralException(AuthErrorStatus.INVALID_TOKEN);
             }
 
-            return new TokenClaims(userId, tokenId);
+            return new TokenClaims(
+                    userId,
+                    tokenId,
+                    claims.getExpiration().toInstant()
+            );
         } catch (NumberFormatException exception) {
             throw new GeneralException(AuthErrorStatus.INVALID_TOKEN, exception);
         }
@@ -132,7 +136,8 @@ public class JwtProvider {
 
     public record TokenClaims(
             Long userId,
-            String tokenId
+            String tokenId,
+            Instant expiresAt
     ) {
     }
 }

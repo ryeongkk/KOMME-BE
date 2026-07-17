@@ -1,6 +1,7 @@
 package com.komme.domain.auth.jwt;
 
 import com.komme.common.exception.GeneralException;
+import com.komme.domain.auth.exception.AuthErrorStatus;
 import com.komme.domain.auth.jwt.JwtProvider.TokenClaims;
 
 import java.io.IOException;
@@ -11,6 +12,7 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
@@ -27,6 +29,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private static final String BEARER_PREFIX = "Bearer ";
 
     private final JwtProvider jwtProvider;
+    private final StringRedisTemplate redisTemplate;
 
     // Access Token 검증 및 인증 정보 등록 기능
     @Override
@@ -59,9 +62,10 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private void authenticate(HttpServletRequest request, String accessToken) {
         try {
             TokenClaims tokenClaims = jwtProvider.parseAccessToken(accessToken);
+            validateNotBlacklisted(tokenClaims);
             UsernamePasswordAuthenticationToken authentication =
                     new UsernamePasswordAuthenticationToken(
-                            tokenClaims.userId(),
+                            tokenClaims,
                             null,
                             List.of()
                     );
@@ -69,6 +73,15 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         } catch (GeneralException exception) {
             SecurityContextHolder.clearContext();
             request.setAttribute(AUTH_ERROR_STATUS_ATTRIBUTE, exception.getErrorStatus());
+        }
+    }
+
+    // Access Token 블랙리스트 미등록 검증 기능
+    private void validateNotBlacklisted(TokenClaims tokenClaims) {
+        if (Boolean.TRUE.equals(redisTemplate.hasKey(
+                JwtRedisKeys.accessTokenBlacklist(tokenClaims.tokenId())
+        ))) {
+            throw new GeneralException(AuthErrorStatus.INVALID_TOKEN);
         }
     }
 }

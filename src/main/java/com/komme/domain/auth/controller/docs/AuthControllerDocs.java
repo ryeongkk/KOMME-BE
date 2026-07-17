@@ -4,11 +4,13 @@ import com.komme.common.response.ApiResponse;
 import com.komme.domain.auth.dto.request.EmailVerificationConfirmRequest;
 import com.komme.domain.auth.dto.request.EmailVerificationSendRequest;
 import com.komme.domain.auth.dto.request.LoginRequest;
+import com.komme.domain.auth.dto.request.LogoutRequest;
 import com.komme.domain.auth.dto.request.PasswordChangeRequest;
 import com.komme.domain.auth.dto.request.SignUpRequest;
 import com.komme.domain.auth.dto.request.TokenReissueRequest;
 import com.komme.domain.auth.dto.response.LoginResponse;
 import com.komme.domain.auth.dto.response.TokenReissueResponse;
+import com.komme.domain.auth.jwt.JwtProvider.TokenClaims;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -232,7 +234,37 @@ public interface AuthControllerDocs {
     )
     @PatchMapping("/password")
     ResponseEntity<ApiResponse<Void>> changePassword(
-            @Parameter(hidden = true) @AuthenticationPrincipal Long userId,
+            @Parameter(hidden = true) @AuthenticationPrincipal TokenClaims tokenClaims,
             @Valid @RequestBody PasswordChangeRequest request
+    );
+
+    // 로그아웃 API
+    @Operation(
+            summary = "로그아웃",
+            description = "현재 Access Token을 블랙리스트에 등록하고 요청한 기기의 Refresh Token을 폐기합니다.",
+            security = @SecurityRequirement(name = "bearerAuth")
+    )
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+            responseCode = "200",
+            description = "로그아웃 성공",
+            content = @Content(examples = @ExampleObject(value = AuthApiExamples.SUCCESS_WITHOUT_DATA))
+    )
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+            responseCode = "400",
+            description = "Refresh Token 누락",
+            content = @Content(examples = @ExampleObject(value = AuthApiExamples.BAD_REQUEST))
+    )
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+            responseCode = "401",
+            description = "Access Token 또는 Refresh Token 오류",
+            content = @Content(examples = {
+                    @ExampleObject(name = "유효하지 않은 토큰", value = AuthApiExamples.INVALID_TOKEN),
+                    @ExampleObject(name = "만료된 토큰", value = AuthApiExamples.EXPIRED_TOKEN)
+            })
+    )
+    @PostMapping("/logout")
+    ResponseEntity<ApiResponse<Void>> logout(
+            @Parameter(hidden = true) @AuthenticationPrincipal TokenClaims tokenClaims,
+            @Valid @RequestBody LogoutRequest request
     );
 }

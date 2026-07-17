@@ -6,11 +6,13 @@ import com.komme.domain.auth.controller.docs.AuthControllerDocs;
 import com.komme.domain.auth.dto.request.EmailVerificationConfirmRequest;
 import com.komme.domain.auth.dto.request.EmailVerificationSendRequest;
 import com.komme.domain.auth.dto.request.LoginRequest;
+import com.komme.domain.auth.dto.request.LogoutRequest;
 import com.komme.domain.auth.dto.request.PasswordChangeRequest;
 import com.komme.domain.auth.dto.request.SignUpRequest;
 import com.komme.domain.auth.dto.request.TokenReissueRequest;
 import com.komme.domain.auth.dto.response.LoginResponse;
 import com.komme.domain.auth.dto.response.TokenReissueResponse;
+import com.komme.domain.auth.jwt.JwtProvider.TokenClaims;
 import com.komme.domain.auth.service.AuthService;
 import com.komme.domain.auth.service.EmailVerificationService;
 
@@ -72,10 +74,20 @@ public class AuthController implements AuthControllerDocs {
     // 비밀번호 변경 API
     @Override
     public ResponseEntity<ApiResponse<Void>> changePassword(
-            Long userId,
+            TokenClaims tokenClaims,
             PasswordChangeRequest request
     ) {
-        authService.changePassword(userId, request);
+        authService.changePassword(tokenClaims.userId(), request);
+        return ApiResponse.success(SuccessStatus.COMMON_SUCCESS_STATUS);
+    }
+
+    // 로그아웃 API
+    @Override
+    public ResponseEntity<ApiResponse<Void>> logout(
+            TokenClaims tokenClaims,
+            LogoutRequest request
+    ) {
+        authService.logout(tokenClaims, request);
         return ApiResponse.success(SuccessStatus.COMMON_SUCCESS_STATUS);
     }
 }
