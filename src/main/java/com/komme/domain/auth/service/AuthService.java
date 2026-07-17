@@ -92,10 +92,15 @@ public class AuthService {
     }
 
     // 현재 기기 토큰 로그아웃 기능
-    public void logout(TokenClaims accessTokenClaims, LogoutRequest request) {
+    public void logout(
+            Long userId,
+            TokenClaims accessTokenClaims,
+            LogoutRequest request
+    ) {
         TokenClaims refreshTokenClaims = jwtProvider.parseRefreshToken(request.refreshToken());
 
-        if (!accessTokenClaims.userId().equals(refreshTokenClaims.userId())) {
+        if (!userId.equals(accessTokenClaims.userId())
+                || !userId.equals(refreshTokenClaims.userId())) {
             throw new GeneralException(AuthErrorStatus.INVALID_TOKEN);
         }
 

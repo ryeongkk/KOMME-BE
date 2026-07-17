@@ -65,10 +65,11 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             validateNotBlacklisted(tokenClaims);
             UsernamePasswordAuthenticationToken authentication =
                     new UsernamePasswordAuthenticationToken(
-                            tokenClaims,
+                            tokenClaims.userId(),
                             null,
                             List.of()
                     );
+            authentication.setDetails(tokenClaims);
             SecurityContextHolder.getContext().setAuthentication(authentication);
         } catch (GeneralException exception) {
             SecurityContextHolder.clearContext();

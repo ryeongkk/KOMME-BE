@@ -10,7 +10,6 @@ import com.komme.domain.auth.dto.request.SignUpRequest;
 import com.komme.domain.auth.dto.request.TokenReissueRequest;
 import com.komme.domain.auth.dto.response.LoginResponse;
 import com.komme.domain.auth.dto.response.TokenReissueResponse;
-import com.komme.domain.auth.jwt.JwtProvider.TokenClaims;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -22,6 +21,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -234,7 +234,7 @@ public interface AuthControllerDocs {
     )
     @PatchMapping("/password")
     ResponseEntity<ApiResponse<Void>> changePassword(
-            @Parameter(hidden = true) @AuthenticationPrincipal TokenClaims tokenClaims,
+            @Parameter(hidden = true) @AuthenticationPrincipal Long userId,
             @Valid @RequestBody PasswordChangeRequest request
     );
 
@@ -264,7 +264,8 @@ public interface AuthControllerDocs {
     )
     @PostMapping("/logout")
     ResponseEntity<ApiResponse<Void>> logout(
-            @Parameter(hidden = true) @AuthenticationPrincipal TokenClaims tokenClaims,
+            @Parameter(hidden = true) @AuthenticationPrincipal Long userId,
+            @Parameter(hidden = true) Authentication authentication,
             @Valid @RequestBody LogoutRequest request
     );
 }
