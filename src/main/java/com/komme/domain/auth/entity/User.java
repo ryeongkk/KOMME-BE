@@ -50,25 +50,22 @@ public class User extends BaseEntity {
     @Column(length = 255)
     private String password;
 
-    @Column(nullable = false, length = 20)
+    @Column(length = 20)
     private String nickname;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
     private Provider provider;
 
-    @Column(length = 255)
-    private String providerId;
-
-    @Column(nullable = false, length = 2)
+    @Column(length = 2)
     private String nationality;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false, length = 10)
+    @Column(length = 10)
     private Gender gender;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false, length = 30)
+    @Column(length = 30)
     private Language preferredLanguage;
 
     @ElementCollection(fetch = FetchType.LAZY)
@@ -87,7 +84,6 @@ public class User extends BaseEntity {
             String password,
             String nickname,
             Provider provider,
-            String providerId,
             String nationality,
             Gender gender,
             Language preferredLanguage,
@@ -97,7 +93,6 @@ public class User extends BaseEntity {
         this.password = password;
         this.nickname = nickname;
         this.provider = provider;
-        this.providerId = providerId;
         this.nationality = nationality;
         this.gender = gender;
         this.preferredLanguage = preferredLanguage;
@@ -119,11 +114,24 @@ public class User extends BaseEntity {
                 .password(encodedPassword)
                 .nickname(nickname)
                 .provider(Provider.LOCAL)
-                .providerId(null)
                 .nationality(nationality)
                 .gender(gender)
                 .preferredLanguage(preferredLanguage)
                 .serviceInterests(serviceInterests)
+                .build();
+    }
+
+    // OAuth 사용자 생성 기능
+    public static User createOAuth(String email, Provider provider) {
+        return User.builder()
+                .email(email)
+                .password(null)
+                .nickname(null)
+                .provider(provider)
+                .nationality(null)
+                .gender(null)
+                .preferredLanguage(null)
+                .serviceInterests(Set.of())
                 .build();
     }
 

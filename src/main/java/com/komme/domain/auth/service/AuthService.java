@@ -14,7 +14,6 @@ import com.komme.domain.auth.enums.Provider;
 import com.komme.domain.auth.enums.ServiceInterest;
 import com.komme.domain.auth.exception.AuthErrorStatus;
 import com.komme.domain.auth.jwt.JwtProvider;
-import com.komme.domain.auth.jwt.JwtProvider.IssuedToken;
 import com.komme.domain.auth.jwt.JwtProvider.TokenClaims;
 import com.komme.domain.auth.jwt.JwtRedisKeys;
 import com.komme.domain.auth.repository.UserRepository;
@@ -45,6 +44,7 @@ public class AuthService {
     private final PasswordEncoder passwordEncoder;
     private final JwtProvider jwtProvider;
     private final StringRedisTemplate redisTemplate;
+    private final AuthTokenService authTokenService;
 
     // 이메일 인증 기반 LOCAL 사용자 가입 기능
     @Transactional
@@ -63,14 +63,7 @@ public class AuthService {
         User user = findLocalUser(email);
         validatePassword(request.password(), user.getPassword());
 
-        IssuedToken accessToken = jwtProvider.issueAccessToken(user.getId());
-        IssuedToken refreshToken = jwtProvider.issueRefreshToken(user.getId());
-        saveRefreshToken(user.getId(), refreshToken);
-
-        return LoginResponse.of(
-                accessToken.value(),
-                refreshToken.value()
-        );
+        return authTokenService.issueLoginTokens(user.getId());
     }
 
     // Refresh Token 기반 토큰 재발급 기능
@@ -78,11 +71,11 @@ public class AuthService {
         TokenClaims tokenClaims = jwtProvider.parseRefreshToken(request.refreshToken());
         validateAndConsumeRefreshToken(tokenClaims);
 
-        IssuedToken accessToken = jwtProvider.issueAccessToken(tokenClaims.userId());
-        IssuedToken refreshToken = jwtProvider.issueRefreshToken(tokenClaims.userId());
-        saveRefreshToken(tokenClaims.userId(), refreshToken);
-
-        return TokenReissueResponse.of(accessToken.value(), refreshToken.value());
+        LoginResponse loginResponse = authTokenService.issueLoginTokens(tokenClaims.userId());
+        return TokenReissueResponse.of(
+                loginResponse.accessToken(),
+                loginResponse.refreshToken()
+        );
     }
 
     // 로그인 사용자 비밀번호 변경 기능
@@ -214,23 +207,6 @@ public class AuthService {
         if (!passwordEncoder.matches(rawPassword, encodedPassword)) {
             throw new GeneralException(AuthErrorStatus.INVALID_CREDENTIALS);
         }
-    }
-
-    // Refresh Token 식별자 Redis 저장 기능
-    private void saveRefreshToken(Long userId, IssuedToken refreshToken) {
-        redisTemplate.opsForValue().set(
-                JwtRedisKeys.refreshToken(refreshToken.id()),
-                userId.toString(),
-                refreshToken.expiration()
-        );
-        redisTemplate.opsForSet().add(
-                JwtRedisKeys.userRefreshTokens(userId),
-                refreshToken.id()
-        );
-        redisTemplate.expire(
-                JwtRedisKeys.userRefreshTokens(userId),
-                refreshToken.expiration()
-        );
     }
 
     // Refresh Token Redis 저장값 검증 및 소비 기능
