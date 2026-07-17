@@ -6,15 +6,20 @@ import com.komme.domain.auth.client.OAuthIdentity;
 import com.komme.domain.auth.client.OAuthGoogleClient;
 import com.komme.domain.auth.dto.request.OAuthAppleLoginRequest;
 import com.komme.domain.auth.dto.request.OAuthGoogleLoginRequest;
+import com.komme.domain.auth.dto.request.OAuthProfileCompleteRequest;
 import com.komme.domain.auth.dto.response.LoginResponse;
 import com.komme.domain.auth.entity.OAuthAccount;
 import com.komme.domain.auth.entity.User;
+import com.komme.domain.auth.enums.Gender;
 import com.komme.domain.auth.enums.Provider;
+import com.komme.domain.auth.enums.ServiceInterest;
 import com.komme.domain.auth.exception.AuthErrorStatus;
 import com.komme.domain.auth.repository.OAuthAccountRepository;
 import com.komme.domain.auth.repository.UserRepository;
+import com.komme.i18n.enums.Language;
 
 import java.util.Optional;
+import java.util.Set;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -63,7 +68,8 @@ class OAuthServiceTests {
                 oAuthAppleClient,
                 oAuthGoogleClient,
                 new OAuthAccountService(oAuthAccountRepository, userRepository),
-                authTokenService
+                authTokenService,
+                userRepository
         );
     }
 
@@ -177,6 +183,31 @@ class OAuthServiceTests {
                 .isEqualTo(AuthErrorStatus.EMAIL_ALREADY_EXISTS);
 
         verify(authTokenService, never()).issueLoginTokens(any());
+    }
+
+    // OAuth 사용자 프로필 완성 검증
+    @Test
+    void completeProfileUpdatesUserProfile() {
+        User user = User.createOAuth(EMAIL, Provider.GOOGLE);
+        when(userRepository.findById(USER_ID)).thenReturn(Optional.of(user));
+
+        oAuthService.completeProfile(
+                USER_ID,
+                new OAuthProfileCompleteRequest(
+                        " nickname ",
+                        "kr",
+                        Gender.FEMALE,
+                        Language.ENGLISH,
+                        Set.of(ServiceInterest.COURSE)
+                )
+        );
+
+        assertThat(user.getNickname()).isEqualTo("nickname");
+        assertThat(user.getNationality()).isEqualTo("KR");
+        assertThat(user.getGender()).isEqualTo(Gender.FEMALE);
+        assertThat(user.getPreferredLanguage()).isEqualTo(Language.ENGLISH);
+        assertThat(user.getServiceInterests()).containsExactly(ServiceInterest.COURSE);
+        verify(userRepository).flush();
     }
 
     // Apple identity token 검증 결과 구성

@@ -135,6 +135,21 @@ public class User extends BaseEntity {
                 .build();
     }
 
+    // OAuth 사용자 프로필 완성 기능
+    public void completeProfile(
+            String nickname,
+            String nationality,
+            Gender gender,
+            Language preferredLanguage,
+            Set<ServiceInterest> serviceInterests
+    ) {
+        this.nickname = nickname;
+        this.nationality = nationality;
+        this.gender = gender;
+        this.preferredLanguage = preferredLanguage;
+        this.serviceInterests = new HashSet<>(serviceInterests);
+    }
+
     // 비밀번호 변경 기능
     public void changePassword(String encodedPassword) {
         this.password = encodedPassword;

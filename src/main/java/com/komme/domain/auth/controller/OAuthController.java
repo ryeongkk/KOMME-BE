@@ -5,6 +5,7 @@ import com.komme.common.response.ApiResponse;
 import com.komme.domain.auth.controller.docs.OAuthControllerDocs;
 import com.komme.domain.auth.dto.request.OAuthAppleLoginRequest;
 import com.komme.domain.auth.dto.request.OAuthGoogleLoginRequest;
+import com.komme.domain.auth.dto.request.OAuthProfileCompleteRequest;
 import com.komme.domain.auth.dto.response.LoginResponse;
 import com.komme.domain.auth.service.OAuthService;
 
@@ -37,5 +38,15 @@ public class OAuthController implements OAuthControllerDocs {
     ) {
         LoginResponse response = oAuthService.loginWithGoogle(request);
         return ApiResponse.success(SuccessStatus.COMMON_SUCCESS_STATUS, response);
+    }
+
+    // OAuth 사용자 프로필 완성 API
+    @Override
+    public ResponseEntity<ApiResponse<Void>> completeProfile(
+            Long userId,
+            OAuthProfileCompleteRequest request
+    ) {
+        oAuthService.completeProfile(userId, request);
+        return ApiResponse.success(SuccessStatus.COMMON_SUCCESS_STATUS);
     }
 }

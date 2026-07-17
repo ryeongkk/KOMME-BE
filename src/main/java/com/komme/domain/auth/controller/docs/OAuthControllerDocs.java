@@ -3,6 +3,7 @@ package com.komme.domain.auth.controller.docs;
 import com.komme.common.response.ApiResponse;
 import com.komme.domain.auth.dto.request.OAuthAppleLoginRequest;
 import com.komme.domain.auth.dto.request.OAuthGoogleLoginRequest;
+import com.komme.domain.auth.dto.request.OAuthProfileCompleteRequest;
 import com.komme.domain.auth.dto.response.LoginResponse;
 
 import io.swagger.v3.oas.annotations.Operation;
@@ -15,6 +16,8 @@ import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.PatchMapping;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 
 @Tag(name = "OAuth", description = "소셜 로그인 API")
 public interface OAuthControllerDocs {
@@ -147,5 +150,40 @@ public interface OAuthControllerDocs {
     @PostMapping("/google")
     ResponseEntity<ApiResponse<LoginResponse>> loginWithGoogle(
             @Valid @RequestBody OAuthGoogleLoginRequest request
+    );
+
+    // OAuth 사용자 프로필 완성 API
+    @Operation(
+            summary = "소셜 로그인 사용자 프로필 완성",
+            description = "Apple 또는 Google 최초 로그인 후 비어 있는 프로필 정보를 저장합니다.",
+            security = @io.swagger.v3.oas.annotations.security.SecurityRequirement(
+                    name = "bearerAuth"
+            )
+    )
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+            responseCode = "200",
+            description = "프로필 완성 성공",
+            content = @Content(examples = @ExampleObject(value = AuthApiExamples.SUCCESS_WITHOUT_DATA))
+    )
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+            responseCode = "400",
+            description = "프로필 입력값 오류",
+            content = @Content(examples = @ExampleObject(value = AuthApiExamples.BAD_REQUEST))
+    )
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+            responseCode = "401",
+            description = "Access Token 오류",
+            content = @Content(examples = @ExampleObject(value = AuthApiExamples.INVALID_TOKEN))
+    )
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+            responseCode = "409",
+            description = "닉네임 중복",
+            content = @Content(examples = @ExampleObject(value = AuthApiExamples.NICKNAME_ALREADY_EXISTS))
+    )
+    @PatchMapping("/profile")
+    ResponseEntity<ApiResponse<Void>> completeProfile(
+            @io.swagger.v3.oas.annotations.Parameter(hidden = true)
+            @AuthenticationPrincipal Long userId,
+            @Valid @RequestBody OAuthProfileCompleteRequest request
     );
 }
