@@ -1,6 +1,6 @@
 ---
 paths:
-  - "src/main/java/com/komme/auth/**"
+  - "src/main/java/com/komme/domain/auth/**"
 ---
 
 # auth 도메인 규칙
