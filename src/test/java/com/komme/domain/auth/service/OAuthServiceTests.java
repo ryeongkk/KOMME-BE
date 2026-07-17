@@ -3,7 +3,10 @@ package com.komme.domain.auth.service;
 import com.komme.common.exception.GeneralException;
 import com.komme.domain.auth.client.OAuthAppleClient;
 import com.komme.domain.auth.client.OAuthAppleClient.AppleIdentity;
+import com.komme.domain.auth.client.OAuthGoogleClient;
+import com.komme.domain.auth.client.OAuthGoogleClient.GoogleIdentity;
 import com.komme.domain.auth.dto.request.OAuthAppleLoginRequest;
+import com.komme.domain.auth.dto.request.OAuthGoogleLoginRequest;
 import com.komme.domain.auth.dto.response.LoginResponse;
 import com.komme.domain.auth.entity.OAuthAccount;
 import com.komme.domain.auth.entity.User;
@@ -40,6 +43,9 @@ class OAuthServiceTests {
     private OAuthAppleClient oAuthAppleClient;
 
     @Mock
+    private OAuthGoogleClient oAuthGoogleClient;
+
+    @Mock
     private OAuthAccountRepository oAuthAccountRepository;
 
     @Mock
@@ -55,6 +61,7 @@ class OAuthServiceTests {
     void setUp() {
         oAuthService = new OAuthService(
                 oAuthAppleClient,
+                oAuthGoogleClient,
                 new OAuthAccountService(oAuthAccountRepository, userRepository),
                 authTokenService
         );
@@ -130,6 +137,27 @@ class OAuthServiceTests {
 
         verify(userRepository, never()).saveAndFlush(any(User.class));
         verify(authTokenService, never()).issueLoginTokens(any());
+    }
+
+    // 연결된 Google 계정 로그인 검증
+    @Test
+    void loginWithGoogleLogsInLinkedUser() {
+        User user = createUserMock();
+        OAuthAccount account = OAuthAccount.create(user, Provider.GOOGLE, APPLE_SUBJECT);
+        when(oAuthGoogleClient.verifyIdentityToken("google-id-token"))
+                .thenReturn(new GoogleIdentity(APPLE_SUBJECT, EMAIL));
+        when(oAuthAccountRepository.findByProviderAndProviderId(
+                Provider.GOOGLE,
+                APPLE_SUBJECT
+        )).thenReturn(Optional.of(account));
+        prepareTokenResponse();
+
+        LoginResponse response = oAuthService.loginWithGoogle(
+                new OAuthGoogleLoginRequest("google-id-token")
+        );
+
+        assertThat(response.accessToken()).isEqualTo("access-token");
+        verify(authTokenService).issueLoginTokens(USER_ID);
     }
 
     // Apple identity token 검증 결과 구성

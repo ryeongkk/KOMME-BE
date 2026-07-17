@@ -24,6 +24,7 @@ public class SecurityConfig {
             "/api/v1/auth/signup",
             "/api/v1/auth/login",
             "/api/v1/auth/oauth/apple",
+            "/api/v1/auth/oauth/google",
             "/api/v1/auth/tokens/reissue",
             "/v3/api-docs/**",
             "/swagger-ui/**",

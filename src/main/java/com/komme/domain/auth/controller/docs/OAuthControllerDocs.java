@@ -2,6 +2,7 @@ package com.komme.domain.auth.controller.docs;
 
 import com.komme.common.response.ApiResponse;
 import com.komme.domain.auth.dto.request.OAuthAppleLoginRequest;
+import com.komme.domain.auth.dto.request.OAuthGoogleLoginRequest;
 import com.komme.domain.auth.dto.response.LoginResponse;
 
 import io.swagger.v3.oas.annotations.Operation;
@@ -81,5 +82,70 @@ public interface OAuthControllerDocs {
     @PostMapping("/apple")
     ResponseEntity<ApiResponse<LoginResponse>> loginWithApple(
             @Valid @RequestBody OAuthAppleLoginRequest request
+    );
+
+    // Google 로그인 API
+    @Operation(
+            summary = "Google 로그인",
+            description = "Google ID token의 서명, 발급자, 대상, 만료를 검증합니다. "
+                    + "연결된 계정은 로그인하고, 검증된 이메일의 기존 계정은 Google 계정을 연결하며, "
+                    + "가입 이력이 없으면 최소 프로필의 Google 계정을 생성합니다."
+    )
+    @io.swagger.v3.oas.annotations.parameters.RequestBody(
+            required = true,
+            content = @Content(
+                    schema = @Schema(implementation = OAuthGoogleLoginRequest.class),
+                    examples = @ExampleObject(value = OAuthApiExamples.GOOGLE_LOGIN_REQUEST)
+            )
+    )
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+            responseCode = "200",
+            description = "Google 로그인 또는 회원가입 성공",
+            content = @Content(
+                    schema = @Schema(implementation = LoginResponse.class),
+                    examples = @ExampleObject(value = OAuthApiExamples.GOOGLE_LOGIN_SUCCESS)
+            )
+    )
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+            responseCode = "400",
+            description = "ID token 누락 또는 이메일 정보 없음",
+            content = @Content(examples = {
+                    @ExampleObject(name = "입력값 오류", value = AuthApiExamples.BAD_REQUEST),
+                    @ExampleObject(
+                            name = "Google 이메일 없음",
+                            value = OAuthApiExamples.GOOGLE_EMAIL_REQUIRED
+                    )
+            })
+    )
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+            responseCode = "401",
+            description = "Google ID token 검증 실패",
+            content = @Content(
+                    examples = @ExampleObject(
+                            value = OAuthApiExamples.INVALID_GOOGLE_IDENTITY_TOKEN
+                    )
+            )
+    )
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+            responseCode = "409",
+            description = "동시에 다른 사용자에게 연결된 Google 계정",
+            content = @Content(
+                    examples = @ExampleObject(
+                            value = OAuthApiExamples.OAUTH_ACCOUNT_ALREADY_LINKED
+                    )
+            )
+    )
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+            responseCode = "502",
+            description = "Google 공개키 서버 연결 실패",
+            content = @Content(
+                    examples = @ExampleObject(
+                            value = OAuthApiExamples.GOOGLE_SERVER_CONNECTION_FAILED
+                    )
+            )
+    )
+    @PostMapping("/google")
+    ResponseEntity<ApiResponse<LoginResponse>> loginWithGoogle(
+            @Valid @RequestBody OAuthGoogleLoginRequest request
     );
 }

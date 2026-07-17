@@ -26,6 +26,9 @@ auth:
   apple:
     client-id: ${APPLE_CLIENT_ID}
     jwks-cache-ttl: ${APPLE_JWKS_CACHE_TTL}
+  google:
+    client-id: ${GOOGLE_CLIENT_ID}
+    jwks-cache-ttl: ${GOOGLE_JWKS_CACHE_TTL}
   email-verification:
     code-expiration: ${EMAIL_VERIFICATION_CODE_EXPIRATION}
     verified-expiration: ${EMAIL_VERIFICATION_VERIFIED_EXPIRATION}

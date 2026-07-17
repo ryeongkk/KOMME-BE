@@ -1,7 +1,6 @@
 package com.komme.domain.auth.service;
 
 import com.komme.common.exception.GeneralException;
-import com.komme.domain.auth.client.OAuthAppleClient.AppleIdentity;
 import com.komme.domain.auth.entity.OAuthAccount;
 import com.komme.domain.auth.entity.User;
 import com.komme.domain.auth.enums.Provider;
@@ -23,48 +22,48 @@ public class OAuthAccountService {
     private final OAuthAccountRepository oAuthAccountRepository;
     private final UserRepository userRepository;
 
-    // Apple identity 기반 사용자 조회 및 연결 기능
+    // OAuth identity 기반 사용자 조회 및 연결 기능
     @Transactional
-    public User resolveAppleUser(AppleIdentity identity) {
-        User linkedUser = findLinkedUser(identity.subject());
+    public User resolveUser(Provider provider, String providerId, String email) {
+        User linkedUser = findLinkedUser(provider, providerId);
 
         if (linkedUser != null) {
             return linkedUser;
         }
 
-        return linkOrCreateAppleUser(identity);
+        return linkOrCreateUser(provider, providerId, email);
     }
 
-    // Apple 계정 연결 사용자 조회 기능
-    private User findLinkedUser(String providerId) {
+    // OAuth 계정 연결 사용자 조회 기능
+    private User findLinkedUser(Provider provider, String providerId) {
         return oAuthAccountRepository.findByProviderAndProviderId(
-                        Provider.APPLE,
+                        provider,
                         providerId
                 )
                 .map(OAuthAccount::getUser)
                 .orElse(null);
     }
 
-    // 이메일 기반 기존 사용자 연결 또는 Apple 사용자 생성 기능
-    private User linkOrCreateAppleUser(AppleIdentity identity) {
-        if (identity.email() == null) {
-            throw new GeneralException(AuthErrorStatus.APPLE_EMAIL_REQUIRED);
+    // 이메일 기반 기존 사용자 연결 또는 OAuth 사용자 생성 기능
+    private User linkOrCreateUser(Provider provider, String providerId, String email) {
+        if (email == null) {
+            throw new GeneralException(resolveEmailRequiredStatus(provider));
         }
 
-        String email = EmailNormalizer.normalize(identity.email());
-        User user = userRepository.findByEmail(email)
+        String normalizedEmail = EmailNormalizer.normalize(email);
+        User user = userRepository.findByEmail(normalizedEmail)
                 .orElseGet(() -> userRepository.saveAndFlush(
-                        User.createOAuth(email, Provider.APPLE)
+                        User.createOAuth(normalizedEmail, provider)
                 ));
-        saveOAuthAccount(user, identity.subject());
+        saveOAuthAccount(user, provider, providerId);
         return user;
     }
 
-    // Apple OAuth 계정 연결 저장 기능
-    private void saveOAuthAccount(User user, String providerId) {
+    // OAuth 계정 연결 저장 기능
+    private void saveOAuthAccount(User user, Provider provider, String providerId) {
         try {
             oAuthAccountRepository.saveAndFlush(
-                    OAuthAccount.create(user, Provider.APPLE, providerId)
+                    OAuthAccount.create(user, provider, providerId)
             );
         } catch (DataIntegrityViolationException exception) {
             throw new GeneralException(
@@ -72,5 +71,12 @@ public class OAuthAccountService {
                     exception
             );
         }
+    }
+
+    // Provider별 이메일 필수 오류 조회 기능
+    private AuthErrorStatus resolveEmailRequiredStatus(Provider provider) {
+        return provider == Provider.GOOGLE
+                ? AuthErrorStatus.GOOGLE_EMAIL_REQUIRED
+                : AuthErrorStatus.APPLE_EMAIL_REQUIRED;
     }
 }
