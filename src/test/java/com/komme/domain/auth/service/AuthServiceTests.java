@@ -22,7 +22,6 @@ import com.komme.i18n.enums.Language;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.Collection;
-import java.util.Optional;
 import java.util.Set;
 
 import org.hibernate.exception.ConstraintViolationException;
@@ -58,6 +57,9 @@ class AuthServiceTests {
     private UserRepository userRepository;
 
     @Mock
+    private UserReader userReader;
+
+    @Mock
     private EmailVerificationService emailVerificationService;
 
     @Mock
@@ -85,11 +87,12 @@ class AuthServiceTests {
     void setUp() {
         authService = new AuthService(
                 userRepository,
+                userReader,
                 emailVerificationService,
                 passwordEncoder,
                 jwtProvider,
                 authTokenService,
-                new RefreshTokenStore(redisTemplate, userRepository),
+                new RefreshTokenStore(redisTemplate, userReader),
                 new AccessTokenBlacklistStore(redisTemplate),
                 new AuthConstraintExceptionMapper()
         );
@@ -120,7 +123,7 @@ class AuthServiceTests {
     // 중복 이메일 회원가입 거부 검증
     @Test
     void signUpRejectsDuplicateEmail() {
-        when(userRepository.existsByEmail(EMAIL)).thenReturn(true);
+        when(userReader.existsByEmail(EMAIL)).thenReturn(true);
 
         assertThatThrownBy(() -> authService.signUp(createSignUpRequest()))
                 .isInstanceOf(GeneralException.class)
@@ -133,7 +136,7 @@ class AuthServiceTests {
     // 중복 닉네임 회원가입 거부 검증
     @Test
     void signUpRejectsDuplicateNickname() {
-        when(userRepository.existsByNickname("nickname")).thenReturn(true);
+        when(userReader.existsByNickname("nickname")).thenReturn(true);
 
         assertThatThrownBy(() -> authService.signUp(createSignUpRequest()))
                 .isInstanceOf(GeneralException.class)
@@ -177,10 +180,9 @@ class AuthServiceTests {
     @Test
     void loginIssuesAndStoresTokens() {
         User user = createLocalUserMock();
-        when(user.getId()).thenReturn(USER_ID);
-        when(userRepository.findByEmail(EMAIL)).thenReturn(Optional.of(user));
+        when(userReader.findLocalByEmailOrThrow(EMAIL)).thenReturn(user);
         when(passwordEncoder.matches("password1", "encoded-password")).thenReturn(true);
-        when(authTokenService.issueLoginTokens(USER_ID))
+        when(authTokenService.issueLoginResponse(user))
                 .thenReturn(LoginResponse.of("access-token", "refresh-token"));
 
         LoginResponse response = authService.login(
@@ -189,14 +191,14 @@ class AuthServiceTests {
 
         assertThat(response.accessToken()).isEqualTo("access-token");
         assertThat(response.refreshToken()).isEqualTo("refresh-token");
-        verify(authTokenService).issueLoginTokens(USER_ID);
+        verify(authTokenService).issueLoginResponse(user);
     }
 
     // 잘못된 로그인 비밀번호 거부 검증
     @Test
     void loginRejectsInvalidPassword() {
         User user = createLocalUserMock();
-        when(userRepository.findByEmail(EMAIL)).thenReturn(Optional.of(user));
+        when(userReader.findLocalByEmailOrThrow(EMAIL)).thenReturn(user);
         when(passwordEncoder.matches("wrong-password", "encoded-password"))
                 .thenReturn(false);
 
@@ -220,7 +222,7 @@ class AuthServiceTests {
         when(jwtProvider.parseRefreshToken("old-refresh-token")).thenReturn(oldClaims);
         when(valueOperations.getAndDelete(JwtRedisKeys.refreshToken("old-refresh-id")))
                 .thenReturn(USER_ID.toString());
-        when(userRepository.existsById(USER_ID)).thenReturn(true);
+        when(userReader.existsById(USER_ID)).thenReturn(true);
         when(authTokenService.issueLoginTokens(USER_ID))
                 .thenReturn(LoginResponse.of("new-access-token", "new-refresh-token"));
 
@@ -243,7 +245,7 @@ class AuthServiceTests {
     void changePasswordUpdatesPasswordAndDeletesRefreshTokens() {
         prepareSetOperations();
         User user = createLocalUserMock();
-        when(userRepository.findById(USER_ID)).thenReturn(Optional.of(user));
+        when(userReader.findLocalByIdOrThrow(USER_ID)).thenReturn(user);
         when(passwordEncoder.matches("password1", "encoded-password")).thenReturn(true);
         when(passwordEncoder.encode("newpassword2")).thenReturn("new-encoded-password");
         when(setOperations.members(JwtRedisKeys.userRefreshTokens(USER_ID)))
@@ -268,7 +270,7 @@ class AuthServiceTests {
     @Test
     void changePasswordRejectsInvalidCurrentPassword() {
         User user = createLocalUserMock();
-        when(userRepository.findById(USER_ID)).thenReturn(Optional.of(user));
+        when(userReader.findLocalByIdOrThrow(USER_ID)).thenReturn(user);
         when(passwordEncoder.matches("wrong-password", "encoded-password"))
                 .thenReturn(false);
 
@@ -295,7 +297,7 @@ class AuthServiceTests {
         when(jwtProvider.parseRefreshToken("refresh-token")).thenReturn(refreshClaims);
         when(valueOperations.getAndDelete(JwtRedisKeys.refreshToken("refresh-id")))
                 .thenReturn(USER_ID.toString());
-        when(userRepository.existsById(USER_ID)).thenReturn(true);
+        when(userReader.existsById(USER_ID)).thenReturn(true);
 
         authService.logout(USER_ID, accessClaims, new LogoutRequest("refresh-token"));
 
@@ -348,7 +350,6 @@ class AuthServiceTests {
     // LOCAL 사용자 Mock 생성
     private User createLocalUserMock() {
         User user = org.mockito.Mockito.mock(User.class);
-        when(user.getProvider()).thenReturn(Provider.LOCAL);
         when(user.getPassword()).thenReturn("encoded-password");
         return user;
     }

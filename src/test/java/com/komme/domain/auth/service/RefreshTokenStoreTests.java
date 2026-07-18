@@ -4,7 +4,6 @@ import com.komme.common.exception.GeneralException;
 import com.komme.domain.auth.exception.AuthErrorStatus;
 import com.komme.domain.auth.jwt.JwtProvider.TokenClaims;
 import com.komme.domain.auth.jwt.JwtRedisKeys;
-import com.komme.domain.auth.repository.UserRepository;
 
 import java.time.Duration;
 import java.time.Instant;
@@ -33,7 +32,7 @@ class RefreshTokenStoreTests {
     private StringRedisTemplate redisTemplate;
 
     @Mock
-    private UserRepository userRepository;
+    private UserReader userReader;
 
     @Mock
     private ValueOperations<String, String> valueOperations;
@@ -73,7 +72,7 @@ class RefreshTokenStoreTests {
 
     // Refresh Token Store 생성
     private RefreshTokenStore createStore() {
-        return new RefreshTokenStore(redisTemplate, userRepository);
+        return new RefreshTokenStore(redisTemplate, userReader);
     }
 
     // Refresh Token 테스트 Claim 생성

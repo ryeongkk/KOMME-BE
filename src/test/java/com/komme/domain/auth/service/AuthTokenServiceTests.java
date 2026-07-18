@@ -4,7 +4,6 @@ import com.komme.domain.auth.dto.response.LoginResponse;
 import com.komme.domain.auth.jwt.JwtProvider;
 import com.komme.domain.auth.jwt.JwtProvider.IssuedToken;
 import com.komme.domain.auth.jwt.JwtRedisKeys;
-import com.komme.domain.auth.repository.UserRepository;
 
 import java.time.Duration;
 
@@ -31,7 +30,7 @@ class AuthTokenServiceTests {
     private JwtProvider jwtProvider;
 
     @Mock
-    private UserRepository userRepository;
+    private TermsAgreementService termsAgreementService;
 
     @Mock
     private StringRedisTemplate redisTemplate;
@@ -51,9 +50,11 @@ class AuthTokenServiceTests {
                 .thenReturn(new IssuedToken("access-token", "access-id", ACCESS_EXPIRATION));
         when(jwtProvider.issueRefreshToken(USER_ID))
                 .thenReturn(new IssuedToken("refresh-token", "refresh-id", REFRESH_EXPIRATION));
+        UserReader userReader = org.mockito.Mockito.mock(UserReader.class);
         AuthTokenService authTokenService = new AuthTokenService(
                 jwtProvider,
-                new RefreshTokenStore(redisTemplate, userRepository)
+                new RefreshTokenStore(redisTemplate, userReader),
+                termsAgreementService
         );
 
         LoginResponse response = authTokenService.issueLoginTokens(USER_ID);

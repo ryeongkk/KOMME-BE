@@ -5,7 +5,6 @@ import com.komme.domain.auth.exception.AuthErrorStatus;
 import com.komme.domain.auth.jwt.JwtProvider.IssuedToken;
 import com.komme.domain.auth.jwt.JwtProvider.TokenClaims;
 import com.komme.domain.auth.jwt.JwtRedisKeys;
-import com.komme.domain.auth.repository.UserRepository;
 
 import java.util.Set;
 
@@ -19,7 +18,7 @@ import lombok.RequiredArgsConstructor;
 public class RefreshTokenStore {
 
     private final StringRedisTemplate redisTemplate;
-    private final UserRepository userRepository;
+    private final UserReader userReader;
 
     // Refresh Token Redis 저장 기능
     public void save(Long userId, IssuedToken refreshToken) {
@@ -49,7 +48,7 @@ public class RefreshTokenStore {
         );
 
         if (!tokenClaims.userId().toString().equals(savedUserId)
-                || !userRepository.existsById(tokenClaims.userId())) {
+                || !userReader.existsById(tokenClaims.userId())) {
             throw new GeneralException(AuthErrorStatus.INVALID_TOKEN);
         }
     }
