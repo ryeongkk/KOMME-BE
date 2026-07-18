@@ -59,7 +59,7 @@ public class AuthService {
         User user = findLocalUser(email);
         validatePassword(request.password(), user.getPassword());
 
-        return authTokenService.issueLoginTokens(user.getId());
+        return authTokenService.issueLoginResponse(user);
     }
 
     // Refresh Token 기반 토큰 재발급 기능

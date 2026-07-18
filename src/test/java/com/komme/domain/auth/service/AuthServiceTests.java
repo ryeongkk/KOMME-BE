@@ -177,10 +177,9 @@ class AuthServiceTests {
     @Test
     void loginIssuesAndStoresTokens() {
         User user = createLocalUserMock();
-        when(user.getId()).thenReturn(USER_ID);
         when(userRepository.findByEmail(EMAIL)).thenReturn(Optional.of(user));
         when(passwordEncoder.matches("password1", "encoded-password")).thenReturn(true);
-        when(authTokenService.issueLoginTokens(USER_ID))
+        when(authTokenService.issueLoginResponse(user))
                 .thenReturn(LoginResponse.of("access-token", "refresh-token"));
 
         LoginResponse response = authService.login(
@@ -189,7 +188,7 @@ class AuthServiceTests {
 
         assertThat(response.accessToken()).isEqualTo("access-token");
         assertThat(response.refreshToken()).isEqualTo("refresh-token");
-        verify(authTokenService).issueLoginTokens(USER_ID);
+        verify(authTokenService).issueLoginResponse(user);
     }
 
     // 잘못된 로그인 비밀번호 거부 검증

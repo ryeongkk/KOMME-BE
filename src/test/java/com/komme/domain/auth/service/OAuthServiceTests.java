@@ -93,7 +93,7 @@ class OAuthServiceTests {
 
         assertThat(response.accessToken()).isEqualTo("access-token");
         verify(userRepository, never()).findByEmail(any());
-        verify(authTokenService).issueLoginTokens(USER_ID);
+        verify(authTokenService).issueLoginResponse(user);
     }
 
     // 동일 이메일 LOCAL 사용자 Apple 계정 연결 검증
@@ -146,7 +146,7 @@ class OAuthServiceTests {
                 .isEqualTo(AuthErrorStatus.APPLE_EMAIL_REQUIRED);
 
         verify(userRepository, never()).saveAndFlush(any(User.class));
-        verify(authTokenService, never()).issueLoginTokens(any());
+        verify(authTokenService, never()).issueLoginResponse(any());
     }
 
     // 연결된 Google 계정 로그인 검증
@@ -167,7 +167,7 @@ class OAuthServiceTests {
         );
 
         assertThat(response.accessToken()).isEqualTo("access-token");
-        verify(authTokenService).issueLoginTokens(USER_ID);
+        verify(authTokenService).issueLoginResponse(user);
     }
 
     // 동시 OAuth 이메일 생성 충돌 도메인 오류 변환 검증
@@ -186,7 +186,7 @@ class OAuthServiceTests {
                 .extracting(exception -> ((GeneralException) exception).getErrorStatus())
                 .isEqualTo(AuthErrorStatus.EMAIL_ALREADY_EXISTS);
 
-        verify(authTokenService, never()).issueLoginTokens(any());
+        verify(authTokenService, never()).issueLoginResponse(any());
     }
 
     // OAuth 사용자 프로필 완성 검증
@@ -222,7 +222,7 @@ class OAuthServiceTests {
 
     // 로그인 토큰 응답 구성
     private void prepareTokenResponse() {
-        when(authTokenService.issueLoginTokens(USER_ID))
+        when(authTokenService.issueLoginResponse(any(User.class)))
                 .thenReturn(LoginResponse.of("access-token", "refresh-token"));
     }
 
@@ -234,7 +234,6 @@ class OAuthServiceTests {
     // 사용자 Mock 생성
     private User createUserMock() {
         User user = org.mockito.Mockito.mock(User.class);
-        when(user.getId()).thenReturn(USER_ID);
         return user;
     }
 }
