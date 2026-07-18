@@ -51,21 +51,6 @@ public class UserReader {
         return userRepository.existsById(userId);
     }
 
-    // 사용자 이메일 존재 여부 조회 기능
-    public boolean existsByEmail(String email) {
-        return userRepository.existsByEmail(email);
-    }
-
-    // 사용자 닉네임 존재 여부 조회 기능
-    public boolean existsByNickname(String nickname) {
-        return userRepository.existsByNickname(nickname);
-    }
-
-    // 본인 제외 사용자 닉네임 존재 여부 조회 기능
-    public boolean existsByNicknameAndIdNot(String nickname, Long userId) {
-        return userRepository.existsByNicknameAndIdNot(nickname, userId);
-    }
-
     // LOCAL 사용자 여부 검증 기능
     private User validateLocalUser(User user, AuthErrorStatus errorStatus) {
         if (user.getProvider() != Provider.LOCAL) {

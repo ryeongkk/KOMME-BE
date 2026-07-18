@@ -99,7 +99,7 @@ class UserProfileServiceTests {
     // 본인 제외 닉네임 중복 거부 검증
     @Test
     void changeNicknameRejectsDuplicateNicknameFromOtherUser() {
-        when(userReader.existsByNicknameAndIdNot("nickname", USER_ID)).thenReturn(true);
+        when(userRepository.existsByNicknameAndIdNot("nickname", USER_ID)).thenReturn(true);
 
         assertThatThrownBy(() -> userProfileService.changeNickname(
                 USER_ID,

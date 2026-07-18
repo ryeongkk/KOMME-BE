@@ -124,7 +124,7 @@ class AuthServiceTests {
     // 중복 이메일 회원가입 거부 검증
     @Test
     void signUpRejectsDuplicateEmail() {
-        when(userReader.existsByEmail(EMAIL)).thenReturn(true);
+        when(userRepository.existsByEmail(EMAIL)).thenReturn(true);
 
         assertThatThrownBy(() -> authService.signUp(createSignUpRequest()))
                 .isInstanceOf(GeneralException.class)
@@ -137,7 +137,7 @@ class AuthServiceTests {
     // 중복 닉네임 회원가입 거부 검증
     @Test
     void signUpRejectsDuplicateNickname() {
-        when(userReader.existsByNickname("nickname")).thenReturn(true);
+        when(userRepository.existsByNickname("nickname")).thenReturn(true);
 
         assertThatThrownBy(() -> authService.signUp(createSignUpRequest()))
                 .isInstanceOf(GeneralException.class)

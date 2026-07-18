@@ -147,14 +147,14 @@ public class AuthService {
 
     // 가입된 이메일 여부 확인 기능
     private void validateEmailNotRegistered(String email) {
-        if (userReader.existsByEmail(email)) {
+        if (userRepository.existsByEmail(email)) {
             throw new GeneralException(AuthErrorStatus.EMAIL_ALREADY_EXISTS);
         }
     }
 
     // 가입된 닉네임 여부 확인 기능
     private void validateNicknameNotRegistered(String nickname) {
-        if (userReader.existsByNickname(nickname)) {
+        if (userRepository.existsByNickname(nickname)) {
             throw new GeneralException(AuthErrorStatus.NICKNAME_ALREADY_EXISTS);
         }
     }

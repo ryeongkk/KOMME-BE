@@ -68,7 +68,7 @@ public class UserProfileService {
 
     // 본인 제외 닉네임 중복 검증 기능
     private void validateNicknameNotUsedByOthers(Long userId, String nickname) {
-        if (userReader.existsByNicknameAndIdNot(nickname, userId)) {
+        if (userRepository.existsByNicknameAndIdNot(nickname, userId)) {
             throw new GeneralException(UserErrorStatus.NICKNAME_ALREADY_EXISTS);
         }
     }
