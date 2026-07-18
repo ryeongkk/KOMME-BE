@@ -2,6 +2,7 @@ package com.komme.domain.user.controller.docs;
 
 import com.komme.common.response.ApiResponse;
 import com.komme.domain.user.dto.request.ChangeNicknameRequest;
+import com.komme.domain.user.dto.request.ChangePreferredLanguageRequest;
 import com.komme.domain.user.dto.response.UserProfileResponse;
 
 import io.swagger.v3.oas.annotations.Operation;
@@ -76,5 +77,32 @@ public interface UserControllerDocs {
     ResponseEntity<ApiResponse<Void>> changeNickname(
             @Parameter(hidden = true) @AuthenticationPrincipal Long userId,
             @Valid @RequestBody ChangeNicknameRequest request
+    );
+
+    // 마이페이지 선호 언어 변경 API
+    @Operation(
+            summary = "마이페이지 선호 언어 변경",
+            description = "인증된 사용자의 선호 언어를 변경합니다.",
+            security = @SecurityRequirement(name = "bearerAuth")
+    )
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+            responseCode = "200",
+            description = "선호 언어 변경 성공",
+            content = @Content(examples = @ExampleObject(value = UserApiExamples.SUCCESS_WITHOUT_DATA))
+    )
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+            responseCode = "400",
+            description = "선호 언어 입력값 오류",
+            content = @Content(examples = @ExampleObject(value = UserApiExamples.BAD_REQUEST))
+    )
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+            responseCode = "401",
+            description = "Access Token 누락, 만료 또는 오류",
+            content = @Content(examples = @ExampleObject(value = UserApiExamples.INVALID_TOKEN))
+    )
+    @PatchMapping("/me/language")
+    ResponseEntity<ApiResponse<Void>> changePreferredLanguage(
+            @Parameter(hidden = true) @AuthenticationPrincipal Long userId,
+            @Valid @RequestBody ChangePreferredLanguageRequest request
     );
 }

@@ -48,6 +48,16 @@ class UserTests {
         assertThat(user.getNickname()).isEqualTo("new-nickname");
     }
 
+    // 사용자 선호 언어 변경 검증
+    @Test
+    void changePreferredLanguageUpdatesPreferredLanguage() {
+        User user = createUser();
+
+        user.changePreferredLanguage(Language.JAPANESE);
+
+        assertThat(user.getPreferredLanguage()).isEqualTo(Language.JAPANESE);
+    }
+
     // OAuth 사용자 최소 프로필 생성값 검증
     @Test
     void createOAuthCreatesMinimalProfileUser() {

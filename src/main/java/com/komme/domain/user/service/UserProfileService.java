@@ -5,6 +5,7 @@ import com.komme.domain.auth.exception.AuthErrorStatus;
 import com.komme.domain.auth.service.AuthConstraintExceptionMapper;
 import com.komme.domain.auth.service.TermsAgreementService;
 import com.komme.domain.user.dto.request.ChangeNicknameRequest;
+import com.komme.domain.user.dto.request.ChangePreferredLanguageRequest;
 import com.komme.domain.user.dto.response.UserProfileResponse;
 import com.komme.domain.user.entity.User;
 import com.komme.domain.user.repository.UserRepository;
@@ -43,6 +44,16 @@ public class UserProfileService {
         User user = userReader.findByIdOrThrow(userId);
         user.changeNickname(nickname);
         flushUserChanges(AuthErrorStatus.NICKNAME_ALREADY_EXISTS);
+    }
+
+    // 사용자 선호 언어 변경 기능
+    @Transactional
+    public void changePreferredLanguage(
+            Long userId,
+            ChangePreferredLanguageRequest request
+    ) {
+        User user = userReader.findByIdOrThrow(userId);
+        user.changePreferredLanguage(request.preferredLanguage());
     }
 
     // 본인 제외 닉네임 중복 검증 기능

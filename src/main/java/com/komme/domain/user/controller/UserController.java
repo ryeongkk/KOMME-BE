@@ -4,6 +4,7 @@ import com.komme.common.base.status.SuccessStatus;
 import com.komme.common.response.ApiResponse;
 import com.komme.domain.user.controller.docs.UserControllerDocs;
 import com.komme.domain.user.dto.request.ChangeNicknameRequest;
+import com.komme.domain.user.dto.request.ChangePreferredLanguageRequest;
 import com.komme.domain.user.dto.response.UserProfileResponse;
 import com.komme.domain.user.service.UserProfileService;
 
@@ -34,6 +35,16 @@ public class UserController implements UserControllerDocs {
             ChangeNicknameRequest request
     ) {
         userProfileService.changeNickname(userId, request);
+        return ApiResponse.success(SuccessStatus.COMMON_SUCCESS_STATUS);
+    }
+
+    // 마이페이지 선호 언어 변경 API
+    @Override
+    public ResponseEntity<ApiResponse<Void>> changePreferredLanguage(
+            Long userId,
+            ChangePreferredLanguageRequest request
+    ) {
+        userProfileService.changePreferredLanguage(userId, request);
         return ApiResponse.success(SuccessStatus.COMMON_SUCCESS_STATUS);
     }
 }

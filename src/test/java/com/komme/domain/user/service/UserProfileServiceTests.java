@@ -6,6 +6,7 @@ import com.komme.domain.auth.exception.AuthErrorStatus;
 import com.komme.domain.auth.service.AuthConstraintExceptionMapper;
 import com.komme.domain.auth.service.TermsAgreementService;
 import com.komme.domain.user.dto.request.ChangeNicknameRequest;
+import com.komme.domain.user.dto.request.ChangePreferredLanguageRequest;
 import com.komme.domain.user.dto.response.UserProfileResponse;
 import com.komme.domain.user.entity.User;
 import com.komme.domain.user.repository.UserRepository;
@@ -123,6 +124,20 @@ class UserProfileServiceTests {
                 .isInstanceOf(com.komme.common.exception.GeneralException.class)
                 .extracting(exception -> ((com.komme.common.exception.GeneralException) exception).getErrorStatus())
                 .isEqualTo(AuthErrorStatus.NICKNAME_ALREADY_EXISTS);
+    }
+
+    // 선호 언어 변경 검증
+    @Test
+    void changePreferredLanguageUpdatesPreferredLanguage() {
+        User user = mock(User.class);
+        when(userReader.findByIdOrThrow(USER_ID)).thenReturn(user);
+
+        userProfileService.changePreferredLanguage(
+                USER_ID,
+                new ChangePreferredLanguageRequest(Language.ENGLISH)
+        );
+
+        verify(user).changePreferredLanguage(Language.ENGLISH);
     }
 
     // Hibernate unique 제약조건 예외 생성
