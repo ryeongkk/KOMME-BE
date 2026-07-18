@@ -33,6 +33,7 @@ public class OAuthService {
     private final UserRepository userRepository;
 
     // Apple identity token 로그인 흐름 조율 기능
+    @Transactional(readOnly = true)
     public LoginResponse loginWithApple(OAuthAppleLoginRequest request) {
         OAuthIdentity identity = oAuthAppleClient.verifyIdentityToken(request.identityToken());
         User user = oAuthAccountService.resolveUser(
@@ -69,6 +70,7 @@ public class OAuthService {
     }
 
     // Google identity token 로그인 흐름 조율 기능
+    @Transactional(readOnly = true)
     public LoginResponse loginWithGoogle(OAuthGoogleLoginRequest request) {
         OAuthIdentity identity = oAuthGoogleClient.verifyIdentityToken(request.idToken());
         User user = oAuthAccountService.resolveUser(

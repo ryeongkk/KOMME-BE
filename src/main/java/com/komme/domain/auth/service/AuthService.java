@@ -54,6 +54,7 @@ public class AuthService {
     }
 
     // 이메일 기반 LOCAL 사용자 로그인 기능
+    @Transactional(readOnly = true)
     public LoginResponse login(LoginRequest request) {
         String email = EmailNormalizer.normalize(request.email());
         User user = findLocalUser(email);
@@ -63,6 +64,7 @@ public class AuthService {
     }
 
     // Refresh Token 기반 토큰 재발급 기능
+    @Transactional(readOnly = true)
     public TokenReissueResponse reissueToken(TokenReissueRequest request) {
         TokenClaims tokenClaims = jwtProvider.parseRefreshToken(request.refreshToken());
         refreshTokenStore.validateAndConsume(tokenClaims);
@@ -84,6 +86,7 @@ public class AuthService {
     }
 
     // 현재 기기 토큰 로그아웃 기능
+    @Transactional(readOnly = true)
     public void logout(
             Long userId,
             TokenClaims accessTokenClaims,
