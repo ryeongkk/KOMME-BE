@@ -38,6 +38,16 @@ class UserTests {
         assertThat(user.getPassword()).isEqualTo("new-encoded-password");
     }
 
+    // 사용자 닉네임 변경 검증
+    @Test
+    void changeNicknameUpdatesNickname() {
+        User user = createUser();
+
+        user.changeNickname("new-nickname");
+
+        assertThat(user.getNickname()).isEqualTo("new-nickname");
+    }
+
     // OAuth 사용자 최소 프로필 생성값 검증
     @Test
     void createOAuthCreatesMinimalProfileUser() {

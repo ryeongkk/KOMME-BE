@@ -2,21 +2,30 @@ package com.komme.domain.user.service;
 
 import com.komme.domain.auth.enums.Provider;
 import com.komme.domain.auth.enums.TermsType;
+import com.komme.domain.auth.exception.AuthErrorStatus;
+import com.komme.domain.auth.service.AuthConstraintExceptionMapper;
 import com.komme.domain.auth.service.TermsAgreementService;
+import com.komme.domain.user.dto.request.ChangeNicknameRequest;
 import com.komme.domain.user.dto.response.UserProfileResponse;
 import com.komme.domain.user.entity.User;
+import com.komme.domain.user.repository.UserRepository;
 import com.komme.i18n.enums.Language;
 
 import java.util.Map;
 
+import org.hibernate.exception.ConstraintViolationException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.dao.DataIntegrityViolationException;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -28,6 +37,9 @@ class UserProfileServiceTests {
     private UserReader userReader;
 
     @Mock
+    private UserRepository userRepository;
+
+    @Mock
     private TermsAgreementService termsAgreementService;
 
     private UserProfileService userProfileService;
@@ -37,7 +49,9 @@ class UserProfileServiceTests {
     void setUp() {
         userProfileService = new UserProfileService(
                 userReader,
-                termsAgreementService
+                userRepository,
+                termsAgreementService,
+                new AuthConstraintExceptionMapper()
         );
     }
 
@@ -64,5 +78,57 @@ class UserProfileServiceTests {
         assertThat(response.preferredLanguage()).isEqualTo(Language.JAPANESE);
         assertThat(response.marketingAgreed()).isTrue();
         assertThat(response.pushNotificationAgreed()).isFalse();
+    }
+
+    // 닉네임 변경 검증
+    @Test
+    void changeNicknameUpdatesTrimmedNickname() {
+        User user = mock(User.class);
+        when(userReader.findByIdOrThrow(USER_ID)).thenReturn(user);
+
+        userProfileService.changeNickname(
+                USER_ID,
+                new ChangeNicknameRequest(" new-nickname ")
+        );
+
+        verify(user).changeNickname("new-nickname");
+        verify(userRepository).flush();
+    }
+
+    // 본인 제외 닉네임 중복 거부 검증
+    @Test
+    void changeNicknameRejectsDuplicateNicknameFromOtherUser() {
+        when(userReader.existsByNicknameAndIdNot("nickname", USER_ID)).thenReturn(true);
+
+        assertThatThrownBy(() -> userProfileService.changeNickname(
+                USER_ID,
+                new ChangeNicknameRequest("nickname")
+        ))
+                .isInstanceOf(com.komme.common.exception.GeneralException.class)
+                .extracting(exception -> ((com.komme.common.exception.GeneralException) exception).getErrorStatus())
+                .isEqualTo(AuthErrorStatus.NICKNAME_ALREADY_EXISTS);
+    }
+
+    // 닉네임 unique 제약조건 오류 변환 검증
+    @Test
+    void changeNicknameMapsNicknameUniqueConstraintViolation() {
+        User user = mock(User.class);
+        when(userReader.findByIdOrThrow(USER_ID)).thenReturn(user);
+        doThrow(createUniqueConstraintException()).when(userRepository).flush();
+
+        assertThatThrownBy(() -> userProfileService.changeNickname(
+                USER_ID,
+                new ChangeNicknameRequest("nickname")
+        ))
+                .isInstanceOf(com.komme.common.exception.GeneralException.class)
+                .extracting(exception -> ((com.komme.common.exception.GeneralException) exception).getErrorStatus())
+                .isEqualTo(AuthErrorStatus.NICKNAME_ALREADY_EXISTS);
+    }
+
+    // Hibernate unique 제약조건 예외 생성
+    private DataIntegrityViolationException createUniqueConstraintException() {
+        ConstraintViolationException cause = mock(ConstraintViolationException.class);
+        when(cause.getConstraintName()).thenReturn("uk_user_nickname");
+        return new DataIntegrityViolationException("unique constraint", cause);
     }
 }

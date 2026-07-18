@@ -155,6 +155,11 @@ public class User extends BaseEntity {
         this.password = encodedPassword;
     }
 
+    // 닉네임 변경 기능
+    public void changeNickname(String nickname) {
+        this.nickname = nickname;
+    }
+
     // 사용자 프로필 완성 여부 조회 기능
     public boolean isProfileCompleted() {
         return nickname != null

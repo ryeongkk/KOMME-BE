@@ -3,6 +3,7 @@ package com.komme.domain.user.controller;
 import com.komme.common.base.status.SuccessStatus;
 import com.komme.common.response.ApiResponse;
 import com.komme.domain.user.controller.docs.UserControllerDocs;
+import com.komme.domain.user.dto.request.ChangeNicknameRequest;
 import com.komme.domain.user.dto.response.UserProfileResponse;
 import com.komme.domain.user.service.UserProfileService;
 
@@ -24,5 +25,15 @@ public class UserController implements UserControllerDocs {
     public ResponseEntity<ApiResponse<UserProfileResponse>> getMyProfile(Long userId) {
         UserProfileResponse response = userProfileService.getMyProfile(userId);
         return ApiResponse.success(SuccessStatus.COMMON_SUCCESS_STATUS, response);
+    }
+
+    // 마이페이지 닉네임 변경 API
+    @Override
+    public ResponseEntity<ApiResponse<Void>> changeNickname(
+            Long userId,
+            ChangeNicknameRequest request
+    ) {
+        userProfileService.changeNickname(userId, request);
+        return ApiResponse.success(SuccessStatus.COMMON_SUCCESS_STATUS);
     }
 }
