@@ -4,6 +4,7 @@ import com.komme.common.exception.GeneralException;
 import com.komme.domain.auth.dto.request.EmailVerificationConfirmRequest;
 import com.komme.domain.auth.dto.request.EmailVerificationSendRequest;
 import com.komme.domain.auth.exception.AuthErrorStatus;
+import com.komme.domain.user.repository.UserRepository;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -24,7 +25,7 @@ class EmailVerificationServiceTests {
     private static final String EMAIL = "user@example.com";
 
     @Mock
-    private UserReader userReader;
+    private UserRepository userRepository;
 
     @Mock
     private EmailVerificationStore emailVerificationStore;
@@ -41,7 +42,7 @@ class EmailVerificationServiceTests {
     @BeforeEach
     void setUp() {
         emailVerificationService = new EmailVerificationService(
-                userReader,
+                userRepository,
                 emailVerificationStore,
                 codeGenerator,
                 verificationMailSender
@@ -57,7 +58,7 @@ class EmailVerificationServiceTests {
                 new EmailVerificationSendRequest(" USER@example.com ")
         );
 
-        verify(userReader).existsByEmail(EMAIL);
+        verify(userRepository).existsByEmail(EMAIL);
         verify(emailVerificationStore).prepareSend(EMAIL);
         verify(emailVerificationStore).saveCode(EMAIL, "123456");
         verify(verificationMailSender).send(EMAIL, "123456");
@@ -66,7 +67,7 @@ class EmailVerificationServiceTests {
     // 가입된 이메일 인증 코드 전송 거부 검증
     @Test
     void sendVerificationCodeRejectsRegisteredEmail() {
-        when(userReader.existsByEmail(EMAIL)).thenReturn(true);
+        when(userRepository.existsByEmail(EMAIL)).thenReturn(true);
 
         assertThatThrownBy(() -> emailVerificationService.sendVerificationCode(
                 new EmailVerificationSendRequest(EMAIL)

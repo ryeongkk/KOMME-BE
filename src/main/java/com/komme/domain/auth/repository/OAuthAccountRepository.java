@@ -1,7 +1,7 @@
 package com.komme.domain.auth.repository;
 
 import com.komme.domain.auth.entity.OAuthAccount;
-import com.komme.domain.auth.enums.Provider;
+import com.komme.domain.user.enums.Provider;
 
 import java.util.Optional;
 

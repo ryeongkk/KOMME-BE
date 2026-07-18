@@ -5,6 +5,7 @@ import com.komme.domain.auth.dto.request.EmailVerificationConfirmRequest;
 import com.komme.domain.auth.dto.request.EmailVerificationSendRequest;
 import com.komme.domain.auth.exception.AuthErrorStatus;
 import com.komme.domain.auth.util.EmailNormalizer;
+import com.komme.domain.user.repository.UserRepository;
 
 import org.springframework.mail.MailException;
 import org.springframework.stereotype.Service;
@@ -15,7 +16,7 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class EmailVerificationService {
 
-    private final UserReader userReader;
+    private final UserRepository userRepository;
     private final EmailVerificationStore emailVerificationStore;
     private final EmailVerificationCodeGenerator codeGenerator;
     private final VerificationMailSender verificationMailSender;
@@ -49,7 +50,7 @@ public class EmailVerificationService {
 
     // 가입된 이메일 여부 확인 기능
     private void validateEmailNotRegistered(String email) {
-        if (userReader.existsByEmail(email)) {
+        if (userRepository.existsByEmail(email)) {
             throw new GeneralException(AuthErrorStatus.EMAIL_ALREADY_EXISTS);
         }
     }

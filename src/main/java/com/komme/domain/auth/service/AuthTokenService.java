@@ -1,9 +1,10 @@
 package com.komme.domain.auth.service;
 
 import com.komme.domain.auth.dto.response.LoginResponse;
-import com.komme.domain.auth.entity.User;
 import com.komme.domain.auth.jwt.JwtProvider;
 import com.komme.domain.auth.jwt.JwtProvider.IssuedToken;
+import com.komme.domain.user.entity.User;
+import com.komme.domain.user.service.TermsAgreementService;
 
 import org.springframework.stereotype.Service;
 

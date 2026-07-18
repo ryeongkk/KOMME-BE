@@ -1,7 +1,8 @@
 package com.komme.domain.auth.entity;
 
 import com.komme.common.base.BaseEntity;
-import com.komme.domain.auth.enums.Provider;
+import com.komme.domain.user.enums.Provider;
+import com.komme.domain.user.entity.User;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;

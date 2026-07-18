@@ -1,4 +1,4 @@
-package com.komme.domain.auth.enums;
+package com.komme.domain.user.enums;
 
 import java.util.Set;
 
@@ -20,5 +20,18 @@ public enum TermsType {
                 LOCATION_COLLECTION,
                 AGE_CONFIRMATION
         );
+    }
+
+    // 선택 약관 유형 조회 기능
+    public static Set<TermsType> optionalConsentTypes() {
+        return Set.of(
+                MARKETING,
+                PUSH_NOTIFICATION
+        );
+    }
+
+    // 선택 약관 유형 여부 조회 기능
+    public boolean isOptionalConsentType() {
+        return optionalConsentTypes().contains(this);
     }
 }

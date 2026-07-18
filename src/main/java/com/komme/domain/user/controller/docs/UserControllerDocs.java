@@ -1,0 +1,145 @@
+package com.komme.domain.user.controller.docs;
+
+import com.komme.common.response.ApiResponse;
+import com.komme.domain.user.enums.TermsType;
+import com.komme.domain.user.dto.response.UserProfileResponse;
+import com.komme.domain.user.dto.request.ChangeNicknameRequest;
+import com.komme.domain.user.dto.request.UpdateTermsAgreementRequest;
+import com.komme.domain.user.dto.request.ChangePreferredLanguageRequest;
+
+import jakarta.validation.Valid;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.ExampleObject;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+
+@Tag(name = "User", description = "사용자 마이페이지 API")
+public interface UserControllerDocs {
+
+    // 마이페이지 프로필 조회 API
+    @Operation(
+            summary = "마이페이지 프로필 조회",
+            description = "인증된 사용자의 닉네임, 연결 계정, 선호 언어, 마케팅 및 푸시 동의 상태를 조회합니다.",
+            security = @SecurityRequirement(name = "bearerAuth")
+    )
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+            responseCode = "200",
+            description = "프로필 조회 성공",
+            content = @Content(
+                    schema = @Schema(implementation = UserProfileResponse.class),
+                    examples = @ExampleObject(value = UserApiExamples.USER_PROFILE_SUCCESS)
+            )
+    )
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+            responseCode = "401",
+            description = "Access Token 누락, 만료 또는 오류",
+            content = @Content(examples = @ExampleObject(value = UserApiExamples.INVALID_TOKEN))
+    )
+    @GetMapping("/me")
+    ResponseEntity<ApiResponse<UserProfileResponse>> getMyProfile(
+            @Parameter(hidden = true) @AuthenticationPrincipal Long userId
+    );
+
+    // 마이페이지 닉네임 변경 API
+    @Operation(
+            summary = "마이페이지 닉네임 변경",
+            description = "인증된 사용자의 닉네임을 변경합니다. 본인의 기존 닉네임은 중복으로 보지 않습니다.",
+            security = @SecurityRequirement(name = "bearerAuth")
+    )
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+            responseCode = "200",
+            description = "닉네임 변경 성공",
+            content = @Content(examples = @ExampleObject(value = UserApiExamples.SUCCESS_WITHOUT_DATA))
+    )
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+            responseCode = "400",
+            description = "닉네임 입력값 오류",
+            content = @Content(examples = @ExampleObject(value = UserApiExamples.BAD_REQUEST))
+    )
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+            responseCode = "401",
+            description = "Access Token 누락, 만료 또는 오류",
+            content = @Content(examples = @ExampleObject(value = UserApiExamples.INVALID_TOKEN))
+    )
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+            responseCode = "409",
+            description = "이미 사용 중인 닉네임",
+            content = @Content(examples = @ExampleObject(value = UserApiExamples.NICKNAME_ALREADY_EXISTS))
+    )
+    @PatchMapping("/me/nickname")
+    ResponseEntity<ApiResponse<Void>> changeNickname(
+            @Parameter(hidden = true) @AuthenticationPrincipal Long userId,
+            @Valid @RequestBody ChangeNicknameRequest request
+    );
+
+    // 마이페이지 선호 언어 변경 API
+    @Operation(
+            summary = "마이페이지 선호 언어 변경",
+            description = "인증된 사용자의 선호 언어를 변경합니다.",
+            security = @SecurityRequirement(name = "bearerAuth")
+    )
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+            responseCode = "200",
+            description = "선호 언어 변경 성공",
+            content = @Content(examples = @ExampleObject(value = UserApiExamples.SUCCESS_WITHOUT_DATA))
+    )
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+            responseCode = "400",
+            description = "선호 언어 입력값 오류",
+            content = @Content(examples = @ExampleObject(value = UserApiExamples.BAD_REQUEST))
+    )
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+            responseCode = "401",
+            description = "Access Token 누락, 만료 또는 오류",
+            content = @Content(examples = @ExampleObject(value = UserApiExamples.INVALID_TOKEN))
+    )
+    @PatchMapping("/me/language")
+    ResponseEntity<ApiResponse<Void>> changePreferredLanguage(
+            @Parameter(hidden = true) @AuthenticationPrincipal Long userId,
+            @Valid @RequestBody ChangePreferredLanguageRequest request
+    );
+
+    // 마이페이지 선택 약관 변경 API
+    @Operation(
+            summary = "마이페이지 선택 약관 변경",
+            description = "인증된 사용자의 마케팅 또는 푸시 알림 동의 상태를 변경합니다.",
+            security = @SecurityRequirement(name = "bearerAuth")
+    )
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+            responseCode = "200",
+            description = "선택 약관 변경 성공",
+            content = @Content(examples = @ExampleObject(value = UserApiExamples.SUCCESS_WITHOUT_DATA))
+    )
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+            responseCode = "400",
+            description = "약관 유형 또는 동의 여부 입력값 오류",
+            content = @Content(examples = {
+                    @ExampleObject(name = "입력값 오류", value = UserApiExamples.BAD_REQUEST),
+                    @ExampleObject(
+                            name = "변경 불가 약관",
+                            value = UserApiExamples.UNSUPPORTED_TERMS_TYPE
+                    )
+            })
+    )
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+            responseCode = "401",
+            description = "Access Token 누락, 만료 또는 오류",
+            content = @Content(examples = @ExampleObject(value = UserApiExamples.INVALID_TOKEN))
+    )
+    @PatchMapping("/me/terms/{type}")
+    ResponseEntity<ApiResponse<Void>> updateOptionalTermsAgreement(
+            @Parameter(hidden = true) @AuthenticationPrincipal Long userId,
+            @PathVariable("type") TermsType termsType,
+            @Valid @RequestBody UpdateTermsAgreementRequest request
+    );
+}

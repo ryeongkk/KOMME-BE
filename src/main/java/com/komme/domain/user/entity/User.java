@@ -1,9 +1,9 @@
-package com.komme.domain.auth.entity;
+package com.komme.domain.user.entity;
 
 import com.komme.common.base.BaseEntity;
-import com.komme.domain.auth.enums.Gender;
-import com.komme.domain.auth.enums.Provider;
-import com.komme.domain.auth.enums.ServiceInterest;
+import com.komme.domain.user.enums.Gender;
+import com.komme.domain.user.enums.Provider;
+import com.komme.domain.user.enums.ServiceInterest;
 import com.komme.i18n.enums.Language;
 
 import java.util.HashSet;
@@ -153,6 +153,16 @@ public class User extends BaseEntity {
     // 비밀번호 변경 기능
     public void changePassword(String encodedPassword) {
         this.password = encodedPassword;
+    }
+
+    // 닉네임 변경 기능
+    public void changeNickname(String nickname) {
+        this.nickname = nickname;
+    }
+
+    // 선호 언어 변경 기능
+    public void changePreferredLanguage(Language preferredLanguage) {
+        this.preferredLanguage = preferredLanguage;
     }
 
     // 사용자 프로필 완성 여부 조회 기능

@@ -4,7 +4,11 @@
 
 KOMME-BE is a Java 21, Spring Boot 4 REST API built with Gradle. Production code lives under `src/main/java/com/komme`; shared infrastructure is in `com.komme.common`. Tests mirror packages under `src/test/java`. Runtime configuration belongs in `src/main/resources/application.yaml`.
 
-Add features under `course`, `spot`, `tourapi`, `i18n`, or `auth`. Consult `.claude/rules/<domain>/rule.md` before changing a domain. Keep cross-cutting code in `common`.
+Add features under the owning domain package such as `course`, `spot`, `tourapi`, `i18n`, `auth`, or `user`. Consult `.claude/rules/<domain>/rule.md` before changing a domain. Keep cross-cutting code in `common`.
+
+Choose packages by domain ownership and responsibility, not by the first caller that needs the code. Before adding a class, decide which domain owns the concept and place it under that domain's package. For example, user profile APIs and user-specific errors belong under `domain.user`, even if they are used by authentication flows. Authentication-only concerns such as JWT, OAuth login, password login, and token lifecycle belong under `domain.auth`.
+
+Within each domain, keep classes grouped by responsibility (`entity`, `enums`, `repository`, `dto/request`, `dto/response`, `service`, `controller`, `controller/docs`, `exception`, and domain-specific infrastructure packages such as `jwt` or `properties`). Put exception statuses and exception mappers in the owning domain's `exception` package, not in `service`. Avoid placing a class in another domain just because it is convenient to inject from there.
 
 For authentication-related changes, keep the package layout grouped by responsibility (`entity`, `enums`, `repository`, `dto/request`, `dto/response`, `service`, `controller/docs`, `jwt`, and `properties`). Keep domain enums in the owning domain's `enums` package.
 
@@ -31,11 +35,11 @@ Keep methods short and give repeated or independently meaningful logic a private
 
 For entities, use `BaseEntity`, the standard JPA entity annotations, a protected no-args constructor, and a private builder constructor when a builder is useful. Expose creation through named static factory methods (for example, `createLocal` or `createOAuth`); services should call those factories instead of invoking builders directly.
 
-Separate request and response DTOs into `dto/request` and `dto/response`. Controllers should expose documentation through a `controller/docs` interface and implement that interface in the concrete controller. Document request fields, success responses, and domain-specific error responses in Swagger.
+Separate request and response DTOs into `dto/request` and `dto/response`. Name request and response DTOs with the action verb first, such as `ChangeNicknameRequest` instead of `NicknameChangeRequest`. Controllers should expose documentation through a `controller/docs` interface and implement that interface in the concrete controller. Document request fields, success responses, and domain-specific error responses in Swagger.
 
 Keep status enum entries ordered by HTTP response code in ascending order (for example, 400 before 401, then 409 and 500).
 
-JPA entities should extend `BaseEntity`. Controllers should return `ResponseEntity<ApiResponse<T>>` through `ApiResponse` factory methods. Represent domain failures with `GeneralException` and a domain-specific enum implementing `BaseStatus`; avoid ad hoc response bodies and exception types.
+JPA entities should extend `BaseEntity`. Controllers should return `ResponseEntity<ApiResponse<T>>` through `ApiResponse` factory methods. Represent domain failures with `GeneralException` and a domain-specific enum implementing `BaseStatus`; avoid ad hoc response bodies and exception types. Keep error statuses in the owning domain's exception package (for example, user API failures should use `UserErrorStatus`, not `AuthErrorStatus`).
 
 ## Testing Guidelines
 

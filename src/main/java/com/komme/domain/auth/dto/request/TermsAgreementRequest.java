@@ -1,5 +1,9 @@
 package com.komme.domain.auth.dto.request;
 
+import com.komme.domain.user.enums.TermsType;
+
+import java.util.Map;
+
 import jakarta.validation.constraints.AssertTrue;
 import jakarta.validation.constraints.NotNull;
 
@@ -30,4 +34,17 @@ public record TermsAgreementRequest(
         @AssertTrue(message = "만 14세 이상만 가입할 수 있습니다.")
         Boolean ageConfirmed
 ) {
+
+    // 약관 유형별 동의 상태 변환 기능
+    public Map<TermsType, Boolean> toAgreements() {
+        return Map.of(
+                TermsType.SERVICE_TERMS, serviceTermsAgreed,
+                TermsType.PRIVACY_POLICY, privacyPolicyAgreed,
+                TermsType.LOCATION_TERMS, locationTermsAgreed,
+                TermsType.LOCATION_COLLECTION, locationCollectionAgreed,
+                TermsType.MARKETING, marketingAgreed,
+                TermsType.PUSH_NOTIFICATION, pushNotificationAgreed,
+                TermsType.AGE_CONFIRMATION, ageConfirmed
+        );
+    }
 }

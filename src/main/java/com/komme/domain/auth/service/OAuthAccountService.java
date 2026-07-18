@@ -2,11 +2,12 @@ package com.komme.domain.auth.service;
 
 import com.komme.common.exception.GeneralException;
 import com.komme.domain.auth.entity.OAuthAccount;
-import com.komme.domain.auth.entity.User;
-import com.komme.domain.auth.enums.Provider;
+import com.komme.domain.user.entity.User;
+import com.komme.domain.user.enums.Provider;
 import com.komme.domain.auth.exception.AuthErrorStatus;
 import com.komme.domain.auth.repository.OAuthAccountRepository;
-import com.komme.domain.auth.repository.UserRepository;
+import com.komme.domain.user.repository.UserRepository;
+import com.komme.domain.user.service.UserReader;
 import com.komme.domain.auth.util.EmailNormalizer;
 
 import java.util.Optional;

@@ -1,8 +1,8 @@
-package com.komme.domain.auth.entity;
+package com.komme.domain.user.entity;
 
-import com.komme.domain.auth.enums.Gender;
-import com.komme.domain.auth.enums.Provider;
-import com.komme.domain.auth.enums.ServiceInterest;
+import com.komme.domain.user.enums.Gender;
+import com.komme.domain.user.enums.Provider;
+import com.komme.domain.user.enums.ServiceInterest;
 import com.komme.i18n.enums.Language;
 
 import java.util.Set;
@@ -36,6 +36,26 @@ class UserTests {
         user.changePassword("new-encoded-password");
 
         assertThat(user.getPassword()).isEqualTo("new-encoded-password");
+    }
+
+    // 사용자 닉네임 변경 검증
+    @Test
+    void changeNicknameUpdatesNickname() {
+        User user = createUser();
+
+        user.changeNickname("new-nickname");
+
+        assertThat(user.getNickname()).isEqualTo("new-nickname");
+    }
+
+    // 사용자 선호 언어 변경 검증
+    @Test
+    void changePreferredLanguageUpdatesPreferredLanguage() {
+        User user = createUser();
+
+        user.changePreferredLanguage(Language.JAPANESE);
+
+        assertThat(user.getPreferredLanguage()).isEqualTo(Language.JAPANESE);
     }
 
     // OAuth 사용자 최소 프로필 생성값 검증
