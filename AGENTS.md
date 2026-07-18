@@ -35,7 +35,7 @@ Separate request and response DTOs into `dto/request` and `dto/response`. Name r
 
 Keep status enum entries ordered by HTTP response code in ascending order (for example, 400 before 401, then 409 and 500).
 
-JPA entities should extend `BaseEntity`. Controllers should return `ResponseEntity<ApiResponse<T>>` through `ApiResponse` factory methods. Represent domain failures with `GeneralException` and a domain-specific enum implementing `BaseStatus`; avoid ad hoc response bodies and exception types.
+JPA entities should extend `BaseEntity`. Controllers should return `ResponseEntity<ApiResponse<T>>` through `ApiResponse` factory methods. Represent domain failures with `GeneralException` and a domain-specific enum implementing `BaseStatus`; avoid ad hoc response bodies and exception types. Keep error statuses in the owning domain's exception package (for example, user API failures should use `UserErrorStatus`, not `AuthErrorStatus`).
 
 ## Testing Guidelines
 

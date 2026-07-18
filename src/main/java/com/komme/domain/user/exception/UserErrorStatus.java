@@ -1,0 +1,20 @@
+package com.komme.domain.user.exception;
+
+import com.komme.common.base.status.BaseStatus;
+
+import org.springframework.http.HttpStatus;
+
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+
+@Getter
+@AllArgsConstructor
+public enum UserErrorStatus implements BaseStatus {
+
+    UNSUPPORTED_TERMS_TYPE(HttpStatus.BAD_REQUEST, "USER_400_1", "변경할 수 없는 약관 유형입니다."),
+    NICKNAME_ALREADY_EXISTS(HttpStatus.CONFLICT, "USER_409_1", "이미 사용 중인 닉네임입니다.");
+
+    private final HttpStatus httpStatus;
+    private final String code;
+    private final String message;
+}

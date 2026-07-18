@@ -2,14 +2,13 @@ package com.komme.domain.user.service;
 
 import com.komme.common.exception.GeneralException;
 import com.komme.domain.auth.enums.TermsType;
-import com.komme.domain.auth.exception.AuthErrorStatus;
-import com.komme.domain.auth.service.AuthConstraintExceptionMapper;
 import com.komme.domain.auth.service.TermsAgreementService;
 import com.komme.domain.user.dto.request.ChangeNicknameRequest;
 import com.komme.domain.user.dto.request.ChangePreferredLanguageRequest;
 import com.komme.domain.user.dto.request.UpdateTermsAgreementRequest;
 import com.komme.domain.user.dto.response.UserProfileResponse;
 import com.komme.domain.user.entity.User;
+import com.komme.domain.user.exception.UserErrorStatus;
 import com.komme.domain.user.repository.UserRepository;
 
 import org.springframework.dao.DataIntegrityViolationException;
@@ -25,7 +24,7 @@ public class UserProfileService {
     private final UserReader userReader;
     private final UserRepository userRepository;
     private final TermsAgreementService termsAgreementService;
-    private final AuthConstraintExceptionMapper authConstraintExceptionMapper;
+    private final UserConstraintExceptionMapper userConstraintExceptionMapper;
 
     // 사용자 마이페이지 프로필 조회 기능
     @Transactional(readOnly = true)
@@ -45,7 +44,7 @@ public class UserProfileService {
 
         User user = userReader.findByIdOrThrow(userId);
         user.changeNickname(nickname);
-        flushUserChanges(AuthErrorStatus.NICKNAME_ALREADY_EXISTS);
+        flushUserChanges(UserErrorStatus.NICKNAME_ALREADY_EXISTS);
     }
 
     // 사용자 선호 언어 변경 기능
@@ -70,16 +69,16 @@ public class UserProfileService {
     // 본인 제외 닉네임 중복 검증 기능
     private void validateNicknameNotUsedByOthers(Long userId, String nickname) {
         if (userReader.existsByNicknameAndIdNot(nickname, userId)) {
-            throw new GeneralException(AuthErrorStatus.NICKNAME_ALREADY_EXISTS);
+            throw new GeneralException(UserErrorStatus.NICKNAME_ALREADY_EXISTS);
         }
     }
 
     // 사용자 변경사항 flush 및 unique 오류 변환 기능
-    private void flushUserChanges(AuthErrorStatus defaultStatus) {
+    private void flushUserChanges(UserErrorStatus defaultStatus) {
         try {
             userRepository.flush();
         } catch (DataIntegrityViolationException exception) {
-            throw authConstraintExceptionMapper.map(exception, defaultStatus);
+            throw userConstraintExceptionMapper.map(exception, defaultStatus);
         }
     }
 }

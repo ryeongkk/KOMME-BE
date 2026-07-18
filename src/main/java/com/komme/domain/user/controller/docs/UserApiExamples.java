@@ -36,7 +36,7 @@ public final class UserApiExamples {
     public static final String UNSUPPORTED_TERMS_TYPE = """
             {
               "isSuccess": false,
-              "code": "AUTH_400_7",
+              "code": "USER_400_1",
               "message": "변경할 수 없는 약관 유형입니다."
             }
             """;
@@ -52,7 +52,7 @@ public final class UserApiExamples {
     public static final String NICKNAME_ALREADY_EXISTS = """
             {
               "isSuccess": false,
-              "code": "AUTH_409_2",
+              "code": "USER_409_1",
               "message": "이미 사용 중인 닉네임입니다."
             }
             """;

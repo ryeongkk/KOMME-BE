@@ -2,14 +2,13 @@ package com.komme.domain.user.service;
 
 import com.komme.domain.auth.enums.Provider;
 import com.komme.domain.auth.enums.TermsType;
-import com.komme.domain.auth.exception.AuthErrorStatus;
-import com.komme.domain.auth.service.AuthConstraintExceptionMapper;
 import com.komme.domain.auth.service.TermsAgreementService;
 import com.komme.domain.user.dto.request.ChangeNicknameRequest;
 import com.komme.domain.user.dto.request.ChangePreferredLanguageRequest;
 import com.komme.domain.user.dto.request.UpdateTermsAgreementRequest;
 import com.komme.domain.user.dto.response.UserProfileResponse;
 import com.komme.domain.user.entity.User;
+import com.komme.domain.user.exception.UserErrorStatus;
 import com.komme.domain.user.repository.UserRepository;
 import com.komme.i18n.enums.Language;
 
@@ -53,7 +52,7 @@ class UserProfileServiceTests {
                 userReader,
                 userRepository,
                 termsAgreementService,
-                new AuthConstraintExceptionMapper()
+                new UserConstraintExceptionMapper()
         );
     }
 
@@ -108,7 +107,7 @@ class UserProfileServiceTests {
         ))
                 .isInstanceOf(com.komme.common.exception.GeneralException.class)
                 .extracting(exception -> ((com.komme.common.exception.GeneralException) exception).getErrorStatus())
-                .isEqualTo(AuthErrorStatus.NICKNAME_ALREADY_EXISTS);
+                .isEqualTo(UserErrorStatus.NICKNAME_ALREADY_EXISTS);
     }
 
     // 닉네임 unique 제약조건 오류 변환 검증
@@ -124,7 +123,7 @@ class UserProfileServiceTests {
         ))
                 .isInstanceOf(com.komme.common.exception.GeneralException.class)
                 .extracting(exception -> ((com.komme.common.exception.GeneralException) exception).getErrorStatus())
-                .isEqualTo(AuthErrorStatus.NICKNAME_ALREADY_EXISTS);
+                .isEqualTo(UserErrorStatus.NICKNAME_ALREADY_EXISTS);
     }
 
     // 선호 언어 변경 검증

@@ -5,8 +5,8 @@ import com.komme.domain.auth.dto.request.TermsAgreementRequest;
 import com.komme.domain.auth.entity.TermsAgreement;
 import com.komme.domain.user.entity.User;
 import com.komme.domain.auth.enums.TermsType;
-import com.komme.domain.auth.exception.AuthErrorStatus;
 import com.komme.domain.auth.repository.TermsAgreementRepository;
+import com.komme.domain.user.exception.UserErrorStatus;
 import com.komme.domain.user.service.UserReader;
 
 import java.util.List;
@@ -108,7 +108,7 @@ public class TermsAgreementService {
     // 선택 약관 유형 검증 기능
     private void validateOptionalConsentType(TermsType termsType) {
         if (!termsType.isOptionalConsentType()) {
-            throw new GeneralException(AuthErrorStatus.UNSUPPORTED_TERMS_TYPE);
+            throw new GeneralException(UserErrorStatus.UNSUPPORTED_TERMS_TYPE);
         }
     }
 }

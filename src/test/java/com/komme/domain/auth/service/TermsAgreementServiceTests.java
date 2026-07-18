@@ -5,8 +5,8 @@ import com.komme.domain.auth.dto.request.TermsAgreementRequest;
 import com.komme.domain.auth.entity.TermsAgreement;
 import com.komme.domain.user.entity.User;
 import com.komme.domain.auth.enums.TermsType;
-import com.komme.domain.auth.exception.AuthErrorStatus;
 import com.komme.domain.auth.repository.TermsAgreementRepository;
+import com.komme.domain.user.exception.UserErrorStatus;
 import com.komme.domain.user.service.UserReader;
 
 import java.util.List;
@@ -129,7 +129,7 @@ class TermsAgreementServiceTests {
         ))
                 .isInstanceOf(GeneralException.class)
                 .extracting(exception -> ((GeneralException) exception).getErrorStatus())
-                .isEqualTo(AuthErrorStatus.UNSUPPORTED_TERMS_TYPE);
+                .isEqualTo(UserErrorStatus.UNSUPPORTED_TERMS_TYPE);
 
         verify(termsAgreementRepository, never()).save(any());
     }
