@@ -4,7 +4,6 @@ import com.komme.domain.auth.dto.response.LoginResponse;
 import com.komme.domain.auth.jwt.JwtProvider;
 import com.komme.domain.auth.jwt.JwtProvider.IssuedToken;
 import com.komme.domain.auth.jwt.JwtRedisKeys;
-import com.komme.domain.auth.repository.UserRepository;
 
 import java.time.Duration;
 
@@ -29,9 +28,6 @@ class AuthTokenServiceTests {
 
     @Mock
     private JwtProvider jwtProvider;
-
-    @Mock
-    private UserRepository userRepository;
 
     @Mock
     private TermsAgreementService termsAgreementService;

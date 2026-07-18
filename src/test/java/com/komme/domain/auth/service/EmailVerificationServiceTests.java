@@ -4,7 +4,6 @@ import com.komme.common.exception.GeneralException;
 import com.komme.domain.auth.dto.request.EmailVerificationConfirmRequest;
 import com.komme.domain.auth.dto.request.EmailVerificationSendRequest;
 import com.komme.domain.auth.exception.AuthErrorStatus;
-import com.komme.domain.auth.repository.UserRepository;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -23,9 +22,6 @@ import static org.mockito.Mockito.when;
 class EmailVerificationServiceTests {
 
     private static final String EMAIL = "user@example.com";
-
-    @Mock
-    private UserRepository userRepository;
 
     @Mock
     private UserReader userReader;

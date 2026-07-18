@@ -4,9 +4,6 @@ import com.komme.domain.auth.dto.request.TermsAgreementRequest;
 import com.komme.domain.auth.entity.User;
 import com.komme.domain.auth.enums.TermsType;
 import com.komme.domain.auth.repository.TermsAgreementRepository;
-import com.komme.domain.auth.repository.UserRepository;
-
-import java.util.Optional;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -25,9 +22,6 @@ class TermsAgreementServiceTests {
 
     @Mock
     private TermsAgreementRepository termsAgreementRepository;
-
-    @Mock
-    private UserRepository userRepository;
 
     @Mock
     private UserReader userReader;

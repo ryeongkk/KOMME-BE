@@ -22,7 +22,6 @@ import com.komme.i18n.enums.Language;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.Collection;
-import java.util.Optional;
 import java.util.Set;
 
 import org.hibernate.exception.ConstraintViolationException;
