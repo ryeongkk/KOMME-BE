@@ -10,7 +10,6 @@ import com.komme.domain.auth.dto.response.LoginResponse;
 import com.komme.domain.auth.dto.response.TokenReissueResponse;
 import com.komme.domain.auth.entity.User;
 import com.komme.domain.auth.enums.Gender;
-import com.komme.domain.auth.enums.Provider;
 import com.komme.domain.auth.enums.ServiceInterest;
 import com.komme.domain.auth.exception.AuthErrorStatus;
 import com.komme.domain.auth.jwt.JwtProvider;
@@ -34,6 +33,7 @@ import lombok.RequiredArgsConstructor;
 public class AuthService {
 
     private final UserRepository userRepository;
+    private final UserReader userReader;
     private final EmailVerificationService emailVerificationService;
     private final PasswordEncoder passwordEncoder;
     private final JwtProvider jwtProvider;
@@ -57,7 +57,7 @@ public class AuthService {
     @Transactional(readOnly = true)
     public LoginResponse login(LoginRequest request) {
         String email = EmailNormalizer.normalize(request.email());
-        User user = findLocalUser(email);
+        User user = userReader.findLocalByEmailOrThrow(email);
         validatePassword(request.password(), user.getPassword());
 
         return authTokenService.issueLoginResponse(user);
@@ -79,7 +79,7 @@ public class AuthService {
     // 로그인 사용자 비밀번호 변경 기능
     @Transactional
     public void changePassword(Long userId, PasswordChangeRequest request) {
-        User user = findLocalUser(userId);
+        User user = userReader.findLocalByIdOrThrow(userId);
         validateCurrentPassword(request.currentPassword(), user.getPassword());
         user.changePassword(passwordEncoder.encode(request.newPassword()));
         refreshTokenStore.invalidateAll(userId);
@@ -146,24 +146,16 @@ public class AuthService {
 
     // 가입된 이메일 여부 확인 기능
     private void validateEmailNotRegistered(String email) {
-        if (userRepository.existsByEmail(email)) {
+        if (userReader.existsByEmail(email)) {
             throw new GeneralException(AuthErrorStatus.EMAIL_ALREADY_EXISTS);
         }
     }
 
     // 가입된 닉네임 여부 확인 기능
     private void validateNicknameNotRegistered(String nickname) {
-        if (userRepository.existsByNickname(nickname)) {
+        if (userReader.existsByNickname(nickname)) {
             throw new GeneralException(AuthErrorStatus.NICKNAME_ALREADY_EXISTS);
         }
-    }
-
-    // 이메일 기반 LOCAL 사용자 조회 기능
-    private User findLocalUser(String email) {
-        User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new GeneralException(AuthErrorStatus.INVALID_CREDENTIALS));
-
-        return validateLocalUser(user, AuthErrorStatus.INVALID_CREDENTIALS);
     }
 
     // 로그인 비밀번호 검증 기능
@@ -171,23 +163,6 @@ public class AuthService {
         if (!passwordEncoder.matches(rawPassword, encodedPassword)) {
             throw new GeneralException(AuthErrorStatus.INVALID_CREDENTIALS);
         }
-    }
-
-    // 사용자 ID 기반 LOCAL 사용자 조회 기능
-    private User findLocalUser(Long userId) {
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new GeneralException(AuthErrorStatus.INVALID_TOKEN));
-
-        return validateLocalUser(user, AuthErrorStatus.INVALID_TOKEN);
-    }
-
-    // LOCAL 사용자 여부 검증 기능
-    private User validateLocalUser(User user, AuthErrorStatus errorStatus) {
-        if (user.getProvider() != Provider.LOCAL) {
-            throw new GeneralException(errorStatus);
-        }
-
-        return user;
     }
 
     // 현재 비밀번호 검증 기능

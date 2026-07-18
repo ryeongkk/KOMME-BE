@@ -29,12 +29,15 @@ class TermsAgreementServiceTests {
     @Mock
     private UserRepository userRepository;
 
+    @Mock
+    private UserReader userReader;
+
     // 필수 약관 전체 동의 상태 조회 검증
     @Test
     void areRequiredTermsAgreedReturnsTrueWhenAllRequiredTermsAreAgreed() {
         TermsAgreementService service = new TermsAgreementService(
                 termsAgreementRepository,
-                userRepository
+                userReader
         );
         when(termsAgreementRepository.countByUserIdAndTermsTypeInAndAgreedTrue(
                 USER_ID,
@@ -49,11 +52,11 @@ class TermsAgreementServiceTests {
     void agreeSavesAllTermsForUser() {
         TermsAgreementService service = new TermsAgreementService(
                 termsAgreementRepository,
-                userRepository
+                userReader
         );
         User user = org.mockito.Mockito.mock(User.class);
         when(user.getId()).thenReturn(USER_ID);
-        when(userRepository.findById(USER_ID)).thenReturn(Optional.of(user));
+        when(userReader.findByIdOrThrow(USER_ID)).thenReturn(user);
 
         service.agree(USER_ID, new TermsAgreementRequest(
                 true,

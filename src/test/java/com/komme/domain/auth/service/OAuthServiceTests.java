@@ -57,6 +57,9 @@ class OAuthServiceTests {
     private UserRepository userRepository;
 
     @Mock
+    private UserReader userReader;
+
+    @Mock
     private AuthTokenService authTokenService;
 
     private OAuthService oAuthService;
@@ -70,10 +73,12 @@ class OAuthServiceTests {
                 new OAuthAccountService(
                         oAuthAccountRepository,
                         userRepository,
+                        userReader,
                         new AuthConstraintExceptionMapper()
                 ),
                 authTokenService,
-                userRepository
+                userRepository,
+                userReader
         );
     }
 
@@ -101,7 +106,7 @@ class OAuthServiceTests {
     void loginWithAppleLinksExistingLocalUser() {
         User user = createUserMock();
         prepareIdentity(" USER@example.com ");
-        when(userRepository.findByEmail(EMAIL)).thenReturn(Optional.of(user));
+        when(userReader.findByEmail(EMAIL)).thenReturn(Optional.of(user));
         prepareTokenResponse();
 
         oAuthService.loginWithApple(createRequest());
@@ -120,7 +125,7 @@ class OAuthServiceTests {
     void loginWithAppleCreatesNewAppleUser() {
         User savedUser = createUserMock();
         prepareIdentity(EMAIL);
-        when(userRepository.findByEmail(EMAIL)).thenReturn(Optional.empty());
+        when(userReader.findByEmail(EMAIL)).thenReturn(Optional.empty());
         when(userRepository.saveAndFlush(any(User.class))).thenReturn(savedUser);
         prepareTokenResponse();
 
@@ -175,7 +180,7 @@ class OAuthServiceTests {
     void loginWithGoogleMapsConcurrentEmailConflict() {
         when(oAuthGoogleClient.verifyIdentityToken("google-id-token"))
                 .thenReturn(new OAuthIdentity(APPLE_SUBJECT, EMAIL));
-        when(userRepository.findByEmail(EMAIL)).thenReturn(Optional.empty());
+        when(userReader.findByEmail(EMAIL)).thenReturn(Optional.empty());
         when(userRepository.saveAndFlush(any(User.class)))
                 .thenThrow(new DataIntegrityViolationException("duplicate email"));
 
@@ -193,7 +198,7 @@ class OAuthServiceTests {
     @Test
     void completeProfileUpdatesUserProfile() {
         User user = User.createOAuth(EMAIL, Provider.GOOGLE);
-        when(userRepository.findById(USER_ID)).thenReturn(Optional.of(user));
+        when(userReader.findByIdOrThrow(USER_ID)).thenReturn(user);
 
         oAuthService.completeProfile(
                 USER_ID,

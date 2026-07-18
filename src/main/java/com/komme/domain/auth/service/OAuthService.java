@@ -31,6 +31,7 @@ public class OAuthService {
     private final OAuthAccountService oAuthAccountService;
     private final AuthTokenService authTokenService;
     private final UserRepository userRepository;
+    private final UserReader userReader;
 
     // Apple identity token 로그인 흐름 조율 기능
     @Transactional(readOnly = true)
@@ -47,10 +48,7 @@ public class OAuthService {
     // 로그인 사용자 OAuth 프로필 완성 기능
     @Transactional
     public void completeProfile(Long userId, OAuthProfileCompleteRequest request) {
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new GeneralException(
-                        AuthErrorStatus.INVALID_TOKEN
-                ));
+        User user = userReader.findByIdOrThrow(userId);
 
         try {
             user.completeProfile(

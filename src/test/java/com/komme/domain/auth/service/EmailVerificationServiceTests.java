@@ -28,6 +28,9 @@ class EmailVerificationServiceTests {
     private UserRepository userRepository;
 
     @Mock
+    private UserReader userReader;
+
+    @Mock
     private EmailVerificationStore emailVerificationStore;
 
     @Mock
@@ -42,7 +45,7 @@ class EmailVerificationServiceTests {
     @BeforeEach
     void setUp() {
         emailVerificationService = new EmailVerificationService(
-                userRepository,
+                userReader,
                 emailVerificationStore,
                 codeGenerator,
                 verificationMailSender
@@ -58,7 +61,7 @@ class EmailVerificationServiceTests {
                 new EmailVerificationSendRequest(" USER@example.com ")
         );
 
-        verify(userRepository).existsByEmail(EMAIL);
+        verify(userReader).existsByEmail(EMAIL);
         verify(emailVerificationStore).prepareSend(EMAIL);
         verify(emailVerificationStore).saveCode(EMAIL, "123456");
         verify(verificationMailSender).send(EMAIL, "123456");
@@ -67,7 +70,7 @@ class EmailVerificationServiceTests {
     // 가입된 이메일 인증 코드 전송 거부 검증
     @Test
     void sendVerificationCodeRejectsRegisteredEmail() {
-        when(userRepository.existsByEmail(EMAIL)).thenReturn(true);
+        when(userReader.existsByEmail(EMAIL)).thenReturn(true);
 
         assertThatThrownBy(() -> emailVerificationService.sendVerificationCode(
                 new EmailVerificationSendRequest(EMAIL)

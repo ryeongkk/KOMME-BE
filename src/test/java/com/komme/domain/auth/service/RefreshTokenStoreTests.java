@@ -36,6 +36,9 @@ class RefreshTokenStoreTests {
     private UserRepository userRepository;
 
     @Mock
+    private UserReader userReader;
+
+    @Mock
     private ValueOperations<String, String> valueOperations;
 
     @Mock
@@ -73,7 +76,7 @@ class RefreshTokenStoreTests {
 
     // Refresh Token Store 생성
     private RefreshTokenStore createStore() {
-        return new RefreshTokenStore(redisTemplate, userRepository);
+        return new RefreshTokenStore(redisTemplate, userReader);
     }
 
     // Refresh Token 테스트 Claim 생성

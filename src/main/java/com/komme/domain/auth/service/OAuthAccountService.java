@@ -23,6 +23,7 @@ public class OAuthAccountService {
 
     private final OAuthAccountRepository oAuthAccountRepository;
     private final UserRepository userRepository;
+    private final UserReader userReader;
     private final AuthConstraintExceptionMapper authConstraintExceptionMapper;
 
     // OAuth identity 기반 사용자 조회 및 연결 기능
@@ -55,7 +56,7 @@ public class OAuthAccountService {
 
     // OAuth 이메일 기반 사용자 조회 또는 생성 기능
     private User findOrCreateUser(Provider provider, String email) {
-        return userRepository.findByEmail(email)
+        return userReader.findByEmail(email)
                 .orElseGet(() -> createOAuthUser(provider, email));
     }
 

@@ -54,9 +54,10 @@ class AuthTokenServiceTests {
                 .thenReturn(new IssuedToken("access-token", "access-id", ACCESS_EXPIRATION));
         when(jwtProvider.issueRefreshToken(USER_ID))
                 .thenReturn(new IssuedToken("refresh-token", "refresh-id", REFRESH_EXPIRATION));
+        UserReader userReader = org.mockito.Mockito.mock(UserReader.class);
         AuthTokenService authTokenService = new AuthTokenService(
                 jwtProvider,
-                new RefreshTokenStore(redisTemplate, userRepository),
+                new RefreshTokenStore(redisTemplate, userReader),
                 termsAgreementService
         );
 

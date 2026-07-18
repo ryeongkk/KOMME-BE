@@ -1,13 +1,10 @@
 package com.komme.domain.auth.service;
 
-import com.komme.common.exception.GeneralException;
 import com.komme.domain.auth.dto.request.TermsAgreementRequest;
 import com.komme.domain.auth.entity.TermsAgreement;
 import com.komme.domain.auth.entity.User;
 import com.komme.domain.auth.enums.TermsType;
-import com.komme.domain.auth.exception.AuthErrorStatus;
 import com.komme.domain.auth.repository.TermsAgreementRepository;
-import com.komme.domain.auth.repository.UserRepository;
 
 import java.util.Map;
 
@@ -21,13 +18,12 @@ import lombok.RequiredArgsConstructor;
 public class TermsAgreementService {
 
     private final TermsAgreementRepository termsAgreementRepository;
-    private final UserRepository userRepository;
+    private final UserReader userReader;
 
     // 사용자 약관 동의 저장 기능
     @Transactional
     public void agree(Long userId, TermsAgreementRequest request) {
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new GeneralException(AuthErrorStatus.INVALID_TOKEN));
+        User user = userReader.findByIdOrThrow(userId);
 
         Map<TermsType, Boolean> agreements = Map.of(
                 TermsType.SERVICE_TERMS, request.serviceTermsAgreed(),
