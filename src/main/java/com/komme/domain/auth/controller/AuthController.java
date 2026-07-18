@@ -11,12 +11,14 @@ import com.komme.domain.auth.dto.request.LogoutRequest;
 import com.komme.domain.auth.dto.request.PasswordChangeRequest;
 import com.komme.domain.auth.dto.request.SignUpRequest;
 import com.komme.domain.auth.dto.request.TokenReissueRequest;
+import com.komme.domain.auth.dto.request.TermsAgreementRequest;
 import com.komme.domain.auth.dto.response.LoginResponse;
 import com.komme.domain.auth.dto.response.TokenReissueResponse;
 import com.komme.domain.auth.exception.AuthErrorStatus;
 import com.komme.domain.auth.jwt.JwtProvider.TokenClaims;
 import com.komme.domain.auth.service.AuthService;
 import com.komme.domain.auth.service.EmailVerificationService;
+import com.komme.domain.auth.service.TermsAgreementService;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -32,6 +34,7 @@ public class AuthController implements AuthControllerDocs {
 
     private final AuthService authService;
     private final EmailVerificationService emailVerificationService;
+    private final TermsAgreementService termsAgreementService;
 
     // 이메일 인증 코드 전송 API
     @Override
@@ -63,6 +66,16 @@ public class AuthController implements AuthControllerDocs {
     public ResponseEntity<ApiResponse<LoginResponse>> login(LoginRequest request) {
         LoginResponse response = authService.login(request);
         return ApiResponse.success(SuccessStatus.COMMON_SUCCESS_STATUS, response);
+    }
+
+    // 약관 동의 API
+    @Override
+    public ResponseEntity<ApiResponse<Void>> agreeTerms(
+            Long userId,
+            TermsAgreementRequest request
+    ) {
+        termsAgreementService.agree(userId, request);
+        return ApiResponse.success(SuccessStatus.COMMON_SUCCESS_STATUS);
     }
 
     // 토큰 재발급 API

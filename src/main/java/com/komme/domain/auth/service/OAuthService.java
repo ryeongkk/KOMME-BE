@@ -35,12 +35,12 @@ public class OAuthService {
     // Apple identity token 로그인 흐름 조율 기능
     public LoginResponse loginWithApple(OAuthAppleLoginRequest request) {
         OAuthIdentity identity = oAuthAppleClient.verifyIdentityToken(request.identityToken());
-        Long userId = oAuthAccountService.resolveUser(
+        User user = oAuthAccountService.resolveUser(
                 Provider.APPLE,
                 identity.subject(),
                 identity.email()
-        ).getId();
-        return authTokenService.issueLoginTokens(userId);
+        );
+        return authTokenService.issueLoginResponse(user);
     }
 
     // 로그인 사용자 OAuth 프로필 완성 기능
@@ -71,11 +71,11 @@ public class OAuthService {
     // Google identity token 로그인 흐름 조율 기능
     public LoginResponse loginWithGoogle(OAuthGoogleLoginRequest request) {
         OAuthIdentity identity = oAuthGoogleClient.verifyIdentityToken(request.idToken());
-        Long userId = oAuthAccountService.resolveUser(
+        User user = oAuthAccountService.resolveUser(
                 Provider.GOOGLE,
                 identity.subject(),
                 identity.email()
-        ).getId();
-        return authTokenService.issueLoginTokens(userId);
+        );
+        return authTokenService.issueLoginResponse(user);
     }
 }

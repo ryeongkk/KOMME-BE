@@ -154,4 +154,14 @@ public class User extends BaseEntity {
     public void changePassword(String encodedPassword) {
         this.password = encodedPassword;
     }
+
+    // 사용자 프로필 완성 여부 조회 기능
+    public boolean isProfileCompleted() {
+        return nickname != null
+                && nationality != null
+                && gender != null
+                && preferredLanguage != null
+                && serviceInterests != null
+                && !serviceInterests.isEmpty();
+    }
 }

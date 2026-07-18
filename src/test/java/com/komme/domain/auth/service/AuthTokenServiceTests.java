@@ -34,6 +34,9 @@ class AuthTokenServiceTests {
     private UserRepository userRepository;
 
     @Mock
+    private TermsAgreementService termsAgreementService;
+
+    @Mock
     private StringRedisTemplate redisTemplate;
 
     @Mock
@@ -53,7 +56,8 @@ class AuthTokenServiceTests {
                 .thenReturn(new IssuedToken("refresh-token", "refresh-id", REFRESH_EXPIRATION));
         AuthTokenService authTokenService = new AuthTokenService(
                 jwtProvider,
-                new RefreshTokenStore(redisTemplate, userRepository)
+                new RefreshTokenStore(redisTemplate, userRepository),
+                termsAgreementService
         );
 
         LoginResponse response = authTokenService.issueLoginTokens(USER_ID);
