@@ -1,9 +1,11 @@
 package com.komme.domain.auth.service;
 
+import com.komme.common.exception.GeneralException;
 import com.komme.domain.auth.dto.request.TermsAgreementRequest;
 import com.komme.domain.auth.entity.TermsAgreement;
 import com.komme.domain.user.entity.User;
 import com.komme.domain.auth.enums.TermsType;
+import com.komme.domain.auth.exception.AuthErrorStatus;
 import com.komme.domain.auth.repository.TermsAgreementRepository;
 import com.komme.domain.user.service.UserReader;
 
@@ -62,6 +64,14 @@ public class TermsAgreementService {
                 ));
     }
 
+    // 사용자 선택 약관 동의 상태 변경 기능
+    @Transactional
+    public void updateOptionalConsent(Long userId, TermsType termsType, boolean agreed) {
+        validateOptionalConsentType(termsType);
+        User user = userReader.findByIdOrThrow(userId);
+        saveOrUpdate(user, termsType, agreed);
+    }
+
     // 약관 동의 저장 또는 갱신 기능
     private void saveOrUpdate(User user, TermsType termsType, boolean agreed) {
         TermsAgreement termsAgreement = termsAgreementRepository
@@ -95,4 +105,10 @@ public class TermsAgreementService {
         return termsAgreement != null && termsAgreement.isAgreed();
     }
 
+    // 선택 약관 유형 검증 기능
+    private void validateOptionalConsentType(TermsType termsType) {
+        if (!termsType.isOptionalConsentType()) {
+            throw new GeneralException(AuthErrorStatus.UNSUPPORTED_TERMS_TYPE);
+        }
+    }
 }

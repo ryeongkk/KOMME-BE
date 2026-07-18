@@ -17,6 +17,7 @@ public enum AuthErrorStatus implements BaseStatus {
     UNSUPPORTED_PROVIDER(HttpStatus.BAD_REQUEST, "AUTH_400_4", "지원하지 않는 로그인 방식입니다."),
     APPLE_EMAIL_REQUIRED(HttpStatus.BAD_REQUEST, "AUTH_400_5", "Apple 계정의 이메일 정보가 필요합니다."),
     GOOGLE_EMAIL_REQUIRED(HttpStatus.BAD_REQUEST, "AUTH_400_6", "Google 계정의 이메일 정보가 필요합니다."),
+    UNSUPPORTED_TERMS_TYPE(HttpStatus.BAD_REQUEST, "AUTH_400_7", "변경할 수 없는 약관 유형입니다."),
     INVALID_CREDENTIALS(HttpStatus.UNAUTHORIZED, "AUTH_401_1", "이메일 또는 비밀번호가 올바르지 않습니다."),
     INVALID_TOKEN(HttpStatus.UNAUTHORIZED, "AUTH_401_2", "유효하지 않은 토큰입니다."),
     EXPIRED_TOKEN(HttpStatus.UNAUTHORIZED, "AUTH_401_3", "만료된 토큰입니다."),

@@ -7,6 +7,7 @@ import com.komme.domain.auth.service.AuthConstraintExceptionMapper;
 import com.komme.domain.auth.service.TermsAgreementService;
 import com.komme.domain.user.dto.request.ChangeNicknameRequest;
 import com.komme.domain.user.dto.request.ChangePreferredLanguageRequest;
+import com.komme.domain.user.dto.request.UpdateTermsAgreementRequest;
 import com.komme.domain.user.dto.response.UserProfileResponse;
 import com.komme.domain.user.entity.User;
 import com.komme.domain.user.repository.UserRepository;
@@ -138,6 +139,22 @@ class UserProfileServiceTests {
         );
 
         verify(user).changePreferredLanguage(Language.ENGLISH);
+    }
+
+    // 선택 약관 동의 상태 변경 위임 검증
+    @Test
+    void updateOptionalTermsAgreementDelegatesToTermsService() {
+        userProfileService.updateOptionalTermsAgreement(
+                USER_ID,
+                TermsType.PUSH_NOTIFICATION,
+                new UpdateTermsAgreementRequest(true)
+        );
+
+        verify(termsAgreementService).updateOptionalConsent(
+                USER_ID,
+                TermsType.PUSH_NOTIFICATION,
+                true
+        );
     }
 
     // Hibernate unique 제약조건 예외 생성

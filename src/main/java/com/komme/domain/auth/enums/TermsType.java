@@ -30,4 +30,8 @@ public enum TermsType {
         );
     }
 
+    // 선택 약관 유형 여부 조회 기능
+    public boolean isOptionalConsentType() {
+        return optionalConsentTypes().contains(this);
+    }
 }

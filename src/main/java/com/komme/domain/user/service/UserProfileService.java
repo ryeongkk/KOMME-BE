@@ -1,11 +1,13 @@
 package com.komme.domain.user.service;
 
 import com.komme.common.exception.GeneralException;
+import com.komme.domain.auth.enums.TermsType;
 import com.komme.domain.auth.exception.AuthErrorStatus;
 import com.komme.domain.auth.service.AuthConstraintExceptionMapper;
 import com.komme.domain.auth.service.TermsAgreementService;
 import com.komme.domain.user.dto.request.ChangeNicknameRequest;
 import com.komme.domain.user.dto.request.ChangePreferredLanguageRequest;
+import com.komme.domain.user.dto.request.UpdateTermsAgreementRequest;
 import com.komme.domain.user.dto.response.UserProfileResponse;
 import com.komme.domain.user.entity.User;
 import com.komme.domain.user.repository.UserRepository;
@@ -54,6 +56,15 @@ public class UserProfileService {
     ) {
         User user = userReader.findByIdOrThrow(userId);
         user.changePreferredLanguage(request.preferredLanguage());
+    }
+
+    // 사용자 선택 약관 동의 상태 변경 기능
+    public void updateOptionalTermsAgreement(
+            Long userId,
+            TermsType termsType,
+            UpdateTermsAgreementRequest request
+    ) {
+        termsAgreementService.updateOptionalConsent(userId, termsType, request.agreed());
     }
 
     // 본인 제외 닉네임 중복 검증 기능
