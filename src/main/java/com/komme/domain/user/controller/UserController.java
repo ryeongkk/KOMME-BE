@@ -1,14 +1,14 @@
 package com.komme.domain.user.controller;
 
-import com.komme.common.base.status.SuccessStatus;
 import com.komme.common.response.ApiResponse;
 import com.komme.domain.auth.enums.TermsType;
-import com.komme.domain.user.controller.docs.UserControllerDocs;
-import com.komme.domain.user.dto.request.ChangeNicknameRequest;
-import com.komme.domain.user.dto.request.ChangePreferredLanguageRequest;
-import com.komme.domain.user.dto.request.UpdateTermsAgreementRequest;
-import com.komme.domain.user.dto.response.UserProfileResponse;
+import com.komme.common.base.status.SuccessStatus;
 import com.komme.domain.user.service.UserProfileService;
+import com.komme.domain.user.dto.response.UserProfileResponse;
+import com.komme.domain.user.dto.request.ChangeNicknameRequest;
+import com.komme.domain.user.controller.docs.UserControllerDocs;
+import com.komme.domain.user.dto.request.UpdateTermsAgreementRequest;
+import com.komme.domain.user.dto.request.ChangePreferredLanguageRequest;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RequestMapping;

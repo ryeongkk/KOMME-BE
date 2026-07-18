@@ -8,6 +8,7 @@ import com.komme.domain.user.dto.request.ChangePreferredLanguageRequest;
 import com.komme.domain.user.dto.request.UpdateTermsAgreementRequest;
 import com.komme.domain.user.dto.response.UserProfileResponse;
 import com.komme.domain.user.entity.User;
+import com.komme.domain.user.exception.UserConstraintExceptionMapper;
 import com.komme.domain.user.exception.UserErrorStatus;
 import com.komme.domain.user.repository.UserRepository;
 import com.komme.i18n.enums.Language;

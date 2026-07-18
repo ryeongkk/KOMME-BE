@@ -4,7 +4,11 @@
 
 KOMME-BE is a Java 21, Spring Boot 4 REST API built with Gradle. Production code lives under `src/main/java/com/komme`; shared infrastructure is in `com.komme.common`. Tests mirror packages under `src/test/java`. Runtime configuration belongs in `src/main/resources/application.yaml`.
 
-Add features under `course`, `spot`, `tourapi`, `i18n`, or `auth`. Consult `.claude/rules/<domain>/rule.md` before changing a domain. Keep cross-cutting code in `common`.
+Add features under the owning domain package such as `course`, `spot`, `tourapi`, `i18n`, `auth`, or `user`. Consult `.claude/rules/<domain>/rule.md` before changing a domain. Keep cross-cutting code in `common`.
+
+Choose packages by domain ownership and responsibility, not by the first caller that needs the code. Before adding a class, decide which domain owns the concept and place it under that domain's package. For example, user profile APIs and user-specific errors belong under `domain.user`, even if they are used by authentication flows. Authentication-only concerns such as JWT, OAuth login, password login, and token lifecycle belong under `domain.auth`.
+
+Within each domain, keep classes grouped by responsibility (`entity`, `enums`, `repository`, `dto/request`, `dto/response`, `service`, `controller`, `controller/docs`, `exception`, and domain-specific infrastructure packages such as `jwt` or `properties`). Put exception statuses and exception mappers in the owning domain's `exception` package, not in `service`. Avoid placing a class in another domain just because it is convenient to inject from there.
 
 For authentication-related changes, keep the package layout grouped by responsibility (`entity`, `enums`, `repository`, `dto/request`, `dto/response`, `service`, `controller/docs`, `jwt`, and `properties`). Keep domain enums in the owning domain's `enums` package.
 

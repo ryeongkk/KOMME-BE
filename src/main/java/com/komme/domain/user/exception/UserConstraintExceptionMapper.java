@@ -1,7 +1,6 @@
-package com.komme.domain.user.service;
+package com.komme.domain.user.exception;
 
 import com.komme.common.exception.GeneralException;
-import com.komme.domain.user.exception.UserErrorStatus;
 
 import org.hibernate.exception.ConstraintViolationException;
 
