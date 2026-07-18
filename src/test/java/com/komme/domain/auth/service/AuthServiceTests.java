@@ -8,7 +8,7 @@ import com.komme.domain.auth.dto.request.SignUpRequest;
 import com.komme.domain.auth.dto.request.TokenReissueRequest;
 import com.komme.domain.auth.dto.response.LoginResponse;
 import com.komme.domain.auth.dto.response.TokenReissueResponse;
-import com.komme.domain.auth.entity.User;
+import com.komme.domain.user.entity.User;
 import com.komme.domain.auth.enums.Gender;
 import com.komme.domain.auth.enums.Provider;
 import com.komme.domain.auth.enums.ServiceInterest;
@@ -16,7 +16,8 @@ import com.komme.domain.auth.exception.AuthErrorStatus;
 import com.komme.domain.auth.jwt.JwtProvider;
 import com.komme.domain.auth.jwt.JwtProvider.TokenClaims;
 import com.komme.domain.auth.jwt.JwtRedisKeys;
-import com.komme.domain.auth.repository.UserRepository;
+import com.komme.domain.user.repository.UserRepository;
+import com.komme.domain.user.service.UserReader;
 import com.komme.i18n.enums.Language;
 
 import java.time.Duration;

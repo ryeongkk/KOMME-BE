@@ -4,6 +4,7 @@ import com.komme.common.exception.GeneralException;
 import com.komme.domain.auth.dto.request.EmailVerificationConfirmRequest;
 import com.komme.domain.auth.dto.request.EmailVerificationSendRequest;
 import com.komme.domain.auth.exception.AuthErrorStatus;
+import com.komme.domain.user.service.UserReader;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;

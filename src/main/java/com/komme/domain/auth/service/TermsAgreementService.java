@@ -2,11 +2,15 @@ package com.komme.domain.auth.service;
 
 import com.komme.domain.auth.dto.request.TermsAgreementRequest;
 import com.komme.domain.auth.entity.TermsAgreement;
-import com.komme.domain.auth.entity.User;
+import com.komme.domain.user.entity.User;
 import com.komme.domain.auth.enums.TermsType;
 import com.komme.domain.auth.repository.TermsAgreementRepository;
+import com.komme.domain.user.service.UserReader;
 
+import java.util.List;
 import java.util.Map;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -46,6 +50,18 @@ public class TermsAgreementService {
         ) == TermsType.requiredTypes().size();
     }
 
+    // 사용자 선택 약관 동의 상태 조회 기능
+    @Transactional(readOnly = true)
+    public Map<TermsType, Boolean> getOptionalConsentAgreements(Long userId) {
+        Map<TermsType, TermsAgreement> agreements = findOptionalConsentAgreements(userId);
+
+        return TermsType.optionalConsentTypes().stream()
+                .collect(Collectors.toMap(
+                        Function.identity(),
+                        termsType -> resolveAgreement(agreements, termsType)
+                ));
+    }
+
     // 약관 동의 저장 또는 갱신 기능
     private void saveOrUpdate(User user, TermsType termsType, boolean agreed) {
         TermsAgreement termsAgreement = termsAgreementRepository
@@ -55,4 +71,28 @@ public class TermsAgreementService {
         termsAgreement.updateAgreement(agreed);
         termsAgreementRepository.save(termsAgreement);
     }
+
+    // 사용자 선택 약관 동의 엔티티 목록 조회 기능
+    private Map<TermsType, TermsAgreement> findOptionalConsentAgreements(Long userId) {
+        List<TermsAgreement> agreements = termsAgreementRepository.findByUserIdAndTermsTypeIn(
+                userId,
+                TermsType.optionalConsentTypes()
+        );
+
+        return agreements.stream()
+                .collect(Collectors.toMap(
+                        TermsAgreement::getTermsType,
+                        Function.identity()
+                ));
+    }
+
+    // 약관 동의 상태 기본값 조회 기능
+    private boolean resolveAgreement(
+            Map<TermsType, TermsAgreement> agreements,
+            TermsType termsType
+    ) {
+        TermsAgreement termsAgreement = agreements.get(termsType);
+        return termsAgreement != null && termsAgreement.isAgreed();
+    }
+
 }

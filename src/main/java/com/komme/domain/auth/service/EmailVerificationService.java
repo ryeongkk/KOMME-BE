@@ -5,6 +5,7 @@ import com.komme.domain.auth.dto.request.EmailVerificationConfirmRequest;
 import com.komme.domain.auth.dto.request.EmailVerificationSendRequest;
 import com.komme.domain.auth.exception.AuthErrorStatus;
 import com.komme.domain.auth.util.EmailNormalizer;
+import com.komme.domain.user.service.UserReader;
 
 import org.springframework.mail.MailException;
 import org.springframework.stereotype.Service;

@@ -21,4 +21,13 @@ public enum TermsType {
                 AGE_CONFIRMATION
         );
     }
+
+    // 선택 약관 유형 조회 기능
+    public static Set<TermsType> optionalConsentTypes() {
+        return Set.of(
+                MARKETING,
+                PUSH_NOTIFICATION
+        );
+    }
+
 }

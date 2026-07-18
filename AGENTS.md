@@ -31,7 +31,7 @@ Keep methods short and give repeated or independently meaningful logic a private
 
 For entities, use `BaseEntity`, the standard JPA entity annotations, a protected no-args constructor, and a private builder constructor when a builder is useful. Expose creation through named static factory methods (for example, `createLocal` or `createOAuth`); services should call those factories instead of invoking builders directly.
 
-Separate request and response DTOs into `dto/request` and `dto/response`. Controllers should expose documentation through a `controller/docs` interface and implement that interface in the concrete controller. Document request fields, success responses, and domain-specific error responses in Swagger.
+Separate request and response DTOs into `dto/request` and `dto/response`. Name request and response DTOs with the action verb first, such as `ChangeNicknameRequest` instead of `NicknameChangeRequest`. Controllers should expose documentation through a `controller/docs` interface and implement that interface in the concrete controller. Document request fields, success responses, and domain-specific error responses in Swagger.
 
 Keep status enum entries ordered by HTTP response code in ascending order (for example, 400 before 401, then 409 and 500).
 

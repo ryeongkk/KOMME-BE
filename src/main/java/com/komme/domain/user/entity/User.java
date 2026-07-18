@@ -1,4 +1,4 @@
-package com.komme.domain.auth.entity;
+package com.komme.domain.user.entity;
 
 import com.komme.common.base.BaseEntity;
 import com.komme.domain.auth.enums.Gender;

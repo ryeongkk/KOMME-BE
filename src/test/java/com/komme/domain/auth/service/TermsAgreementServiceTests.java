@@ -1,9 +1,14 @@
 package com.komme.domain.auth.service;
 
 import com.komme.domain.auth.dto.request.TermsAgreementRequest;
-import com.komme.domain.auth.entity.User;
+import com.komme.domain.auth.entity.TermsAgreement;
+import com.komme.domain.user.entity.User;
 import com.komme.domain.auth.enums.TermsType;
 import com.komme.domain.auth.repository.TermsAgreementRepository;
+import com.komme.domain.user.service.UserReader;
+
+import java.util.List;
+import java.util.Map;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -12,6 +17,8 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -48,7 +55,7 @@ class TermsAgreementServiceTests {
                 termsAgreementRepository,
                 userReader
         );
-        User user = org.mockito.Mockito.mock(User.class);
+        User user = mock(User.class);
         when(user.getId()).thenReturn(USER_ID);
         when(userReader.findByIdOrThrow(USER_ID)).thenReturn(user);
 
@@ -62,7 +69,29 @@ class TermsAgreementServiceTests {
                 true
         ));
 
-        verify(termsAgreementRepository, org.mockito.Mockito.times(7))
+        verify(termsAgreementRepository, times(7))
                 .save(any());
     }
+
+    // 사용자 선택 약관 동의 상태 조회 검증
+    @Test
+    void getOptionalConsentAgreementsReturnsSavedAndDefaultValues() {
+        TermsAgreementService service = new TermsAgreementService(
+                termsAgreementRepository,
+                userReader
+        );
+        TermsAgreement marketing = mock(TermsAgreement.class);
+        when(marketing.getTermsType()).thenReturn(TermsType.MARKETING);
+        when(marketing.isAgreed()).thenReturn(true);
+        when(termsAgreementRepository.findByUserIdAndTermsTypeIn(
+                USER_ID,
+                TermsType.optionalConsentTypes()
+        )).thenReturn(List.of(marketing));
+
+        Map<TermsType, Boolean> result = service.getOptionalConsentAgreements(USER_ID);
+
+        assertThat(result.get(TermsType.MARKETING)).isTrue();
+        assertThat(result.get(TermsType.PUSH_NOTIFICATION)).isFalse();
+    }
+
 }

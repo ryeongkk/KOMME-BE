@@ -1,10 +1,10 @@
-package com.komme.domain.auth.service;
+package com.komme.domain.user.service;
 
 import com.komme.common.exception.GeneralException;
-import com.komme.domain.auth.entity.User;
+import com.komme.domain.user.entity.User;
 import com.komme.domain.auth.enums.Provider;
 import com.komme.domain.auth.exception.AuthErrorStatus;
-import com.komme.domain.auth.repository.UserRepository;
+import com.komme.domain.user.repository.UserRepository;
 
 import java.util.Optional;
 

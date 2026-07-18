@@ -5,6 +5,7 @@ import com.komme.domain.auth.exception.AuthErrorStatus;
 import com.komme.domain.auth.jwt.JwtProvider.IssuedToken;
 import com.komme.domain.auth.jwt.JwtProvider.TokenClaims;
 import com.komme.domain.auth.jwt.JwtRedisKeys;
+import com.komme.domain.user.service.UserReader;
 
 import java.util.Set;
 

@@ -1,6 +1,6 @@
-package com.komme.domain.auth.repository;
+package com.komme.domain.user.repository;
 
-import com.komme.domain.auth.entity.User;
+import com.komme.domain.user.entity.User;
 
 import java.util.Optional;
 
@@ -16,4 +16,5 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
     // 닉네임 중복 여부 확인 기능
     boolean existsByNickname(String nickname);
+
 }
