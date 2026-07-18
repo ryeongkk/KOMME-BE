@@ -18,7 +18,7 @@ import com.komme.domain.auth.exception.AuthErrorStatus;
 import com.komme.domain.auth.jwt.JwtProvider.TokenClaims;
 import com.komme.domain.auth.service.AuthService;
 import com.komme.domain.auth.service.EmailVerificationService;
-import com.komme.domain.auth.service.TermsAgreementService;
+import com.komme.domain.user.service.TermsAgreementService;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -74,7 +74,7 @@ public class AuthController implements AuthControllerDocs {
             Long userId,
             TermsAgreementRequest request
     ) {
-        termsAgreementService.agree(userId, request);
+        termsAgreementService.agree(userId, request.toAgreements());
         return ApiResponse.success(SuccessStatus.COMMON_SUCCESS_STATUS);
     }
 

@@ -1,7 +1,7 @@
 package com.komme.domain.auth.dto.request;
 
-import com.komme.domain.auth.enums.Gender;
-import com.komme.domain.auth.enums.ServiceInterest;
+import com.komme.domain.user.enums.Gender;
+import com.komme.domain.user.enums.ServiceInterest;
 import com.komme.i18n.enums.Language;
 
 import java.util.Set;

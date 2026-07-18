@@ -4,6 +4,7 @@ import com.komme.domain.auth.dto.response.LoginResponse;
 import com.komme.domain.auth.jwt.JwtProvider;
 import com.komme.domain.auth.jwt.JwtProvider.IssuedToken;
 import com.komme.domain.auth.jwt.JwtRedisKeys;
+import com.komme.domain.user.service.TermsAgreementService;
 import com.komme.domain.user.service.UserReader;
 
 import java.time.Duration;

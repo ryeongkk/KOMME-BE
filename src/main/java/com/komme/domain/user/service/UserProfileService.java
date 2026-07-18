@@ -1,8 +1,8 @@
 package com.komme.domain.user.service;
 
 import com.komme.common.exception.GeneralException;
-import com.komme.domain.auth.enums.TermsType;
-import com.komme.domain.auth.service.TermsAgreementService;
+import com.komme.domain.user.enums.TermsType;
+import com.komme.domain.user.service.TermsAgreementService;
 import com.komme.domain.user.dto.request.ChangeNicknameRequest;
 import com.komme.domain.user.dto.request.ChangePreferredLanguageRequest;
 import com.komme.domain.user.dto.request.UpdateTermsAgreementRequest;

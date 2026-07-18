@@ -1,7 +1,7 @@
 package com.komme.domain.user.controller;
 
 import com.komme.common.response.ApiResponse;
-import com.komme.domain.auth.enums.TermsType;
+import com.komme.domain.user.enums.TermsType;
 import com.komme.common.base.status.SuccessStatus;
 import com.komme.domain.user.service.UserProfileService;
 import com.komme.domain.user.dto.response.UserProfileResponse;

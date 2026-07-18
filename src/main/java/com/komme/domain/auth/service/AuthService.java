@@ -9,13 +9,12 @@ import com.komme.domain.auth.dto.request.TokenReissueRequest;
 import com.komme.domain.auth.dto.response.LoginResponse;
 import com.komme.domain.auth.dto.response.TokenReissueResponse;
 import com.komme.domain.user.entity.User;
-import com.komme.domain.auth.enums.Gender;
-import com.komme.domain.auth.enums.ServiceInterest;
+import com.komme.domain.user.enums.Gender;
+import com.komme.domain.user.enums.ServiceInterest;
 import com.komme.domain.auth.exception.AuthErrorStatus;
 import com.komme.domain.auth.jwt.JwtProvider;
 import com.komme.domain.auth.jwt.JwtProvider.TokenClaims;
 import com.komme.domain.user.repository.UserRepository;
-import com.komme.domain.user.service.UserReader;
 import com.komme.domain.auth.util.EmailNormalizer;
 import com.komme.i18n.enums.Language;
 
@@ -34,7 +33,7 @@ import lombok.RequiredArgsConstructor;
 public class AuthService {
 
     private final UserRepository userRepository;
-    private final UserReader userReader;
+    private final AuthUserReader authUserReader;
     private final EmailVerificationService emailVerificationService;
     private final PasswordEncoder passwordEncoder;
     private final JwtProvider jwtProvider;
@@ -58,7 +57,7 @@ public class AuthService {
     @Transactional(readOnly = true)
     public LoginResponse login(LoginRequest request) {
         String email = EmailNormalizer.normalize(request.email());
-        User user = userReader.findLocalByEmailOrThrow(email);
+        User user = authUserReader.findLocalByEmailOrThrow(email);
         validatePassword(request.password(), user.getPassword());
 
         return authTokenService.issueLoginResponse(user);
@@ -80,7 +79,7 @@ public class AuthService {
     // 로그인 사용자 비밀번호 변경 기능
     @Transactional
     public void changePassword(Long userId, PasswordChangeRequest request) {
-        User user = userReader.findLocalByIdOrThrow(userId);
+        User user = authUserReader.findLocalByIdOrThrow(userId);
         validateCurrentPassword(request.currentPassword(), user.getPassword());
         user.changePassword(passwordEncoder.encode(request.newPassword()));
         refreshTokenStore.invalidateAll(userId);

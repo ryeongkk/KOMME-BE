@@ -9,9 +9,9 @@ import com.komme.domain.auth.dto.request.TokenReissueRequest;
 import com.komme.domain.auth.dto.response.LoginResponse;
 import com.komme.domain.auth.dto.response.TokenReissueResponse;
 import com.komme.domain.user.entity.User;
-import com.komme.domain.auth.enums.Gender;
-import com.komme.domain.auth.enums.Provider;
-import com.komme.domain.auth.enums.ServiceInterest;
+import com.komme.domain.user.enums.Gender;
+import com.komme.domain.user.enums.Provider;
+import com.komme.domain.user.enums.ServiceInterest;
 import com.komme.domain.auth.exception.AuthErrorStatus;
 import com.komme.domain.auth.jwt.JwtProvider;
 import com.komme.domain.auth.jwt.JwtProvider.TokenClaims;
@@ -61,6 +61,9 @@ class AuthServiceTests {
     private UserReader userReader;
 
     @Mock
+    private AuthUserReader authUserReader;
+
+    @Mock
     private EmailVerificationService emailVerificationService;
 
     @Mock
@@ -88,7 +91,7 @@ class AuthServiceTests {
     void setUp() {
         authService = new AuthService(
                 userRepository,
-                userReader,
+                authUserReader,
                 emailVerificationService,
                 passwordEncoder,
                 jwtProvider,
@@ -181,7 +184,7 @@ class AuthServiceTests {
     @Test
     void loginIssuesAndStoresTokens() {
         User user = createLocalUserMock();
-        when(userReader.findLocalByEmailOrThrow(EMAIL)).thenReturn(user);
+        when(authUserReader.findLocalByEmailOrThrow(EMAIL)).thenReturn(user);
         when(passwordEncoder.matches("password1", "encoded-password")).thenReturn(true);
         when(authTokenService.issueLoginResponse(user))
                 .thenReturn(LoginResponse.of("access-token", "refresh-token"));
@@ -199,7 +202,7 @@ class AuthServiceTests {
     @Test
     void loginRejectsInvalidPassword() {
         User user = createLocalUserMock();
-        when(userReader.findLocalByEmailOrThrow(EMAIL)).thenReturn(user);
+        when(authUserReader.findLocalByEmailOrThrow(EMAIL)).thenReturn(user);
         when(passwordEncoder.matches("wrong-password", "encoded-password"))
                 .thenReturn(false);
 
@@ -246,7 +249,7 @@ class AuthServiceTests {
     void changePasswordUpdatesPasswordAndDeletesRefreshTokens() {
         prepareSetOperations();
         User user = createLocalUserMock();
-        when(userReader.findLocalByIdOrThrow(USER_ID)).thenReturn(user);
+        when(authUserReader.findLocalByIdOrThrow(USER_ID)).thenReturn(user);
         when(passwordEncoder.matches("password1", "encoded-password")).thenReturn(true);
         when(passwordEncoder.encode("newpassword2")).thenReturn("new-encoded-password");
         when(setOperations.members(JwtRedisKeys.userRefreshTokens(USER_ID)))
@@ -271,7 +274,7 @@ class AuthServiceTests {
     @Test
     void changePasswordRejectsInvalidCurrentPassword() {
         User user = createLocalUserMock();
-        when(userReader.findLocalByIdOrThrow(USER_ID)).thenReturn(user);
+        when(authUserReader.findLocalByIdOrThrow(USER_ID)).thenReturn(user);
         when(passwordEncoder.matches("wrong-password", "encoded-password"))
                 .thenReturn(false);
 

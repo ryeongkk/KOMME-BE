@@ -1,7 +1,7 @@
 package com.komme.domain.user.controller.docs;
 
 import com.komme.common.response.ApiResponse;
-import com.komme.domain.auth.enums.TermsType;
+import com.komme.domain.user.enums.TermsType;
 import com.komme.domain.user.dto.response.UserProfileResponse;
 import com.komme.domain.user.dto.request.ChangeNicknameRequest;
 import com.komme.domain.user.dto.request.UpdateTermsAgreementRequest;

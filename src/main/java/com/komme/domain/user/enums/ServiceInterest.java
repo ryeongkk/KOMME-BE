@@ -1,4 +1,4 @@
-package com.komme.domain.auth.enums;
+package com.komme.domain.user.enums;
 
 public enum ServiceInterest {
     COURSE,

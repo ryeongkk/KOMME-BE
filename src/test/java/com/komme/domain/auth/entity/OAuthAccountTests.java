@@ -1,6 +1,6 @@
 package com.komme.domain.auth.entity;
 
-import com.komme.domain.auth.enums.Provider;
+import com.komme.domain.user.enums.Provider;
 import com.komme.domain.user.entity.User;
 
 import org.junit.jupiter.api.Test;

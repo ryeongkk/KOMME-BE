@@ -1,13 +1,11 @@
-package com.komme.domain.auth.service;
+package com.komme.domain.user.service;
 
 import com.komme.common.exception.GeneralException;
-import com.komme.domain.auth.dto.request.TermsAgreementRequest;
-import com.komme.domain.auth.entity.TermsAgreement;
+import com.komme.domain.user.entity.TermsAgreement;
 import com.komme.domain.user.entity.User;
-import com.komme.domain.auth.enums.TermsType;
-import com.komme.domain.auth.repository.TermsAgreementRepository;
+import com.komme.domain.user.enums.TermsType;
 import com.komme.domain.user.exception.UserErrorStatus;
-import com.komme.domain.user.service.UserReader;
+import com.komme.domain.user.repository.TermsAgreementRepository;
 
 import java.util.List;
 import java.util.Map;
@@ -28,18 +26,8 @@ public class TermsAgreementService {
 
     // 사용자 약관 동의 저장 기능
     @Transactional
-    public void agree(Long userId, TermsAgreementRequest request) {
+    public void agree(Long userId, Map<TermsType, Boolean> agreements) {
         User user = userReader.findByIdOrThrow(userId);
-
-        Map<TermsType, Boolean> agreements = Map.of(
-                TermsType.SERVICE_TERMS, request.serviceTermsAgreed(),
-                TermsType.PRIVACY_POLICY, request.privacyPolicyAgreed(),
-                TermsType.LOCATION_TERMS, request.locationTermsAgreed(),
-                TermsType.LOCATION_COLLECTION, request.locationCollectionAgreed(),
-                TermsType.MARKETING, request.marketingAgreed(),
-                TermsType.PUSH_NOTIFICATION, request.pushNotificationAgreed(),
-                TermsType.AGE_CONFIRMATION, request.ageConfirmed()
-        );
         agreements.forEach((termsType, agreed) -> saveOrUpdate(user, termsType, agreed));
     }
 

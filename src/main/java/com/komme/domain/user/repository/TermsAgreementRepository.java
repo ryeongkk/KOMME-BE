@@ -1,7 +1,7 @@
-package com.komme.domain.auth.repository;
+package com.komme.domain.user.repository;
 
-import com.komme.domain.auth.entity.TermsAgreement;
-import com.komme.domain.auth.enums.TermsType;
+import com.komme.domain.user.entity.TermsAgreement;
+import com.komme.domain.user.enums.TermsType;
 
 import java.util.Collection;
 import java.util.List;

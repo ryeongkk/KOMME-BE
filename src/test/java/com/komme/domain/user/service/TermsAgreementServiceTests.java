@@ -1,13 +1,11 @@
-package com.komme.domain.auth.service;
+package com.komme.domain.user.service;
 
 import com.komme.common.exception.GeneralException;
-import com.komme.domain.auth.dto.request.TermsAgreementRequest;
-import com.komme.domain.auth.entity.TermsAgreement;
+import com.komme.domain.user.entity.TermsAgreement;
 import com.komme.domain.user.entity.User;
-import com.komme.domain.auth.enums.TermsType;
-import com.komme.domain.auth.repository.TermsAgreementRepository;
+import com.komme.domain.user.enums.TermsType;
 import com.komme.domain.user.exception.UserErrorStatus;
-import com.komme.domain.user.service.UserReader;
+import com.komme.domain.user.repository.TermsAgreementRepository;
 
 import java.util.List;
 import java.util.Map;
@@ -63,14 +61,14 @@ class TermsAgreementServiceTests {
         when(user.getId()).thenReturn(USER_ID);
         when(userReader.findByIdOrThrow(USER_ID)).thenReturn(user);
 
-        service.agree(USER_ID, new TermsAgreementRequest(
-                true,
-                true,
-                true,
-                true,
-                false,
-                true,
-                true
+        service.agree(USER_ID, Map.of(
+                TermsType.SERVICE_TERMS, true,
+                TermsType.PRIVACY_POLICY, true,
+                TermsType.LOCATION_TERMS, true,
+                TermsType.LOCATION_COLLECTION, true,
+                TermsType.MARKETING, false,
+                TermsType.PUSH_NOTIFICATION, true,
+                TermsType.AGE_CONFIRMATION, true
         ));
 
         verify(termsAgreementRepository, times(7))
