@@ -42,11 +42,23 @@ public class EmailVerificationService {
     // 비밀번호 재설정 인증 코드 전송 기능
     public void sendPasswordResetVerificationCode(PasswordResetSendRequest request) {
         String email = EmailNormalizer.normalize(request.email());
+        emailVerificationStore.prepareSend(EmailVerificationPurpose.PASSWORD_RESET, email);
+
         if (authUserReader.findLocalByEmailForPasswordReset(email).isEmpty()) {
             return;
         }
 
-        sendVerificationCode(EmailVerificationPurpose.PASSWORD_RESET, email);
+        String verificationCode = codeGenerator.generate();
+        emailVerificationStore.saveCode(
+                EmailVerificationPurpose.PASSWORD_RESET,
+                email,
+                verificationCode
+        );
+        sendVerificationEmail(
+                EmailVerificationPurpose.PASSWORD_RESET,
+                email,
+                verificationCode
+        );
     }
 
     // 이메일 인증 코드 확인 기능

@@ -146,10 +146,16 @@ class EmailVerificationServiceTests {
                 new PasswordResetSendRequest(EMAIL)
         );
 
-        verify(emailVerificationStore, never()).prepareSend(
+        verify(emailVerificationStore).prepareSend(
                 EmailVerificationPurpose.PASSWORD_RESET,
                 EMAIL
         );
+        verify(emailVerificationStore, never()).saveCode(
+                EmailVerificationPurpose.PASSWORD_RESET,
+                EMAIL,
+                "123456"
+        );
+        verify(verificationMailSender, never()).send(EMAIL, "123456");
     }
 
     // OAuth 이메일 비밀번호 재설정 인증 코드 전송 성공 응답 검증
@@ -162,10 +168,16 @@ class EmailVerificationServiceTests {
                 new PasswordResetSendRequest(EMAIL)
         );
 
-        verify(emailVerificationStore, never()).prepareSend(
+        verify(emailVerificationStore).prepareSend(
                 EmailVerificationPurpose.PASSWORD_RESET,
                 EMAIL
         );
+        verify(emailVerificationStore, never()).saveCode(
+                EmailVerificationPurpose.PASSWORD_RESET,
+                EMAIL,
+                "123456"
+        );
+        verify(verificationMailSender, never()).send(EMAIL, "123456");
     }
 
     // 인증 코드 확인 Store 위임 검증
