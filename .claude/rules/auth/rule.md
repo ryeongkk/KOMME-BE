@@ -14,7 +14,7 @@ KOMME의 로그인/회원가입(이메일, 구글, 애플)을 담당하는 패�
 - 이메일 인증 Redis 키는 목적(`SIGN_UP`, `PASSWORD_RESET`)별로 분리한다. 회원가입은 인증 완료 플래그를 사용하고, 비밀번호 재설정은 인증 성공 시 짧은 TTL의 일회성 reset token을 발급해 `token -> email` 매핑으로만 최종 변경을 허용한다.
 - 비밀번호 재설정은 가입된 `LOCAL` 계정에만 허용하고, 성공 시 모든 Refresh Token을 폐기한다.
 - 계정 탈퇴는 `LOCAL`/OAuth 공통으로 허용한다. 탈퇴 시 사용자 관련 자식 row를 먼저 삭제한 뒤 `User`를 하드 삭제하고, 모든 Refresh Token 폐기와 현재 Access Token 블랙리스트 등록을 수행한다. 탈퇴 이메일은 Redis에 7일간 기록해 동일 이메일 재가입을 차단한다.
-- `service` 패키지는 성격별로 서브패키지를 나눈다: 토큰/세션 Redis 스토어(`RefreshTokenStore`, `AccessTokenBlacklistStore`, `WithdrawalStore`, `AuthTokenService`)는 `service.token`에, 이메일 인증(`EmailVerificationService`, `EmailVerificationStore`, `EmailVerificationCodeGenerator`, `VerificationMailSender`)은 `service.email`에 둔다. 핵심 오케스트레이션(`AuthService`, `OAuthService`, `OAuthAccountService`, `AuthUserReader`)과 예외 매핑(`AuthConstraintExceptionMapper`)은 `service` 루트에 유지한다.
+- `service` 패키지는 성격별로 서브패키지를 나눈다: 토큰/세션 Redis 스토어(`RefreshTokenStore`, `AccessTokenBlacklistStore`, `WithdrawalStore`, `AuthTokenService`)는 `service.token`에, 이메일 인증(`EmailVerificationService`, `EmailVerificationStore`, `EmailVerificationCodeGenerator`, `VerificationMailSender`)은 `service.email`에, 구글/애플 OAuth 로그인(`OAuthService`, `OAuthAccountService`)은 `service.oauth`에 둔다. 핵심 오케스트레이션(`AuthService`, `AuthUserReader`)과 공용 예외 매핑(`AuthConstraintExceptionMapper`, LOCAL/OAuth 양쪽에서 재사용)은 `service` 루트에 유지한다.
 - 구글/애플 로그인은 클라이언트가 보낸 사용자 정보를 그대로 신뢰하지 않고, 서버에서 provider의 idToken/identity token을 검증한 결과만 사용한다.
 - 애플은 이메일이 최초 로그인 시에만 제공될 수 있다 — 이후 로그인에서 이메일이 없는 케이스를 처리한다.
 - JWT 시크릿, OAuth 클라이언트 시크릿 등은 `application.yaml`/환경변수로 주입한다. 코드나 커밋에 하드코딩하지 않는다.

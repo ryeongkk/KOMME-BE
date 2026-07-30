@@ -1,4 +1,4 @@
-package com.komme.domain.auth.service;
+package com.komme.domain.auth.service.oauth;
 
 import com.komme.common.exception.GeneralException;
 import com.komme.domain.auth.client.OAuthAppleClient;

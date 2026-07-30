@@ -7,7 +7,7 @@ import com.komme.domain.auth.dto.request.OAuthAppleLoginRequest;
 import com.komme.domain.auth.dto.request.OAuthGoogleLoginRequest;
 import com.komme.domain.auth.dto.request.OAuthProfileCompleteRequest;
 import com.komme.domain.auth.dto.response.LoginResponse;
-import com.komme.domain.auth.service.OAuthService;
+import com.komme.domain.auth.service.oauth.OAuthService;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RequestMapping;
