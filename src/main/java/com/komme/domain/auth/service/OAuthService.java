@@ -11,6 +11,7 @@ import com.komme.domain.auth.dto.response.LoginResponse;
 import com.komme.domain.user.entity.User;
 import com.komme.domain.user.enums.Provider;
 import com.komme.domain.auth.exception.AuthErrorStatus;
+import com.komme.domain.auth.service.token.AuthTokenService;
 import com.komme.domain.user.repository.UserRepository;
 import com.komme.domain.user.service.UserReader;
 import com.komme.domain.i18n.enums.Language;

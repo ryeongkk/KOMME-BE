@@ -3,7 +3,7 @@ package com.komme.domain.auth.jwt;
 import com.komme.common.exception.GeneralException;
 import com.komme.domain.auth.exception.AuthErrorStatus;
 import com.komme.domain.auth.jwt.JwtProvider.TokenClaims;
-import com.komme.domain.auth.service.AccessTokenBlacklistStore;
+import com.komme.domain.auth.service.token.AccessTokenBlacklistStore;
 
 import java.io.IOException;
 import java.util.List;

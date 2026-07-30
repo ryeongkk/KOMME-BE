@@ -21,7 +21,7 @@ import com.komme.domain.auth.dto.response.TokenReissueResponse;
 import com.komme.domain.auth.exception.AuthErrorStatus;
 import com.komme.domain.auth.jwt.JwtProvider.TokenClaims;
 import com.komme.domain.auth.service.AuthService;
-import com.komme.domain.auth.service.EmailVerificationService;
+import com.komme.domain.auth.service.email.EmailVerificationService;
 import com.komme.domain.user.service.TermsAgreementService;
 
 import org.springframework.http.ResponseEntity;
