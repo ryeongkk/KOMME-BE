@@ -124,7 +124,7 @@ public interface AuthControllerDocs {
     // 비밀번호 재설정 인증 코드 전송 API
     @Operation(
             summary = "비밀번호 재설정 인증 코드 전송",
-            description = "가입된 LOCAL 계정 이메일로 비밀번호 재설정 인증 코드를 전송합니다."
+            description = "비밀번호 재설정 인증 코드 전송 요청을 처리합니다. 가입된 LOCAL 계정인 경우에만 실제 인증 코드가 발송됩니다."
     )
     @io.swagger.v3.oas.annotations.responses.ApiResponse(
             responseCode = "200",
@@ -138,11 +138,6 @@ public interface AuthControllerDocs {
             responseCode = "400",
             description = "이메일 입력값 오류",
             content = @Content(examples = @ExampleObject(value = AuthApiExamples.BAD_REQUEST))
-    )
-    @io.swagger.v3.oas.annotations.responses.ApiResponse(
-            responseCode = "404",
-            description = "가입된 LOCAL 이메일 없음",
-            content = @Content(examples = @ExampleObject(value = AuthApiExamples.EMAIL_NOT_REGISTERED))
     )
     @io.swagger.v3.oas.annotations.responses.ApiResponse(
             responseCode = "429",

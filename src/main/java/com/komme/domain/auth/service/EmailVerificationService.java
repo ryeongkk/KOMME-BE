@@ -9,8 +9,6 @@ import com.komme.domain.auth.dto.response.PasswordResetTokenResponse;
 import com.komme.domain.auth.enums.EmailVerificationPurpose;
 import com.komme.domain.auth.exception.AuthErrorStatus;
 import com.komme.domain.auth.util.EmailNormalizer;
-import com.komme.domain.user.entity.User;
-import com.komme.domain.user.enums.Provider;
 import com.komme.domain.user.repository.UserRepository;
 
 import java.security.SecureRandom;
@@ -29,6 +27,7 @@ public class EmailVerificationService {
     private static final SecureRandom SECURE_RANDOM = new SecureRandom();
 
     private final UserRepository userRepository;
+    private final AuthUserReader authUserReader;
     private final EmailVerificationStore emailVerificationStore;
     private final EmailVerificationCodeGenerator codeGenerator;
     private final VerificationMailSender verificationMailSender;
@@ -43,7 +42,10 @@ public class EmailVerificationService {
     // 비밀번호 재설정 인증 코드 전송 기능
     public void sendPasswordResetVerificationCode(PasswordResetSendRequest request) {
         String email = EmailNormalizer.normalize(request.email());
-        validateLocalEmailRegistered(email);
+        if (authUserReader.findLocalByEmailForPasswordReset(email).isEmpty()) {
+            return;
+        }
+
         sendVerificationCode(EmailVerificationPurpose.PASSWORD_RESET, email);
     }
 
@@ -84,16 +86,6 @@ public class EmailVerificationService {
     private void validateEmailNotRegistered(String email) {
         if (userRepository.existsByEmail(email)) {
             throw new GeneralException(AuthErrorStatus.EMAIL_ALREADY_EXISTS);
-        }
-    }
-
-    // 가입된 LOCAL 이메일 여부 확인 기능
-    private void validateLocalEmailRegistered(String email) {
-        User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new GeneralException(AuthErrorStatus.EMAIL_NOT_REGISTERED));
-
-        if (user.getProvider() != Provider.LOCAL) {
-            throw new GeneralException(AuthErrorStatus.EMAIL_NOT_REGISTERED);
         }
     }
 

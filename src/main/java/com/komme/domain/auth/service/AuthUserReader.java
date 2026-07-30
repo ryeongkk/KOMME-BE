@@ -6,6 +6,8 @@ import com.komme.domain.user.entity.User;
 import com.komme.domain.user.enums.Provider;
 import com.komme.domain.user.service.UserReader;
 
+import java.util.Optional;
+
 import org.springframework.stereotype.Service;
 
 import lombok.RequiredArgsConstructor;
@@ -25,9 +27,14 @@ public class AuthUserReader {
 
     // 비밀번호 재설정용 LOCAL 이메일 사용자 필수 조회 기능
     public User findLocalByEmailForPasswordResetOrThrow(String email) {
-        User user = userReader.findByEmail(email)
+        return findLocalByEmailForPasswordReset(email)
                 .orElseThrow(() -> new GeneralException(AuthErrorStatus.EMAIL_NOT_REGISTERED));
-        return validateLocalUser(user, AuthErrorStatus.EMAIL_NOT_REGISTERED);
+    }
+
+    // 비밀번호 재설정용 LOCAL 이메일 사용자 조회 기능
+    public Optional<User> findLocalByEmailForPasswordReset(String email) {
+        return userReader.findByEmail(email)
+                .filter(user -> user.getProvider() == Provider.LOCAL);
     }
 
     // LOCAL ID 사용자 필수 조회 기능

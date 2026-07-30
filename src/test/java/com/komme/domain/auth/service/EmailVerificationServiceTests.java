@@ -10,7 +10,6 @@ import com.komme.domain.auth.enums.EmailVerificationPurpose;
 import com.komme.domain.auth.exception.AuthErrorStatus;
 import com.komme.domain.user.entity.User;
 import com.komme.domain.user.enums.Gender;
-import com.komme.domain.user.enums.Provider;
 import com.komme.domain.user.enums.ServiceInterest;
 import com.komme.domain.user.repository.UserRepository;
 import com.komme.i18n.enums.Language;
@@ -40,6 +39,9 @@ class EmailVerificationServiceTests {
     private UserRepository userRepository;
 
     @Mock
+    private AuthUserReader authUserReader;
+
+    @Mock
     private EmailVerificationStore emailVerificationStore;
 
     @Mock
@@ -55,6 +57,7 @@ class EmailVerificationServiceTests {
     void setUp() {
         emailVerificationService = new EmailVerificationService(
                 userRepository,
+                authUserReader,
                 emailVerificationStore,
                 codeGenerator,
                 verificationMailSender
@@ -113,7 +116,8 @@ class EmailVerificationServiceTests {
     @Test
     void sendPasswordResetVerificationCodeCoordinatesDependencies() {
         User user = createLocalUser();
-        when(userRepository.findByEmail(EMAIL)).thenReturn(Optional.of(user));
+        when(authUserReader.findLocalByEmailForPasswordReset(EMAIL))
+                .thenReturn(Optional.of(user));
         when(codeGenerator.generate()).thenReturn("123456");
 
         emailVerificationService.sendPasswordResetVerificationCode(
@@ -132,17 +136,15 @@ class EmailVerificationServiceTests {
         verify(verificationMailSender).send(EMAIL, "123456");
     }
 
-    // 미가입 이메일 비밀번호 재설정 인증 코드 전송 거부 검증
+    // 미가입 이메일 비밀번호 재설정 인증 코드 전송 성공 응답 검증
     @Test
-    void sendPasswordResetVerificationCodeRejectsUnregisteredEmail() {
-        when(userRepository.findByEmail(EMAIL)).thenReturn(Optional.empty());
+    void sendPasswordResetVerificationCodeIgnoresUnregisteredEmail() {
+        when(authUserReader.findLocalByEmailForPasswordReset(EMAIL))
+                .thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> emailVerificationService.sendPasswordResetVerificationCode(
+        emailVerificationService.sendPasswordResetVerificationCode(
                 new PasswordResetSendRequest(EMAIL)
-        ))
-                .isInstanceOf(GeneralException.class)
-                .extracting(exception -> ((GeneralException) exception).getErrorStatus())
-                .isEqualTo(AuthErrorStatus.EMAIL_NOT_REGISTERED);
+        );
 
         verify(emailVerificationStore, never()).prepareSend(
                 EmailVerificationPurpose.PASSWORD_RESET,
@@ -150,18 +152,20 @@ class EmailVerificationServiceTests {
         );
     }
 
-    // OAuth 이메일 비밀번호 재설정 인증 코드 전송 거부 검증
+    // OAuth 이메일 비밀번호 재설정 인증 코드 전송 성공 응답 검증
     @Test
-    void sendPasswordResetVerificationCodeRejectsOAuthEmail() {
-        when(userRepository.findByEmail(EMAIL))
-                .thenReturn(Optional.of(User.createOAuth(EMAIL, Provider.GOOGLE)));
+    void sendPasswordResetVerificationCodeIgnoresOAuthEmail() {
+        when(authUserReader.findLocalByEmailForPasswordReset(EMAIL))
+                .thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> emailVerificationService.sendPasswordResetVerificationCode(
+        emailVerificationService.sendPasswordResetVerificationCode(
                 new PasswordResetSendRequest(EMAIL)
-        ))
-                .isInstanceOf(GeneralException.class)
-                .extracting(exception -> ((GeneralException) exception).getErrorStatus())
-                .isEqualTo(AuthErrorStatus.EMAIL_NOT_REGISTERED);
+        );
+
+        verify(emailVerificationStore, never()).prepareSend(
+                EmailVerificationPurpose.PASSWORD_RESET,
+                EMAIL
+        );
     }
 
     // 인증 코드 확인 Store 위임 검증
