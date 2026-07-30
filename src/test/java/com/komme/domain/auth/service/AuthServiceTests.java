@@ -4,6 +4,7 @@ import com.komme.common.exception.GeneralException;
 import com.komme.domain.auth.dto.request.LoginRequest;
 import com.komme.domain.auth.dto.request.LogoutRequest;
 import com.komme.domain.auth.dto.request.PasswordChangeRequest;
+import com.komme.domain.auth.dto.request.PasswordResetRequest;
 import com.komme.domain.auth.dto.request.SignUpRequest;
 import com.komme.domain.auth.dto.request.TokenReissueRequest;
 import com.komme.domain.auth.dto.response.LoginResponse;
@@ -285,6 +286,47 @@ class AuthServiceTests {
                 .isInstanceOf(GeneralException.class)
                 .extracting(exception -> ((GeneralException) exception).getErrorStatus())
                 .isEqualTo(AuthErrorStatus.INVALID_CURRENT_PASSWORD);
+    }
+
+    // 비밀번호 재설정과 전체 Refresh Token 폐기 검증
+    @Test
+    @SuppressWarnings("unchecked")
+    void resetPasswordUpdatesPasswordAndDeletesRefreshTokens() {
+        prepareSetOperations();
+        User user = org.mockito.Mockito.mock(User.class);
+        when(user.getId()).thenReturn(USER_ID);
+        when(emailVerificationService.consumePasswordResetToken("reset-token")).thenReturn(EMAIL);
+        when(authUserReader.findLocalByEmailForPasswordResetOrThrow(EMAIL)).thenReturn(user);
+        when(passwordEncoder.encode("newpassword2!")).thenReturn("new-encoded-password");
+        when(setOperations.members(JwtRedisKeys.userRefreshTokens(USER_ID)))
+                .thenReturn(Set.of("refresh-id-1", "refresh-id-2"));
+
+        authService.resetPassword(new PasswordResetRequest("reset-token", "newpassword2!"));
+
+        verify(user).changePassword("new-encoded-password");
+        ArgumentCaptor<Collection<String>> keysCaptor = ArgumentCaptor.forClass(Collection.class);
+        verify(redisTemplate).delete(keysCaptor.capture());
+        assertThat(keysCaptor.getValue()).containsExactlyInAnyOrder(
+                JwtRedisKeys.refreshToken("refresh-id-1"),
+                JwtRedisKeys.refreshToken("refresh-id-2")
+        );
+        verify(redisTemplate).delete(JwtRedisKeys.userRefreshTokens(USER_ID));
+    }
+
+    // 유효하지 않은 비밀번호 재설정 토큰 거부 검증
+    @Test
+    void resetPasswordRejectsInvalidResetToken() {
+        when(emailVerificationService.consumePasswordResetToken("invalid-token"))
+                .thenThrow(new GeneralException(AuthErrorStatus.INVALID_RESET_TOKEN));
+
+        assertThatThrownBy(() -> authService.resetPassword(
+                new PasswordResetRequest("invalid-token", "newpassword2!")
+        ))
+                .isInstanceOf(GeneralException.class)
+                .extracting(exception -> ((GeneralException) exception).getErrorStatus())
+                .isEqualTo(AuthErrorStatus.INVALID_RESET_TOKEN);
+
+        verify(authUserReader, never()).findLocalByEmailForPasswordResetOrThrow(any());
     }
 
     // 현재 기기 Refresh Token 폐기와 Access Token 블랙리스트 검증

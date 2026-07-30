@@ -23,6 +23,13 @@ public class AuthUserReader {
         return validateLocalUser(user, AuthErrorStatus.INVALID_CREDENTIALS);
     }
 
+    // 비밀번호 재설정용 LOCAL 이메일 사용자 필수 조회 기능
+    public User findLocalByEmailForPasswordResetOrThrow(String email) {
+        User user = userReader.findByEmail(email)
+                .orElseThrow(() -> new GeneralException(AuthErrorStatus.EMAIL_NOT_REGISTERED));
+        return validateLocalUser(user, AuthErrorStatus.EMAIL_NOT_REGISTERED);
+    }
+
     // LOCAL ID 사용자 필수 조회 기능
     public User findLocalByIdOrThrow(Long userId) {
         User user = userReader.findById(userId)
