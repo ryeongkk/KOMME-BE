@@ -1,4 +1,4 @@
-package com.komme.i18n.enums;
+package com.komme.domain.i18n.enums;
 
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;

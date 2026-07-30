@@ -1,6 +1,6 @@
 ---
 paths:
-  - "src/main/java/com/komme/spot/**"
+  - "src/main/java/com/komme/domain/spot/**"
 ---
 
 # spot 도메인 규칙

@@ -3,7 +3,7 @@ package com.komme.domain.user.dto.response;
 import com.komme.domain.user.entity.User;
 import com.komme.domain.user.enums.Provider;
 import com.komme.domain.user.enums.TermsType;
-import com.komme.i18n.enums.Language;
+import com.komme.domain.i18n.enums.Language;
 
 import java.util.Map;
 

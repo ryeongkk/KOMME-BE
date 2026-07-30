@@ -17,7 +17,7 @@ import com.komme.domain.auth.exception.AuthErrorStatus;
 import com.komme.domain.auth.repository.OAuthAccountRepository;
 import com.komme.domain.user.repository.UserRepository;
 import com.komme.domain.user.service.UserReader;
-import com.komme.i18n.enums.Language;
+import com.komme.domain.i18n.enums.Language;
 
 import java.util.Optional;
 import java.util.Set;

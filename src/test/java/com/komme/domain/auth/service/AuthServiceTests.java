@@ -19,7 +19,7 @@ import com.komme.domain.auth.jwt.JwtProvider.TokenClaims;
 import com.komme.domain.auth.jwt.JwtRedisKeys;
 import com.komme.domain.user.repository.UserRepository;
 import com.komme.domain.user.service.UserReader;
-import com.komme.i18n.enums.Language;
+import com.komme.domain.i18n.enums.Language;
 
 import java.time.Duration;
 import java.time.Instant;

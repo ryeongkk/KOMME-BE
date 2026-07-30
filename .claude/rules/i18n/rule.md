@@ -1,6 +1,6 @@
 ---
 paths:
-  - "src/main/java/com/komme/i18n/**"
+  - "src/main/java/com/komme/domain/i18n/**"
 ---
 
 # i18n 도메인 규칙
