@@ -2,6 +2,7 @@ package com.komme.domain.auth.dto.request;
 
 import com.komme.domain.user.enums.Gender;
 import com.komme.domain.user.enums.ServiceInterest;
+import com.komme.domain.user.util.NicknamePolicy;
 import com.komme.i18n.enums.Language;
 
 import java.util.Set;
@@ -10,11 +11,10 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
-import jakarta.validation.constraints.Size;
 
 public record OAuthProfileCompleteRequest(
         @NotBlank(message = "닉네임은 필수입니다.")
-        @Size(max = 20, message = "닉네임은 20자 이하여야 합니다.")
+        @Pattern(regexp = NicknamePolicy.PATTERN, message = NicknamePolicy.MESSAGE)
         String nickname,
 
         @NotBlank(message = "국적은 필수입니다.")
