@@ -26,8 +26,6 @@ import java.util.Locale;
 import java.util.Set;
 
 import org.springframework.dao.DataIntegrityViolationException;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -125,8 +123,7 @@ public class AuthService {
 
     // 로그인 사용자 계정 탈퇴 기능
     @Transactional
-    public void withdraw(Long userId) {
-        TokenClaims accessTokenClaims = resolveAccessTokenClaims();
+    public void withdraw(Long userId, TokenClaims accessTokenClaims) {
         User user = userReader.findByIdOrThrow(userId);
         String email = user.getEmail();
 
@@ -137,17 +134,6 @@ public class AuthService {
         refreshTokenStore.invalidateAll(userId);
         accessTokenBlacklistStore.blacklist(accessTokenClaims);
         withdrawalStore.markWithdrawn(email);
-    }
-
-    // SecurityContext Access Token 세부정보 조회 기능
-    private TokenClaims resolveAccessTokenClaims() {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        if (authentication != null
-                && authentication.getDetails() instanceof TokenClaims tokenClaims) {
-            return tokenClaims;
-        }
-
-        throw new GeneralException(AuthErrorStatus.INVALID_TOKEN);
     }
 
     // 회원가입 입력값 정규화 기능

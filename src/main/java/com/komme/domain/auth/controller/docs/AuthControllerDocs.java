@@ -454,6 +454,7 @@ public interface AuthControllerDocs {
     )
     @DeleteMapping("/withdraw")
     ResponseEntity<ApiResponse<Void>> withdraw(
-            @Parameter(hidden = true) @AuthenticationPrincipal Long userId
+            @Parameter(hidden = true) @AuthenticationPrincipal Long userId,
+            @Parameter(hidden = true) Authentication authentication
     );
 }

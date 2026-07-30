@@ -141,8 +141,12 @@ public class AuthController implements AuthControllerDocs {
 
     // 계정 탈퇴 API
     @Override
-    public ResponseEntity<ApiResponse<Void>> withdraw(Long userId) {
-        authService.withdraw(userId);
+    public ResponseEntity<ApiResponse<Void>> withdraw(
+            Long userId,
+            Authentication authentication
+    ) {
+        TokenClaims tokenClaims = resolveTokenClaims(authentication);
+        authService.withdraw(userId, tokenClaims);
         return ApiResponse.success(SuccessStatus.COMMON_SUCCESS_STATUS);
     }
 

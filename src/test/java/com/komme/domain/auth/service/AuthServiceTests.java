@@ -26,11 +26,9 @@ import com.komme.domain.i18n.enums.Language;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.Collection;
-import java.util.List;
 import java.util.Set;
 
 import org.hibernate.exception.ConstraintViolationException;
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -41,8 +39,6 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.redis.core.SetOperations;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.core.ValueOperations;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -117,12 +113,6 @@ class AuthServiceTests {
                 new WithdrawalStore(redisTemplate),
                 new AuthConstraintExceptionMapper()
         );
-    }
-
-    // 인증 컨텍스트 정리 기능
-    @AfterEach
-    void tearDown() {
-        SecurityContextHolder.clearContext();
     }
 
     // 회원가입 정규화와 LOCAL 사용자 저장 검증
@@ -427,12 +417,11 @@ class AuthServiceTests {
                 "access-id",
                 Instant.now().plus(ACCESS_EXPIRATION)
         );
-        prepareSecurityContext(accessClaims);
         when(userReader.findByIdOrThrow(USER_ID)).thenReturn(user);
         when(setOperations.members(JwtRedisKeys.userRefreshTokens(USER_ID)))
                 .thenReturn(Set.of("refresh-id-1", "refresh-id-2"));
 
-        authService.withdraw(USER_ID);
+        authService.withdraw(USER_ID, accessClaims);
 
         verify(oAuthAccountRepository).deleteAllByUserId(USER_ID);
         verify(termsAgreementRepository).deleteAllByUserId(USER_ID);
@@ -467,12 +456,11 @@ class AuthServiceTests {
                 "access-id",
                 Instant.now().plus(ACCESS_EXPIRATION)
         );
-        prepareSecurityContext(accessClaims);
         when(userReader.findByIdOrThrow(USER_ID)).thenReturn(user);
         when(setOperations.members(JwtRedisKeys.userRefreshTokens(USER_ID)))
                 .thenReturn(Set.of());
 
-        authService.withdraw(USER_ID);
+        authService.withdraw(USER_ID, accessClaims);
 
         verify(oAuthAccountRepository).deleteAllByUserId(USER_ID);
         verify(termsAgreementRepository).deleteAllByUserId(USER_ID);
@@ -522,18 +510,6 @@ class AuthServiceTests {
                 Language.ENGLISH,
                 Set.of(ServiceInterest.COURSE)
         );
-    }
-
-    // Access Token 세부정보 인증 컨텍스트 구성 기능
-    private void prepareSecurityContext(TokenClaims tokenClaims) {
-        UsernamePasswordAuthenticationToken authentication =
-                new UsernamePasswordAuthenticationToken(
-                        tokenClaims.userId(),
-                        null,
-                        List.of()
-                );
-        authentication.setDetails(tokenClaims);
-        SecurityContextHolder.getContext().setAuthentication(authentication);
     }
 
     // Hibernate unique 제약조건 예외 생성
