@@ -38,4 +38,9 @@ public class UserReader {
         return userRepository.existsById(userId);
     }
 
+    // 사용자 닉네임 존재 여부 조회 기능
+    public boolean existsByNickname(String nickname) {
+        return userRepository.existsByNickname(nickname);
+    }
+
 }

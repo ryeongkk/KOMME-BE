@@ -17,6 +17,7 @@ import com.komme.domain.auth.jwt.JwtProvider;
 import com.komme.domain.auth.jwt.JwtProvider.TokenClaims;
 import com.komme.domain.user.repository.UserRepository;
 import com.komme.domain.auth.util.EmailNormalizer;
+import com.komme.domain.user.service.UserReader;
 import com.komme.i18n.enums.Language;
 
 import java.util.Locale;
@@ -34,6 +35,7 @@ import lombok.RequiredArgsConstructor;
 public class AuthService {
 
     private final UserRepository userRepository;
+    private final UserReader userReader;
     private final AuthUserReader authUserReader;
     private final EmailVerificationService emailVerificationService;
     private final PasswordEncoder passwordEncoder;
@@ -164,7 +166,7 @@ public class AuthService {
 
     // 가입된 닉네임 여부 확인 기능
     private void validateNicknameNotRegistered(String nickname) {
-        if (userRepository.existsByNickname(nickname)) {
+        if (userReader.existsByNickname(nickname)) {
             throw new GeneralException(AuthErrorStatus.NICKNAME_ALREADY_EXISTS);
         }
     }

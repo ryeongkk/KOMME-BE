@@ -4,6 +4,8 @@ import com.komme.common.base.status.BaseStatus;
 import com.komme.common.base.status.ErrorStatus;
 import com.komme.common.response.ApiResponse;
 
+import jakarta.validation.ConstraintViolationException;
+
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
@@ -40,6 +42,21 @@ public class GeneralExceptionAdvice extends ResponseEntityExceptionHandler {
         String errorMessage = "잘못된 요청입니다: " + e.getMessage();
         log.error("[*] IllegalArgumentException :", e);
         return ApiResponse.error(ErrorStatus.BAD_REQUEST, errorMessage);
+    }
+
+    // 요청 파라미터 검증 실패 시 발생하는 예외를 400 에러로 변환하여 응답
+    @ExceptionHandler(ConstraintViolationException.class)
+    public ResponseEntity<ApiResponse<Void>> handleConstraintViolationException(
+            ConstraintViolationException e
+    ) {
+        BaseStatus errorStatus = ErrorStatus.BAD_REQUEST;
+        String errorMessage = e.getConstraintViolations().stream()
+                .map(violation -> violation.getPropertyPath() + ": " + violation.getMessage())
+                .findFirst()
+                .orElse(errorStatus.getMessage());
+
+        log.warn("[*] ConstraintViolationException : {}", errorMessage);
+        return ApiResponse.error(errorStatus, errorMessage);
     }
 
     // null 참조로 발생한 서버 오류를 500 에러로 응답

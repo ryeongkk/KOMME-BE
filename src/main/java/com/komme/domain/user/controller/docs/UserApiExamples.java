@@ -25,6 +25,17 @@ public final class UserApiExamples {
             }
             """;
 
+    public static final String NICKNAME_AVAILABILITY_SUCCESS = """
+            {
+              "isSuccess": true,
+              "code": "COM_200",
+              "message": "성공적으로 처리되었습니다.",
+              "data": {
+                "available": true
+              }
+            }
+            """;
+
     public static final String BAD_REQUEST = """
             {
               "isSuccess": false,
