@@ -49,7 +49,7 @@ When adding a new feature area, follow this existing pattern: entities extend `B
 
 ### Domain packages
 
-KOMME-BE implements the "2026 관광데이터 활용 공모전" proposal: a daily-course curation service for foreign visitors ("한국인처럼 살아보기"). `auth`와 `user`는 이미 구현되어 있고, 나머지(course/spot/tourapi/i18n)는 아직 `com.komme` 아래 존재하지 않는다. 각 도메인이 따라야 할 컨벤션은 `.claude/agents/{domain}/agent.md`(특화 서브에이전트)와 `.claude/rules/{domain}/rule.md`(`src/main/java/com/komme/{domain}/**`가 존재하면 자동 로드되는 경로 스코프 규칙)에 도메인별로 문서화되어 있다:
+KOMME-BE implements the "2026 관광데이터 활용 공모전" proposal: a daily-course curation service for foreign visitors ("한국인처럼 살아보기"). `auth`, `user`, `i18n`은 이미 구현되어 있고, 나머지(course/spot/tourapi)는 아직 `com.komme.domain` 아래 존재하지 않는다. 각 도메인이 따라야 할 컨벤션은 `.claude/agents/{domain}/agent.md`(특화 서브에이전트)와 `.claude/rules/{domain}/rule.md`(`src/main/java/com/komme/domain/{domain}/**`가 존재하면 자동 로드되는 경로 스코프 규칙)에 도메인별로 문서화되어 있다:
 
 - **`course`** — 맞춤형 데일리 코스 생성, 즉시 체험 추천 (지역/주제/체류시간 기반 시간대별 코스)
 - **`spot`** — 관광지/장소(스팟) 도메인 모델, 카테고리, 위치 기반 조회

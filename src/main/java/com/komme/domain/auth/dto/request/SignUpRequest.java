@@ -4,7 +4,7 @@ import com.komme.domain.auth.util.PasswordPolicy;
 import com.komme.domain.user.enums.Gender;
 import com.komme.domain.user.enums.ServiceInterest;
 import com.komme.domain.user.util.NicknamePolicy;
-import com.komme.i18n.enums.Language;
+import com.komme.domain.i18n.enums.Language;
 
 import java.util.Set;
 

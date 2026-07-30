@@ -12,7 +12,7 @@ import com.komme.domain.user.entity.User;
 import com.komme.domain.user.enums.Gender;
 import com.komme.domain.user.enums.ServiceInterest;
 import com.komme.domain.user.repository.UserRepository;
-import com.komme.i18n.enums.Language;
+import com.komme.domain.i18n.enums.Language;
 
 import java.util.Optional;
 import java.util.Set;

@@ -1,6 +1,6 @@
 ---
 paths:
-  - "src/main/java/com/komme/course/**"
+  - "src/main/java/com/komme/domain/course/**"
 ---
 
 # course 도메인 규칙

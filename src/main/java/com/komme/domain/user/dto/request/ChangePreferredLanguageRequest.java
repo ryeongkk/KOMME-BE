@@ -1,6 +1,6 @@
 package com.komme.domain.user.dto.request;
 
-import com.komme.i18n.enums.Language;
+import com.komme.domain.i18n.enums.Language;
 
 import jakarta.validation.constraints.NotNull;
 

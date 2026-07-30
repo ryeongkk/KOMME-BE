@@ -1,6 +1,6 @@
 ---
 paths:
-  - "src/main/java/com/komme/tourapi/**"
+  - "src/main/java/com/komme/domain/tourapi/**"
 ---
 
 # tourapi 도메인 규칙
