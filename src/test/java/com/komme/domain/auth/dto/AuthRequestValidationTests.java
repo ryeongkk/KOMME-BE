@@ -70,6 +70,22 @@ class AuthRequestValidationTests {
         assertThat(propertyNames(validator.validate(request))).contains("password");
     }
 
+    // 회원가입 요청 특수문자 포함 비밀번호 허용 검증
+    @Test
+    void signUpRequestAcceptsSpecialCharacterPassword() {
+        SignUpRequest request = new SignUpRequest(
+                "user@example.com",
+                "newpassword2!",
+                "nickname",
+                "KR",
+                Gender.FEMALE,
+                Language.ENGLISH,
+                Set.of(ServiceInterest.COURSE)
+        );
+
+        assertThat(propertyNames(validator.validate(request))).doesNotContain("password");
+    }
+
     // 잘못된 국적과 필수 선택값 거부 검증
     @Test
     void signUpRequestRejectsInvalidProfileValues() {
@@ -145,6 +161,14 @@ class AuthRequestValidationTests {
         PasswordChangeRequest request = new PasswordChangeRequest("password1", "onlyletters");
 
         assertThat(propertyNames(validator.validate(request))).contains("newPassword");
+    }
+
+    // 비밀번호 변경 요청 특수문자 포함 비밀번호 허용 검증
+    @Test
+    void passwordChangeRequestAcceptsSpecialCharacterPassword() {
+        PasswordChangeRequest request = new PasswordChangeRequest("password1", "newpassword2!");
+
+        assertThat(validator.validate(request)).isEmpty();
     }
 
     // 비밀번호 재설정 이메일 인증 요청 입력값 검증
