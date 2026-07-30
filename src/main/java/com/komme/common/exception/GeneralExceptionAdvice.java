@@ -51,7 +51,9 @@ public class GeneralExceptionAdvice extends ResponseEntityExceptionHandler {
     ) {
         BaseStatus errorStatus = ErrorStatus.BAD_REQUEST;
         String errorMessage = e.getConstraintViolations().stream()
-                .map(violation -> violation.getPropertyPath() + ": " + violation.getMessage())
+                .map(violation -> extractFieldName(violation.getPropertyPath().toString())
+                        + ": "
+                        + violation.getMessage())
                 .findFirst()
                 .orElse(errorStatus.getMessage());
 
@@ -108,6 +110,16 @@ public class GeneralExceptionAdvice extends ResponseEntityExceptionHandler {
                 errorMessage,
                 null
         );
+    }
+
+    // 검증 실패 경로의 필드명 추출 기능
+    private String extractFieldName(String propertyPath) {
+        int lastDotIndex = propertyPath.lastIndexOf('.');
+        if (lastDotIndex < 0) {
+            return propertyPath;
+        }
+
+        return propertyPath.substring(lastDotIndex + 1);
     }
 
 }

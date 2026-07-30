@@ -134,7 +134,7 @@ class UserProfileServiceTests {
         when(userReader.existsByNickname("nickname")).thenReturn(false);
 
         NicknameAvailabilityResponse response =
-                userProfileService.getNicknameAvailability(" nickname ");
+                userProfileService.getNicknameAvailability("nickname");
 
         assertThat(response.available()).isTrue();
     }

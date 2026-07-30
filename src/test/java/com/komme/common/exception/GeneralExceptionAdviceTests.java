@@ -53,7 +53,8 @@ class GeneralExceptionAdviceTests {
         assertThat(response.getStatusCode()).isEqualTo(ErrorStatus.BAD_REQUEST.getHttpStatus());
         assertThat(response.getBody()).isNotNull();
         assertThat(response.getBody().getCode()).isEqualTo(ErrorStatus.BAD_REQUEST.getCode());
-        assertThat(response.getBody().getMessage()).contains(NicknamePolicy.MESSAGE);
+        assertThat(response.getBody().getMessage())
+                .isEqualTo("nickname: " + NicknamePolicy.MESSAGE);
     }
 
     private record NicknameParameter(

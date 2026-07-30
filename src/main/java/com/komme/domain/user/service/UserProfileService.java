@@ -51,7 +51,7 @@ public class UserProfileService {
     // 닉네임 사용 가능 여부 조회 기능
     @Transactional(readOnly = true)
     public NicknameAvailabilityResponse getNicknameAvailability(String nickname) {
-        boolean available = !userReader.existsByNickname(nickname.trim());
+        boolean available = !userReader.existsByNickname(nickname);
         return NicknameAvailabilityResponse.of(available);
     }
 
