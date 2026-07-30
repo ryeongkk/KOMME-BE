@@ -141,6 +141,14 @@ public final class AuthApiExamples {
             }
             """;
 
+    public static final String WITHDRAWAL_GRACE_PERIOD = """
+            {
+              "isSuccess": false,
+              "code": "AUTH_409_4",
+              "message": "탈퇴 후 7일간 재가입할 수 없습니다."
+            }
+            """;
+
     public static final String EMAIL_VERIFICATION_LOCKED = """
             {
               "isSuccess": false,

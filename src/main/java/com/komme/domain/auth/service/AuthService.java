@@ -9,21 +9,25 @@ import com.komme.domain.auth.dto.request.SignUpRequest;
 import com.komme.domain.auth.dto.request.TokenReissueRequest;
 import com.komme.domain.auth.dto.response.LoginResponse;
 import com.komme.domain.auth.dto.response.TokenReissueResponse;
-import com.komme.domain.user.entity.User;
-import com.komme.domain.user.enums.Gender;
-import com.komme.domain.user.enums.ServiceInterest;
 import com.komme.domain.auth.exception.AuthErrorStatus;
 import com.komme.domain.auth.jwt.JwtProvider;
 import com.komme.domain.auth.jwt.JwtProvider.TokenClaims;
-import com.komme.domain.user.repository.UserRepository;
+import com.komme.domain.auth.repository.OAuthAccountRepository;
 import com.komme.domain.auth.util.EmailNormalizer;
-import com.komme.domain.user.service.UserReader;
 import com.komme.domain.i18n.enums.Language;
+import com.komme.domain.user.entity.User;
+import com.komme.domain.user.enums.Gender;
+import com.komme.domain.user.enums.ServiceInterest;
+import com.komme.domain.user.repository.TermsAgreementRepository;
+import com.komme.domain.user.repository.UserRepository;
+import com.komme.domain.user.service.UserReader;
 
 import java.util.Locale;
 import java.util.Set;
 
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -35,6 +39,8 @@ import lombok.RequiredArgsConstructor;
 public class AuthService {
 
     private final UserRepository userRepository;
+    private final OAuthAccountRepository oAuthAccountRepository;
+    private final TermsAgreementRepository termsAgreementRepository;
     private final UserReader userReader;
     private final AuthUserReader authUserReader;
     private final EmailVerificationService emailVerificationService;
@@ -43,6 +49,7 @@ public class AuthService {
     private final AuthTokenService authTokenService;
     private final RefreshTokenStore refreshTokenStore;
     private final AccessTokenBlacklistStore accessTokenBlacklistStore;
+    private final WithdrawalStore withdrawalStore;
     private final AuthConstraintExceptionMapper authConstraintExceptionMapper;
 
     // 이메일 인증 기반 LOCAL 사용자 가입 기능
@@ -116,6 +123,33 @@ public class AuthService {
         accessTokenBlacklistStore.blacklist(accessTokenClaims);
     }
 
+    // 로그인 사용자 계정 탈퇴 기능
+    @Transactional
+    public void withdraw(Long userId) {
+        TokenClaims accessTokenClaims = resolveAccessTokenClaims();
+        User user = userReader.findByIdOrThrow(userId);
+        String email = user.getEmail();
+
+        oAuthAccountRepository.deleteAllByUserId(userId);
+        termsAgreementRepository.deleteAllByUserId(userId);
+        userRepository.delete(user);
+        userRepository.flush();
+        refreshTokenStore.invalidateAll(userId);
+        accessTokenBlacklistStore.blacklist(accessTokenClaims);
+        withdrawalStore.markWithdrawn(email);
+    }
+
+    // SecurityContext Access Token 세부정보 조회 기능
+    private TokenClaims resolveAccessTokenClaims() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication != null
+                && authentication.getDetails() instanceof TokenClaims tokenClaims) {
+            return tokenClaims;
+        }
+
+        throw new GeneralException(AuthErrorStatus.INVALID_TOKEN);
+    }
+
     // 회원가입 입력값 정규화 기능
     private NormalizedSignUpData normalizeSignUpData(SignUpRequest request) {
         return new NormalizedSignUpData(
@@ -130,6 +164,7 @@ public class AuthService {
 
     // 회원가입 가능 여부 검증 기능
     private void validateSignUp(NormalizedSignUpData data) {
+        withdrawalStore.validateNotWithdrawn(data.email());
         emailVerificationService.validateVerifiedEmail(data.email());
         validateEmailNotRegistered(data.email());
         validateNicknameNotRegistered(data.nickname());
