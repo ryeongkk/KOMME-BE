@@ -34,6 +34,17 @@ public final class AuthApiExamples {
             }
             """;
 
+    public static final String PASSWORD_RESET_TOKEN_SUCCESS = """
+            {
+              "isSuccess": true,
+              "code": "COM_200",
+              "message": "성공적으로 처리되었습니다.",
+              "data": {
+                "resetToken": "w5ME7pKqBlj8xj-DaYcpCV8RpYa70PsTv_oak93wxqs"
+              }
+            }
+            """;
+
     public static final String BAD_REQUEST = """
             {
               "isSuccess": false,
@@ -90,6 +101,14 @@ public final class AuthApiExamples {
             }
             """;
 
+    public static final String INVALID_RESET_TOKEN = """
+            {
+              "isSuccess": false,
+              "code": "AUTH_401_6",
+              "message": "유효하지 않은 비밀번호 재설정 토큰입니다."
+            }
+            """;
+
     public static final String EMAIL_NOT_VERIFIED = """
             {
               "isSuccess": false,
@@ -103,6 +122,14 @@ public final class AuthApiExamples {
               "isSuccess": false,
               "code": "AUTH_409_1",
               "message": "이미 가입된 이메일입니다."
+            }
+            """;
+
+    public static final String EMAIL_NOT_REGISTERED = """
+            {
+              "isSuccess": false,
+              "code": "AUTH_404_1",
+              "message": "가입된 이메일이 아닙니다."
             }
             """;
 

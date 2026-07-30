@@ -6,10 +6,14 @@ import com.komme.domain.auth.dto.request.EmailVerificationSendRequest;
 import com.komme.domain.auth.dto.request.LoginRequest;
 import com.komme.domain.auth.dto.request.LogoutRequest;
 import com.komme.domain.auth.dto.request.PasswordChangeRequest;
+import com.komme.domain.auth.dto.request.PasswordResetConfirmRequest;
+import com.komme.domain.auth.dto.request.PasswordResetRequest;
+import com.komme.domain.auth.dto.request.PasswordResetSendRequest;
 import com.komme.domain.auth.dto.request.SignUpRequest;
 import com.komme.domain.auth.dto.request.TokenReissueRequest;
 import com.komme.domain.auth.dto.request.TermsAgreementRequest;
 import com.komme.domain.auth.dto.response.LoginResponse;
+import com.komme.domain.auth.dto.response.PasswordResetTokenResponse;
 import com.komme.domain.auth.dto.response.TokenReissueResponse;
 
 import io.swagger.v3.oas.annotations.Operation;
@@ -115,6 +119,117 @@ public interface AuthControllerDocs {
     @PostMapping("/email-verifications/confirm")
     ResponseEntity<ApiResponse<Void>> confirmEmailVerification(
             @Valid @RequestBody EmailVerificationConfirmRequest request
+    );
+
+    // 비밀번호 재설정 인증 코드 전송 API
+    @Operation(
+            summary = "비밀번호 재설정 인증 코드 전송",
+            description = "가입된 LOCAL 계정 이메일로 비밀번호 재설정 인증 코드를 전송합니다."
+    )
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+            responseCode = "200",
+            description = "인증 코드 전송 성공",
+            content = @Content(
+                    schema = @Schema(implementation = ApiResponse.class),
+                    examples = @ExampleObject(value = AuthApiExamples.SUCCESS_WITHOUT_DATA)
+            )
+    )
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+            responseCode = "400",
+            description = "이메일 입력값 오류",
+            content = @Content(examples = @ExampleObject(value = AuthApiExamples.BAD_REQUEST))
+    )
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+            responseCode = "404",
+            description = "가입된 LOCAL 이메일 없음",
+            content = @Content(examples = @ExampleObject(value = AuthApiExamples.EMAIL_NOT_REGISTERED))
+    )
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+            responseCode = "429",
+            description = "인증 잠금 또는 재전송 요청 간격 미충족",
+            content = @Content(examples = {
+                    @ExampleObject(
+                            name = "인증 잠금",
+                            value = AuthApiExamples.EMAIL_VERIFICATION_LOCKED
+                    ),
+                    @ExampleObject(
+                            name = "재전송 요청 간격 미충족",
+                            value = AuthApiExamples.EMAIL_SEND_TOO_FREQUENTLY
+                    )
+            })
+    )
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+            responseCode = "500",
+            description = "인증 이메일 전송 실패",
+            content = @Content(examples = @ExampleObject(value = AuthApiExamples.EMAIL_SEND_FAILED))
+    )
+    @PostMapping("/password-resets/email-verifications/send")
+    ResponseEntity<ApiResponse<Void>> sendPasswordResetEmailVerification(
+            @Valid @RequestBody PasswordResetSendRequest request
+    );
+
+    // 비밀번호 재설정 인증 코드 확인 API
+    @Operation(
+            summary = "비밀번호 재설정 인증 코드 확인",
+            description = "비밀번호 재설정 인증 코드를 확인하고 일회성 reset token을 발급합니다."
+    )
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+            responseCode = "200",
+            description = "비밀번호 재설정 토큰 발급 성공",
+            content = @Content(
+                    schema = @Schema(implementation = PasswordResetTokenResponse.class),
+                    examples = @ExampleObject(value = AuthApiExamples.PASSWORD_RESET_TOKEN_SUCCESS)
+            )
+    )
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+            responseCode = "400",
+            description = "인증 코드 불일치 또는 만료",
+            content = @Content(examples = {
+                    @ExampleObject(
+                            name = "인증 코드 불일치",
+                            value = AuthApiExamples.INVALID_VERIFICATION_CODE
+                    ),
+                    @ExampleObject(
+                            name = "인증 코드 만료",
+                            value = AuthApiExamples.EXPIRED_VERIFICATION_CODE
+                    )
+            })
+    )
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+            responseCode = "429",
+            description = "인증 코드 입력 횟수 초과",
+            content = @Content(
+                    examples = @ExampleObject(value = AuthApiExamples.EMAIL_VERIFICATION_LOCKED)
+            )
+    )
+    @PostMapping("/password-resets/email-verifications/confirm")
+    ResponseEntity<ApiResponse<PasswordResetTokenResponse>> confirmPasswordResetEmailVerification(
+            @Valid @RequestBody PasswordResetConfirmRequest request
+    );
+
+    // 비밀번호 재설정 API
+    @Operation(
+            summary = "비밀번호 재설정",
+            description = "일회성 reset token을 검증하고 새 비밀번호로 변경합니다. 성공 시 모든 Refresh Token이 폐기됩니다."
+    )
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+            responseCode = "200",
+            description = "비밀번호 재설정 성공",
+            content = @Content(examples = @ExampleObject(value = AuthApiExamples.SUCCESS_WITHOUT_DATA))
+    )
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+            responseCode = "400",
+            description = "비밀번호 재설정 입력값 오류",
+            content = @Content(examples = @ExampleObject(value = AuthApiExamples.BAD_REQUEST))
+    )
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+            responseCode = "401",
+            description = "유효하지 않거나 만료된 reset token",
+            content = @Content(examples = @ExampleObject(value = AuthApiExamples.INVALID_RESET_TOKEN))
+    )
+    @PatchMapping("/password-resets")
+    ResponseEntity<ApiResponse<Void>> resetPassword(
+            @Valid @RequestBody PasswordResetRequest request
     );
 
     // 이메일 회원가입 API

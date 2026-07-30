@@ -9,10 +9,14 @@ import com.komme.domain.auth.dto.request.EmailVerificationSendRequest;
 import com.komme.domain.auth.dto.request.LoginRequest;
 import com.komme.domain.auth.dto.request.LogoutRequest;
 import com.komme.domain.auth.dto.request.PasswordChangeRequest;
+import com.komme.domain.auth.dto.request.PasswordResetConfirmRequest;
+import com.komme.domain.auth.dto.request.PasswordResetRequest;
+import com.komme.domain.auth.dto.request.PasswordResetSendRequest;
 import com.komme.domain.auth.dto.request.SignUpRequest;
 import com.komme.domain.auth.dto.request.TokenReissueRequest;
 import com.komme.domain.auth.dto.request.TermsAgreementRequest;
 import com.komme.domain.auth.dto.response.LoginResponse;
+import com.komme.domain.auth.dto.response.PasswordResetTokenResponse;
 import com.komme.domain.auth.dto.response.TokenReissueResponse;
 import com.komme.domain.auth.exception.AuthErrorStatus;
 import com.komme.domain.auth.jwt.JwtProvider.TokenClaims;
@@ -51,6 +55,32 @@ public class AuthController implements AuthControllerDocs {
             EmailVerificationConfirmRequest request
     ) {
         emailVerificationService.confirmVerificationCode(request);
+        return ApiResponse.success(SuccessStatus.COMMON_SUCCESS_STATUS);
+    }
+
+    // 비밀번호 재설정 인증 코드 전송 API
+    @Override
+    public ResponseEntity<ApiResponse<Void>> sendPasswordResetEmailVerification(
+            PasswordResetSendRequest request
+    ) {
+        emailVerificationService.sendPasswordResetVerificationCode(request);
+        return ApiResponse.success(SuccessStatus.COMMON_SUCCESS_STATUS);
+    }
+
+    // 비밀번호 재설정 인증 코드 확인 API
+    @Override
+    public ResponseEntity<ApiResponse<PasswordResetTokenResponse>> confirmPasswordResetEmailVerification(
+            PasswordResetConfirmRequest request
+    ) {
+        PasswordResetTokenResponse response =
+                emailVerificationService.confirmPasswordResetVerificationCode(request);
+        return ApiResponse.success(SuccessStatus.COMMON_SUCCESS_STATUS, response);
+    }
+
+    // 비밀번호 재설정 API
+    @Override
+    public ResponseEntity<ApiResponse<Void>> resetPassword(PasswordResetRequest request) {
+        authService.resetPassword(request);
         return ApiResponse.success(SuccessStatus.COMMON_SUCCESS_STATUS);
     }
 
