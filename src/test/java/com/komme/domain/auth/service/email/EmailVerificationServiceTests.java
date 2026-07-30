@@ -1,4 +1,4 @@
-package com.komme.domain.auth.service;
+package com.komme.domain.auth.service.email;
 
 import com.komme.common.exception.GeneralException;
 import com.komme.domain.auth.dto.request.EmailVerificationConfirmRequest;
@@ -8,6 +8,7 @@ import com.komme.domain.auth.dto.request.PasswordResetSendRequest;
 import com.komme.domain.auth.dto.response.PasswordResetTokenResponse;
 import com.komme.domain.auth.enums.EmailVerificationPurpose;
 import com.komme.domain.auth.exception.AuthErrorStatus;
+import com.komme.domain.auth.service.AuthUserReader;
 import com.komme.domain.user.entity.User;
 import com.komme.domain.user.enums.Gender;
 import com.komme.domain.user.enums.ServiceInterest;

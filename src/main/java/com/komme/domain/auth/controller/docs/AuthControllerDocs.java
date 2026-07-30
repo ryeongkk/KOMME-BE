@@ -28,6 +28,7 @@ import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -252,7 +253,7 @@ public interface AuthControllerDocs {
     )
     @io.swagger.v3.oas.annotations.responses.ApiResponse(
             responseCode = "409",
-            description = "이메일 또는 닉네임 중복",
+            description = "이메일 또는 닉네임 중복, 탈퇴 유예기간",
             content = @Content(examples = {
                     @ExampleObject(
                             name = "이메일 중복",
@@ -261,6 +262,10 @@ public interface AuthControllerDocs {
                     @ExampleObject(
                             name = "닉네임 중복",
                             value = AuthApiExamples.NICKNAME_ALREADY_EXISTS
+                    ),
+                    @ExampleObject(
+                            name = "탈퇴 유예기간",
+                            value = AuthApiExamples.WITHDRAWAL_GRACE_PERIOD
                     )
             })
     )
@@ -426,5 +431,35 @@ public interface AuthControllerDocs {
             @Parameter(hidden = true) @AuthenticationPrincipal Long userId,
             @Parameter(hidden = true) Authentication authentication,
             @Valid @RequestBody LogoutRequest request
+    );
+
+    // 계정 탈퇴 API
+    @Operation(
+            summary = "계정 탈퇴",
+            description = "인증된 사용자의 계정을 하드 삭제하고 모든 Refresh Token과 현재 Access Token을 폐기합니다. 탈퇴 후 7일간 동일 이메일로 재가입할 수 없습니다.",
+            security = @SecurityRequirement(name = "bearerAuth")
+    )
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+            responseCode = "200",
+            description = "계정 탈퇴 성공",
+            content = @Content(examples = @ExampleObject(value = AuthApiExamples.SUCCESS_WITHOUT_DATA))
+    )
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+            responseCode = "401",
+            description = "Access Token 누락, 만료 또는 오류",
+            content = @Content(examples = {
+                    @ExampleObject(name = "유효하지 않은 토큰", value = AuthApiExamples.INVALID_TOKEN),
+                    @ExampleObject(name = "만료된 토큰", value = AuthApiExamples.EXPIRED_TOKEN)
+            })
+    )
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+            responseCode = "500",
+            description = "계정 탈퇴 실패",
+            content = @Content(examples = @ExampleObject(value = AuthApiExamples.WITHDRAWAL_FAILED))
+    )
+    @DeleteMapping("/withdraw")
+    ResponseEntity<ApiResponse<Void>> withdraw(
+            @Parameter(hidden = true) @AuthenticationPrincipal Long userId,
+            @Parameter(hidden = true) Authentication authentication
     );
 }

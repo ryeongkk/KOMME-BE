@@ -1,4 +1,4 @@
-package com.komme.domain.auth.service;
+package com.komme.domain.auth.service.oauth;
 
 import com.komme.common.exception.GeneralException;
 import com.komme.domain.auth.client.OAuthAppleClient;
@@ -15,6 +15,9 @@ import com.komme.domain.user.enums.Provider;
 import com.komme.domain.user.enums.ServiceInterest;
 import com.komme.domain.auth.exception.AuthErrorStatus;
 import com.komme.domain.auth.repository.OAuthAccountRepository;
+import com.komme.domain.auth.service.AuthConstraintExceptionMapper;
+import com.komme.domain.auth.service.token.AuthTokenService;
+import com.komme.domain.auth.service.token.WithdrawalStore;
 import com.komme.domain.user.repository.UserRepository;
 import com.komme.domain.user.service.UserReader;
 import com.komme.domain.i18n.enums.Language;
@@ -29,6 +32,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.data.redis.core.StringRedisTemplate;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -61,6 +65,9 @@ class OAuthServiceTests {
     private UserReader userReader;
 
     @Mock
+    private StringRedisTemplate redisTemplate;
+
+    @Mock
     private AuthTokenService authTokenService;
 
     private OAuthService oAuthService;
@@ -75,6 +82,7 @@ class OAuthServiceTests {
                         oAuthAccountRepository,
                         userRepository,
                         userReader,
+                        new WithdrawalStore(redisTemplate),
                         new AuthConstraintExceptionMapper()
                 ),
                 authTokenService,
@@ -192,6 +200,26 @@ class OAuthServiceTests {
                 .extracting(exception -> ((GeneralException) exception).getErrorStatus())
                 .isEqualTo(AuthErrorStatus.EMAIL_ALREADY_EXISTS);
 
+        verify(authTokenService, never()).issueLoginResponse(any());
+    }
+
+    // 탈퇴 유예기간 OAuth 신규 가입 거부 검증
+    @Test
+    void loginWithGoogleRejectsWithdrawnEmailForNewUser() {
+        when(oAuthGoogleClient.verifyIdentityToken("google-id-token"))
+                .thenReturn(new OAuthIdentity(APPLE_SUBJECT, EMAIL));
+        when(userReader.findByEmail(EMAIL)).thenReturn(Optional.empty());
+        when(redisTemplate.hasKey("withdrawn:email:" + EMAIL)).thenReturn(true);
+
+        assertThatThrownBy(() -> oAuthService.loginWithGoogle(
+                new OAuthGoogleLoginRequest("google-id-token")
+        ))
+                .isInstanceOf(GeneralException.class)
+                .extracting(exception -> ((GeneralException) exception).getErrorStatus())
+                .isEqualTo(AuthErrorStatus.WITHDRAWAL_GRACE_PERIOD);
+
+        verify(userRepository, never()).saveAndFlush(any(User.class));
+        verify(oAuthAccountRepository, never()).saveAndFlush(any(OAuthAccount.class));
         verify(authTokenService, never()).issueLoginResponse(any());
     }
 

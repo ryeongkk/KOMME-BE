@@ -1,4 +1,4 @@
-package com.komme.domain.auth.service;
+package com.komme.domain.auth.service.oauth;
 
 import com.komme.common.exception.GeneralException;
 import com.komme.domain.auth.entity.OAuthAccount;
@@ -6,6 +6,8 @@ import com.komme.domain.user.entity.User;
 import com.komme.domain.user.enums.Provider;
 import com.komme.domain.auth.exception.AuthErrorStatus;
 import com.komme.domain.auth.repository.OAuthAccountRepository;
+import com.komme.domain.auth.service.AuthConstraintExceptionMapper;
+import com.komme.domain.auth.service.token.WithdrawalStore;
 import com.komme.domain.user.repository.UserRepository;
 import com.komme.domain.user.service.UserReader;
 import com.komme.domain.auth.util.EmailNormalizer;
@@ -25,6 +27,7 @@ public class OAuthAccountService {
     private final OAuthAccountRepository oAuthAccountRepository;
     private final UserRepository userRepository;
     private final UserReader userReader;
+    private final WithdrawalStore withdrawalStore;
     private final AuthConstraintExceptionMapper authConstraintExceptionMapper;
 
     // OAuth identity 기반 사용자 조회 및 연결 기능
@@ -58,7 +61,10 @@ public class OAuthAccountService {
     // OAuth 이메일 기반 사용자 조회 또는 생성 기능
     private User findOrCreateUser(Provider provider, String email) {
         return userReader.findByEmail(email)
-                .orElseGet(() -> createOAuthUser(provider, email));
+                .orElseGet(() -> {
+                    withdrawalStore.validateNotWithdrawn(email);
+                    return createOAuthUser(provider, email);
+                });
     }
 
     // OAuth 최소 프로필 사용자 저장 기능

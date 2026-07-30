@@ -17,7 +17,14 @@ import com.komme.domain.auth.exception.AuthErrorStatus;
 import com.komme.domain.auth.jwt.JwtProvider;
 import com.komme.domain.auth.jwt.JwtProvider.TokenClaims;
 import com.komme.domain.auth.jwt.JwtRedisKeys;
+import com.komme.domain.auth.repository.OAuthAccountRepository;
+import com.komme.domain.auth.service.email.EmailVerificationService;
+import com.komme.domain.auth.service.token.AccessTokenBlacklistStore;
+import com.komme.domain.auth.service.token.AuthTokenService;
+import com.komme.domain.auth.service.token.RefreshTokenStore;
+import com.komme.domain.auth.service.token.WithdrawalStore;
 import com.komme.domain.user.repository.UserRepository;
+import com.komme.domain.user.repository.TermsAgreementRepository;
 import com.komme.domain.user.service.UserReader;
 import com.komme.domain.i18n.enums.Language;
 
@@ -43,6 +50,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -57,6 +65,12 @@ class AuthServiceTests {
 
     @Mock
     private UserRepository userRepository;
+
+    @Mock
+    private OAuthAccountRepository oAuthAccountRepository;
+
+    @Mock
+    private TermsAgreementRepository termsAgreementRepository;
 
     @Mock
     private UserReader userReader;
@@ -92,6 +106,8 @@ class AuthServiceTests {
     void setUp() {
         authService = new AuthService(
                 userRepository,
+                oAuthAccountRepository,
+                termsAgreementRepository,
                 userReader,
                 authUserReader,
                 emailVerificationService,
@@ -100,6 +116,7 @@ class AuthServiceTests {
                 authTokenService,
                 new RefreshTokenStore(redisTemplate, userReader),
                 new AccessTokenBlacklistStore(redisTemplate),
+                new WithdrawalStore(redisTemplate),
                 new AuthConstraintExceptionMapper()
         );
     }
@@ -136,6 +153,20 @@ class AuthServiceTests {
                 .extracting(exception -> ((GeneralException) exception).getErrorStatus())
                 .isEqualTo(AuthErrorStatus.EMAIL_ALREADY_EXISTS);
 
+        verify(userRepository, never()).saveAndFlush(any(User.class));
+    }
+
+    // 탈퇴 유예기간 LOCAL 회원가입 거부 검증
+    @Test
+    void signUpRejectsWithdrawnEmail() {
+        when(redisTemplate.hasKey("withdrawn:email:" + EMAIL)).thenReturn(true);
+
+        assertThatThrownBy(() -> authService.signUp(createSignUpRequest()))
+                .isInstanceOf(GeneralException.class)
+                .extracting(exception -> ((GeneralException) exception).getErrorStatus())
+                .isEqualTo(AuthErrorStatus.WITHDRAWAL_GRACE_PERIOD);
+
+        verify(emailVerificationService, never()).validateVerifiedEmail(any());
         verify(userRepository, never()).saveAndFlush(any(User.class));
     }
 
@@ -381,6 +412,103 @@ class AuthServiceTests {
                 .isEqualTo(AuthErrorStatus.INVALID_TOKEN);
     }
 
+    // LOCAL 사용자 탈퇴와 토큰 폐기 검증
+    @Test
+    @SuppressWarnings("unchecked")
+    void withdrawDeletesLocalUserAndInvalidatesTokens() {
+        prepareRedisOperations();
+        User user = createWithdrawLocalUser();
+        TokenClaims accessClaims = new TokenClaims(
+                USER_ID,
+                "access-id",
+                Instant.now().plus(ACCESS_EXPIRATION)
+        );
+        when(userReader.findByIdOrThrow(USER_ID)).thenReturn(user);
+        when(setOperations.members(JwtRedisKeys.userRefreshTokens(USER_ID)))
+                .thenReturn(Set.of("refresh-id-1", "refresh-id-2"));
+
+        authService.withdraw(USER_ID, accessClaims);
+
+        verify(oAuthAccountRepository).deleteAllByUserId(USER_ID);
+        verify(termsAgreementRepository).deleteAllByUserId(USER_ID);
+        verify(userRepository).delete(user);
+        verify(userRepository).flush();
+        ArgumentCaptor<Collection<String>> keysCaptor = ArgumentCaptor.forClass(Collection.class);
+        verify(redisTemplate).delete(keysCaptor.capture());
+        assertThat(keysCaptor.getValue()).containsExactlyInAnyOrder(
+                JwtRedisKeys.refreshToken("refresh-id-1"),
+                JwtRedisKeys.refreshToken("refresh-id-2")
+        );
+        verify(redisTemplate).delete(JwtRedisKeys.userRefreshTokens(USER_ID));
+        verify(valueOperations).set(
+                eq(JwtRedisKeys.accessTokenBlacklist("access-id")),
+                eq("true"),
+                any(Duration.class)
+        );
+        verify(valueOperations).set(
+                eq("withdrawn:email:" + EMAIL),
+                eq("true"),
+                eq(Duration.ofDays(7))
+        );
+    }
+
+    // OAuth 사용자 탈퇴와 토큰 폐기 검증
+    @Test
+    void withdrawDeletesOAuthUserAndInvalidatesTokens() {
+        prepareRedisOperations();
+        User user = User.createOAuth(EMAIL, Provider.GOOGLE);
+        TokenClaims accessClaims = new TokenClaims(
+                USER_ID,
+                "access-id",
+                Instant.now().plus(ACCESS_EXPIRATION)
+        );
+        when(userReader.findByIdOrThrow(USER_ID)).thenReturn(user);
+        when(setOperations.members(JwtRedisKeys.userRefreshTokens(USER_ID)))
+                .thenReturn(Set.of());
+
+        authService.withdraw(USER_ID, accessClaims);
+
+        verify(oAuthAccountRepository).deleteAllByUserId(USER_ID);
+        verify(termsAgreementRepository).deleteAllByUserId(USER_ID);
+        verify(userRepository).delete(user);
+        verify(userRepository).flush();
+        verify(redisTemplate).delete(JwtRedisKeys.userRefreshTokens(USER_ID));
+        verify(valueOperations).set(
+                eq(JwtRedisKeys.accessTokenBlacklist("access-id")),
+                eq("true"),
+                any(Duration.class)
+        );
+        verify(valueOperations).set(
+                eq("withdrawn:email:" + EMAIL),
+                eq("true"),
+                eq(Duration.ofDays(7))
+        );
+    }
+
+    // 사용자 삭제 무결성 오류 도메인 오류 변환 검증
+    @Test
+    void withdrawMapsUserDeleteIntegrityViolation() {
+        User user = createWithdrawLocalUser();
+        TokenClaims accessClaims = new TokenClaims(
+                USER_ID,
+                "access-id",
+                Instant.now().plus(ACCESS_EXPIRATION)
+        );
+        when(userReader.findByIdOrThrow(USER_ID)).thenReturn(user);
+        doThrow(new DataIntegrityViolationException("referenced user"))
+                .when(userRepository)
+                .flush();
+
+        assertThatThrownBy(() -> authService.withdraw(USER_ID, accessClaims))
+                .isInstanceOf(GeneralException.class)
+                .extracting(exception -> ((GeneralException) exception).getErrorStatus())
+                .isEqualTo(AuthErrorStatus.WITHDRAWAL_FAILED);
+
+        verify(userRepository).delete(user);
+        verify(redisTemplate, never()).opsForSet();
+        verify(redisTemplate, never()).opsForValue();
+    }
+
     // 회원가입 요청 생성
     private SignUpRequest createSignUpRequest() {
         return new SignUpRequest(
@@ -399,6 +527,19 @@ class AuthServiceTests {
         User user = org.mockito.Mockito.mock(User.class);
         when(user.getPassword()).thenReturn("encoded-password");
         return user;
+    }
+
+    // 탈퇴 LOCAL 사용자 생성
+    private User createWithdrawLocalUser() {
+        return User.createLocal(
+                EMAIL,
+                "encoded-password",
+                "nickname",
+                "KR",
+                Gender.FEMALE,
+                Language.ENGLISH,
+                Set.of(ServiceInterest.COURSE)
+        );
     }
 
     // Hibernate unique 제약조건 예외 생성

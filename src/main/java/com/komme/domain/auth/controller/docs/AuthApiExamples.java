@@ -141,6 +141,14 @@ public final class AuthApiExamples {
             }
             """;
 
+    public static final String WITHDRAWAL_GRACE_PERIOD = """
+            {
+              "isSuccess": false,
+              "code": "AUTH_409_4",
+              "message": "탈퇴 후 7일간 재가입할 수 없습니다."
+            }
+            """;
+
     public static final String EMAIL_VERIFICATION_LOCKED = """
             {
               "isSuccess": false,
@@ -162,6 +170,14 @@ public final class AuthApiExamples {
               "isSuccess": false,
               "code": "AUTH_500_1",
               "message": "인증 이메일 전송에 실패했습니다."
+            }
+            """;
+
+    public static final String WITHDRAWAL_FAILED = """
+            {
+              "isSuccess": false,
+              "code": "AUTH_500_2",
+              "message": "계정 탈퇴에 실패했습니다."
             }
             """;
 

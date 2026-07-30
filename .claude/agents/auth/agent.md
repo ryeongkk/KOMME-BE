@@ -19,6 +19,7 @@ description: KOMME의 인증(auth) 도메인 - 이메일 로그인/회원가입,
 - 사용자 식별: provider(LOCAL/GOOGLE/APPLE)와 provider별 고유 식별자(providerId)로 계정을 구분한다.
 - 인증 토큰(JWT 등) 발급/검증/갱신. 시크릿/클라이언트 시크릿 등은 코드에 하드코딩하지 않고 `application.yaml`/환경변수로 주입한다.
 - 동일 이메일로 다른 provider 가입/로그인 시도 시 계정을 병합할지 별도로 취급할지는 임의로 정하지 말고 구현 전에 사용자와 정책을 확인한다.
+- 계정 탈퇴는 사용자 관련 자식 row를 먼저 정리한 뒤 `User`를 하드 삭제하고, 모든 Refresh Token과 현재 Access Token을 폐기하며, 동일 이메일은 Redis 기반 7일 유예기간 동안 재가입을 차단한다.
 
 ## 의존 관계
 

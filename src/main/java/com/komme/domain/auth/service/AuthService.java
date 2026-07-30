@@ -9,16 +9,23 @@ import com.komme.domain.auth.dto.request.SignUpRequest;
 import com.komme.domain.auth.dto.request.TokenReissueRequest;
 import com.komme.domain.auth.dto.response.LoginResponse;
 import com.komme.domain.auth.dto.response.TokenReissueResponse;
-import com.komme.domain.user.entity.User;
-import com.komme.domain.user.enums.Gender;
-import com.komme.domain.user.enums.ServiceInterest;
 import com.komme.domain.auth.exception.AuthErrorStatus;
 import com.komme.domain.auth.jwt.JwtProvider;
 import com.komme.domain.auth.jwt.JwtProvider.TokenClaims;
-import com.komme.domain.user.repository.UserRepository;
+import com.komme.domain.auth.repository.OAuthAccountRepository;
+import com.komme.domain.auth.service.email.EmailVerificationService;
+import com.komme.domain.auth.service.token.AccessTokenBlacklistStore;
+import com.komme.domain.auth.service.token.AuthTokenService;
+import com.komme.domain.auth.service.token.RefreshTokenStore;
+import com.komme.domain.auth.service.token.WithdrawalStore;
 import com.komme.domain.auth.util.EmailNormalizer;
-import com.komme.domain.user.service.UserReader;
 import com.komme.domain.i18n.enums.Language;
+import com.komme.domain.user.entity.User;
+import com.komme.domain.user.enums.Gender;
+import com.komme.domain.user.enums.ServiceInterest;
+import com.komme.domain.user.repository.TermsAgreementRepository;
+import com.komme.domain.user.repository.UserRepository;
+import com.komme.domain.user.service.UserReader;
 
 import java.util.Locale;
 import java.util.Set;
@@ -35,6 +42,8 @@ import lombok.RequiredArgsConstructor;
 public class AuthService {
 
     private final UserRepository userRepository;
+    private final OAuthAccountRepository oAuthAccountRepository;
+    private final TermsAgreementRepository termsAgreementRepository;
     private final UserReader userReader;
     private final AuthUserReader authUserReader;
     private final EmailVerificationService emailVerificationService;
@@ -43,6 +52,7 @@ public class AuthService {
     private final AuthTokenService authTokenService;
     private final RefreshTokenStore refreshTokenStore;
     private final AccessTokenBlacklistStore accessTokenBlacklistStore;
+    private final WithdrawalStore withdrawalStore;
     private final AuthConstraintExceptionMapper authConstraintExceptionMapper;
 
     // 이메일 인증 기반 LOCAL 사용자 가입 기능
@@ -116,6 +126,31 @@ public class AuthService {
         accessTokenBlacklistStore.blacklist(accessTokenClaims);
     }
 
+    // 로그인 사용자 계정 탈퇴 기능
+    @Transactional
+    public void withdraw(Long userId, TokenClaims accessTokenClaims) {
+        User user = userReader.findByIdOrThrow(userId);
+        String email = user.getEmail();
+
+        oAuthAccountRepository.deleteAllByUserId(userId);
+        termsAgreementRepository.deleteAllByUserId(userId);
+        deleteUser(user);
+        refreshTokenStore.invalidateAll(userId);
+        accessTokenBlacklistStore.blacklist(accessTokenClaims);
+        withdrawalStore.markWithdrawn(email);
+    }
+
+    // 사용자 하드 삭제 및 참조 무결성 오류 변환 기능
+    private void deleteUser(User user) {
+        try {
+            userRepository.delete(user);
+            // Redis 마킹 전 User FK 정리 누락을 트랜잭션 안에서 확인하는 기능
+            userRepository.flush();
+        } catch (DataIntegrityViolationException exception) {
+            throw new GeneralException(AuthErrorStatus.WITHDRAWAL_FAILED, exception);
+        }
+    }
+
     // 회원가입 입력값 정규화 기능
     private NormalizedSignUpData normalizeSignUpData(SignUpRequest request) {
         return new NormalizedSignUpData(
@@ -130,6 +165,7 @@ public class AuthService {
 
     // 회원가입 가능 여부 검증 기능
     private void validateSignUp(NormalizedSignUpData data) {
+        withdrawalStore.validateNotWithdrawn(data.email());
         emailVerificationService.validateVerifiedEmail(data.email());
         validateEmailNotRegistered(data.email());
         validateNicknameNotRegistered(data.nickname());

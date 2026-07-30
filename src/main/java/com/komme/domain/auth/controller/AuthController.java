@@ -21,7 +21,7 @@ import com.komme.domain.auth.dto.response.TokenReissueResponse;
 import com.komme.domain.auth.exception.AuthErrorStatus;
 import com.komme.domain.auth.jwt.JwtProvider.TokenClaims;
 import com.komme.domain.auth.service.AuthService;
-import com.komme.domain.auth.service.EmailVerificationService;
+import com.komme.domain.auth.service.email.EmailVerificationService;
 import com.komme.domain.user.service.TermsAgreementService;
 
 import org.springframework.http.ResponseEntity;
@@ -136,6 +136,17 @@ public class AuthController implements AuthControllerDocs {
     ) {
         TokenClaims tokenClaims = resolveTokenClaims(authentication);
         authService.logout(userId, tokenClaims, request);
+        return ApiResponse.success(SuccessStatus.COMMON_SUCCESS_STATUS);
+    }
+
+    // 계정 탈퇴 API
+    @Override
+    public ResponseEntity<ApiResponse<Void>> withdraw(
+            Long userId,
+            Authentication authentication
+    ) {
+        TokenClaims tokenClaims = resolveTokenClaims(authentication);
+        authService.withdraw(userId, tokenClaims);
         return ApiResponse.success(SuccessStatus.COMMON_SUCCESS_STATUS);
     }
 

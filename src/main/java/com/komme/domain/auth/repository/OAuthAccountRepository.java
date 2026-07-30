@@ -14,4 +14,7 @@ public interface OAuthAccountRepository extends JpaRepository<OAuthAccount, Long
             Provider provider,
             String providerId
     );
+
+    // 사용자 ID 기반 OAuth 계정 전체 삭제 기능
+    void deleteAllByUserId(Long userId);
 }

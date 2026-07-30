@@ -1,4 +1,4 @@
-package com.komme.domain.auth.service;
+package com.komme.domain.auth.service.email;
 
 import com.komme.common.exception.GeneralException;
 import com.komme.domain.auth.enums.EmailVerificationPurpose;

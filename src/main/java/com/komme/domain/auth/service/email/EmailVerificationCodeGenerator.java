@@ -1,4 +1,4 @@
-package com.komme.domain.auth.service;
+package com.komme.domain.auth.service.email;
 
 import java.security.SecureRandom;
 

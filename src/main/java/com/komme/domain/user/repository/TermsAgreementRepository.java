@@ -25,4 +25,7 @@ public interface TermsAgreementRepository extends JpaRepository<TermsAgreement, 
             Long userId,
             Collection<TermsType> termsTypes
     );
+
+    // 사용자 ID 기반 약관 동의 전체 삭제 기능
+    void deleteAllByUserId(Long userId);
 }
