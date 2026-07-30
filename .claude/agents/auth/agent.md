@@ -22,6 +22,7 @@ description: KOMME의 인증(auth) 도메인 - 이메일 로그인/회원가입,
 
 ## 의존 관계
 
+- 이 도메인은 **[[user-agent]]**에 의존한다 — 회원가입/로그인/OAuth 프로필 완성은 결국 user 도메인의 `User.createLocal`/`User.createOAuth`/`completeProfile`을 호출하는 것이고, 사용자 조회도 user 도메인의 `UserReader`를 통해서 한다. 사용자 조회가 필요할 때 `UserRepository`를 직접 주입받지 말고 `UserReader`(또는 이 도메인의 `AuthUserReader`)를 거친다.
 - 현재 제안서 MVP 기능(코스 생성, 즉시 체험 추천, 다국어 지원)은 인증 없이도 동작 가능하다 — [[course-agent]], [[spot-agent]]는 이 도메인에 의존하지 않는다.
 - 제안서 2단계(개인화 고도화: 코스 이용 이력 기반 추천, UGC 코스 공유/커뮤니티)를 구현하는 시점부터 course/spot이 이 도메인의 사용자 식별 결과(userId 등)에 의존하게 될 것이다. 그 전까지는 이 도메인을 다른 도메인과 독립적으로 유지한다.
 

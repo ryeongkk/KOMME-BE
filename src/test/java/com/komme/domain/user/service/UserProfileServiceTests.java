@@ -6,6 +6,7 @@ import com.komme.domain.user.service.TermsAgreementService;
 import com.komme.domain.user.dto.request.ChangeNicknameRequest;
 import com.komme.domain.user.dto.request.ChangePreferredLanguageRequest;
 import com.komme.domain.user.dto.request.UpdateTermsAgreementRequest;
+import com.komme.domain.user.dto.response.NicknameAvailabilityResponse;
 import com.komme.domain.user.dto.response.UserProfileResponse;
 import com.komme.domain.user.entity.User;
 import com.komme.domain.user.exception.UserConstraintExceptionMapper;
@@ -125,6 +126,28 @@ class UserProfileServiceTests {
                 .isInstanceOf(com.komme.common.exception.GeneralException.class)
                 .extracting(exception -> ((com.komme.common.exception.GeneralException) exception).getErrorStatus())
                 .isEqualTo(UserErrorStatus.NICKNAME_ALREADY_EXISTS);
+    }
+
+    // 닉네임 사용 가능 여부 조회 가능 검증
+    @Test
+    void getNicknameAvailabilityReturnsTrueWhenNicknameDoesNotExist() {
+        when(userReader.existsByNickname("nickname")).thenReturn(false);
+
+        NicknameAvailabilityResponse response =
+                userProfileService.getNicknameAvailability("nickname");
+
+        assertThat(response.available()).isTrue();
+    }
+
+    // 닉네임 사용 가능 여부 조회 불가 검증
+    @Test
+    void getNicknameAvailabilityReturnsFalseWhenNicknameExists() {
+        when(userReader.existsByNickname("nickname")).thenReturn(true);
+
+        NicknameAvailabilityResponse response =
+                userProfileService.getNicknameAvailability("nickname");
+
+        assertThat(response.available()).isFalse();
     }
 
     // 선호 언어 변경 검증

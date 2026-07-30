@@ -3,6 +3,9 @@ package com.komme.common.config;
 import com.komme.domain.auth.jwt.JwtAuthenticationEntryPoint;
 import com.komme.domain.auth.jwt.JwtAuthenticationFilter;
 
+import java.util.Arrays;
+import java.util.stream.Stream;
+
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -19,18 +22,33 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class SecurityConfig {
 
-    private static final String[] PUBLIC_ENDPOINTS = {
+    private static final String[] AUTH_PUBLIC_ENDPOINTS = {
             "/api/v1/auth/email-verifications/**",
             "/api/v1/auth/password-resets/**",
             "/api/v1/auth/signup",
             "/api/v1/auth/login",
             "/api/v1/auth/oauth/apple",
             "/api/v1/auth/oauth/google",
-            "/api/v1/auth/tokens/reissue",
+            "/api/v1/auth/tokens/reissue"
+    };
+
+    private static final String[] USER_PUBLIC_ENDPOINTS = {
+            "/api/v1/users/nicknames/availability"
+    };
+
+    private static final String[] DOCS_PUBLIC_ENDPOINTS = {
             "/v3/api-docs/**",
             "/swagger-ui/**",
             "/swagger-ui.html"
     };
+
+    private static final String[] PUBLIC_ENDPOINTS = Stream.of(
+                    AUTH_PUBLIC_ENDPOINTS,
+                    USER_PUBLIC_ENDPOINTS,
+                    DOCS_PUBLIC_ENDPOINTS
+            )
+            .flatMap(Arrays::stream)
+            .toArray(String[]::new);
 
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
     private final JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint;

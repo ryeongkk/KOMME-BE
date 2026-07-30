@@ -2,12 +2,15 @@ package com.komme.domain.user.controller.docs;
 
 import com.komme.common.response.ApiResponse;
 import com.komme.domain.user.enums.TermsType;
+import com.komme.domain.user.util.NicknamePolicy;
+import com.komme.domain.user.dto.response.NicknameAvailabilityResponse;
 import com.komme.domain.user.dto.response.UserProfileResponse;
 import com.komme.domain.user.dto.request.ChangeNicknameRequest;
 import com.komme.domain.user.dto.request.UpdateTermsAgreementRequest;
 import com.komme.domain.user.dto.request.ChangePreferredLanguageRequest;
 
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Pattern;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -20,6 +23,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 
@@ -80,6 +84,31 @@ public interface UserControllerDocs {
     ResponseEntity<ApiResponse<Void>> changeNickname(
             @Parameter(hidden = true) @AuthenticationPrincipal Long userId,
             @Valid @RequestBody ChangeNicknameRequest request
+    );
+
+    // 닉네임 사용 가능 여부 조회 API
+    @Operation(
+            summary = "닉네임 사용 가능 여부 조회",
+            description = "회원가입 또는 닉네임 변경 전에 닉네임 중복 여부를 조회합니다."
+    )
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+            responseCode = "200",
+            description = "닉네임 사용 가능 여부 조회 성공",
+            content = @Content(
+                    schema = @Schema(implementation = NicknameAvailabilityResponse.class),
+                    examples = @ExampleObject(value = UserApiExamples.NICKNAME_AVAILABILITY_SUCCESS)
+            )
+    )
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+            responseCode = "400",
+            description = "닉네임 입력값 오류",
+            content = @Content(examples = @ExampleObject(value = UserApiExamples.BAD_REQUEST))
+    )
+    @GetMapping("/nicknames/availability")
+    ResponseEntity<ApiResponse<NicknameAvailabilityResponse>> checkNicknameAvailability(
+            @RequestParam("nickname")
+            @Pattern(regexp = NicknamePolicy.PATTERN, message = NicknamePolicy.MESSAGE)
+            String nickname
     );
 
     // 마이페이지 선호 언어 변경 API

@@ -2,10 +2,10 @@ package com.komme.domain.user.service;
 
 import com.komme.common.exception.GeneralException;
 import com.komme.domain.user.enums.TermsType;
-import com.komme.domain.user.service.TermsAgreementService;
 import com.komme.domain.user.dto.request.ChangeNicknameRequest;
 import com.komme.domain.user.dto.request.ChangePreferredLanguageRequest;
 import com.komme.domain.user.dto.request.UpdateTermsAgreementRequest;
+import com.komme.domain.user.dto.response.NicknameAvailabilityResponse;
 import com.komme.domain.user.dto.response.UserProfileResponse;
 import com.komme.domain.user.entity.User;
 import com.komme.domain.user.exception.UserConstraintExceptionMapper;
@@ -46,6 +46,13 @@ public class UserProfileService {
         User user = userReader.findByIdOrThrow(userId);
         user.changeNickname(nickname);
         flushUserChanges(UserErrorStatus.NICKNAME_ALREADY_EXISTS);
+    }
+
+    // 닉네임 사용 가능 여부 조회 기능
+    @Transactional(readOnly = true)
+    public NicknameAvailabilityResponse getNicknameAvailability(String nickname) {
+        boolean available = !userReader.existsByNickname(nickname);
+        return NicknameAvailabilityResponse.of(available);
     }
 
     // 사용자 선호 언어 변경 기능
