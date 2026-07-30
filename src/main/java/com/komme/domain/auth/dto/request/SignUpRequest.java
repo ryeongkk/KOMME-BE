@@ -1,5 +1,6 @@
 package com.komme.domain.auth.dto.request;
 
+import com.komme.domain.auth.util.PasswordPolicy;
 import com.komme.domain.user.enums.Gender;
 import com.komme.domain.user.enums.ServiceInterest;
 import com.komme.i18n.enums.Language;
@@ -19,10 +20,7 @@ public record SignUpRequest(
         String email,
 
         @NotBlank(message = "비밀번호는 필수입니다.")
-        @Pattern(
-                regexp = "^(?=.*[A-Za-z])(?=.*\\d)[A-Za-z\\d]{8,16}$",
-                message = "비밀번호는 8~16자의 영문과 숫자를 포함해야 합니다."
-        )
+        @Pattern(regexp = PasswordPolicy.PATTERN, message = PasswordPolicy.MESSAGE)
         String password,
 
         @NotBlank(message = "닉네임은 필수입니다.")
