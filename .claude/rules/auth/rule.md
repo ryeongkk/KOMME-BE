@@ -9,6 +9,7 @@ KOMME의 로그인/회원가입(이메일, 구글, 애플)을 담당하는 패�
 
 - 로그인 수단은 이메일/구글/애플 3가지다. `provider`(LOCAL/GOOGLE/APPLE) + provider별 고유 식별자로 계정을 구분한다.
 - 이메일 비밀번호는 반드시 해시(BCrypt 등)해서 저장한다. 평문 저장·로깅 금지.
+- 비밀번호 형식 검증(정규식, 에러 메시지)은 `domain.auth.util.PasswordPolicy` 상수 하나로 관리한다. 회원가입/비밀번호 변경/비밀번호 재설정 등 새 비밀번호를 입력받는 DTO는 각자 정규식을 새로 작성하지 말고 `PasswordPolicy.PATTERN`/`PasswordPolicy.MESSAGE`를 재사용해 정책이 어긋나지 않게 한다.
 - 이메일 인증 Redis 키는 목적(`SIGN_UP`, `PASSWORD_RESET`)별로 분리한다. 회원가입은 인증 완료 플래그를 사용하고, 비밀번호 재설정은 인증 성공 시 짧은 TTL의 일회성 reset token을 발급해 `token -> email` 매핑으로만 최종 변경을 허용한다.
 - 비밀번호 재설정은 가입된 `LOCAL` 계정에만 허용하고, 성공 시 모든 Refresh Token을 폐기한다.
 - 구글/애플 로그인은 클라이언트가 보낸 사용자 정보를 그대로 신뢰하지 않고, 서버에서 provider의 idToken/identity token을 검증한 결과만 사용한다.

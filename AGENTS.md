@@ -14,6 +14,8 @@ For authentication-related changes, keep the package layout grouped by responsib
 
 For email verification, scope Redis keys by purpose such as `SIGN_UP` or `PASSWORD_RESET`. Sign-up may use an email verified flag, but password reset must issue a short-lived one-time reset token mapped to the email and consume that token when changing the password. Password reset is allowed only for registered `LOCAL` accounts and must invalidate all refresh tokens after success.
 
+Keep the password format rule (regex and error message) in a single `domain.auth.util.PasswordPolicy` constant. Every request DTO that accepts a new password (sign-up, password change, password reset) must reference `PasswordPolicy.PATTERN`/`PasswordPolicy.MESSAGE` instead of declaring its own `@Pattern`, so the policy cannot drift between endpoints.
+
 ## Build, Test, and Development Commands
 
 Use the checked-in Gradle wrapper.
