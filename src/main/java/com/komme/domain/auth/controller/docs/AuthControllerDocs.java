@@ -452,6 +452,11 @@ public interface AuthControllerDocs {
                     @ExampleObject(name = "만료된 토큰", value = AuthApiExamples.EXPIRED_TOKEN)
             })
     )
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+            responseCode = "500",
+            description = "계정 탈퇴 실패",
+            content = @Content(examples = @ExampleObject(value = AuthApiExamples.WITHDRAWAL_FAILED))
+    )
     @DeleteMapping("/withdraw")
     ResponseEntity<ApiResponse<Void>> withdraw(
             @Parameter(hidden = true) @AuthenticationPrincipal Long userId,

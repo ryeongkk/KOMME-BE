@@ -45,6 +45,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -477,6 +478,30 @@ class AuthServiceTests {
                 eq("true"),
                 eq(Duration.ofDays(7))
         );
+    }
+
+    // 사용자 삭제 무결성 오류 도메인 오류 변환 검증
+    @Test
+    void withdrawMapsUserDeleteIntegrityViolation() {
+        User user = createWithdrawLocalUser();
+        TokenClaims accessClaims = new TokenClaims(
+                USER_ID,
+                "access-id",
+                Instant.now().plus(ACCESS_EXPIRATION)
+        );
+        when(userReader.findByIdOrThrow(USER_ID)).thenReturn(user);
+        doThrow(new DataIntegrityViolationException("referenced user"))
+                .when(userRepository)
+                .flush();
+
+        assertThatThrownBy(() -> authService.withdraw(USER_ID, accessClaims))
+                .isInstanceOf(GeneralException.class)
+                .extracting(exception -> ((GeneralException) exception).getErrorStatus())
+                .isEqualTo(AuthErrorStatus.WITHDRAWAL_FAILED);
+
+        verify(userRepository).delete(user);
+        verify(redisTemplate, never()).opsForSet();
+        verify(redisTemplate, never()).opsForValue();
     }
 
     // 회원가입 요청 생성

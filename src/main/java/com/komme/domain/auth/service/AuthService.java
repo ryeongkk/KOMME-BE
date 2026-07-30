@@ -129,11 +129,21 @@ public class AuthService {
 
         oAuthAccountRepository.deleteAllByUserId(userId);
         termsAgreementRepository.deleteAllByUserId(userId);
-        userRepository.delete(user);
-        userRepository.flush();
+        deleteUser(user);
         refreshTokenStore.invalidateAll(userId);
         accessTokenBlacklistStore.blacklist(accessTokenClaims);
         withdrawalStore.markWithdrawn(email);
+    }
+
+    // 사용자 하드 삭제 및 참조 무결성 오류 변환 기능
+    private void deleteUser(User user) {
+        try {
+            userRepository.delete(user);
+            // Redis 마킹 전 User FK 정리 누락을 트랜잭션 안에서 확인하는 기능
+            userRepository.flush();
+        } catch (DataIntegrityViolationException exception) {
+            throw new GeneralException(AuthErrorStatus.WITHDRAWAL_FAILED, exception);
+        }
     }
 
     // 회원가입 입력값 정규화 기능

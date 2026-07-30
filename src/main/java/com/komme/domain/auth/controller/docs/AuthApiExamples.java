@@ -173,6 +173,14 @@ public final class AuthApiExamples {
             }
             """;
 
+    public static final String WITHDRAWAL_FAILED = """
+            {
+              "isSuccess": false,
+              "code": "AUTH_500_2",
+              "message": "계정 탈퇴에 실패했습니다."
+            }
+            """;
+
     // 인스턴스 생성 방지
     private AuthApiExamples() {
     }
