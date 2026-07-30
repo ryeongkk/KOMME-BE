@@ -21,6 +21,7 @@ public class SecurityConfig {
 
     private static final String[] PUBLIC_ENDPOINTS = {
             "/api/v1/auth/email-verifications/**",
+            "/api/v1/auth/password-resets/**",
             "/api/v1/auth/signup",
             "/api/v1/auth/login",
             "/api/v1/auth/oauth/apple",

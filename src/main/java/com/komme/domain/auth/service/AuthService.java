@@ -4,6 +4,7 @@ import com.komme.common.exception.GeneralException;
 import com.komme.domain.auth.dto.request.LoginRequest;
 import com.komme.domain.auth.dto.request.LogoutRequest;
 import com.komme.domain.auth.dto.request.PasswordChangeRequest;
+import com.komme.domain.auth.dto.request.PasswordResetRequest;
 import com.komme.domain.auth.dto.request.SignUpRequest;
 import com.komme.domain.auth.dto.request.TokenReissueRequest;
 import com.komme.domain.auth.dto.response.LoginResponse;
@@ -83,6 +84,16 @@ public class AuthService {
         validateCurrentPassword(request.currentPassword(), user.getPassword());
         user.changePassword(passwordEncoder.encode(request.newPassword()));
         refreshTokenStore.invalidateAll(userId);
+    }
+
+    // 비밀번호 재설정 토큰 기반 비밀번호 변경 기능
+    @Transactional
+    public void resetPassword(PasswordResetRequest request) {
+        String email = emailVerificationService.consumePasswordResetToken(request.resetToken());
+        User user = authUserReader.findLocalByEmailForPasswordResetOrThrow(email);
+
+        user.changePassword(passwordEncoder.encode(request.newPassword()));
+        refreshTokenStore.invalidateAll(user.getId());
     }
 
     // 현재 기기 토큰 로그아웃 기능

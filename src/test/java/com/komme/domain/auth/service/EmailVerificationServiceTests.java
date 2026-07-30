@@ -3,8 +3,19 @@ package com.komme.domain.auth.service;
 import com.komme.common.exception.GeneralException;
 import com.komme.domain.auth.dto.request.EmailVerificationConfirmRequest;
 import com.komme.domain.auth.dto.request.EmailVerificationSendRequest;
+import com.komme.domain.auth.dto.request.PasswordResetConfirmRequest;
+import com.komme.domain.auth.dto.request.PasswordResetSendRequest;
+import com.komme.domain.auth.dto.response.PasswordResetTokenResponse;
+import com.komme.domain.auth.enums.EmailVerificationPurpose;
 import com.komme.domain.auth.exception.AuthErrorStatus;
+import com.komme.domain.user.entity.User;
+import com.komme.domain.user.enums.Gender;
+import com.komme.domain.user.enums.ServiceInterest;
 import com.komme.domain.user.repository.UserRepository;
+import com.komme.i18n.enums.Language;
+
+import java.util.Optional;
+import java.util.Set;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -28,6 +39,9 @@ class EmailVerificationServiceTests {
     private UserRepository userRepository;
 
     @Mock
+    private AuthUserReader authUserReader;
+
+    @Mock
     private EmailVerificationStore emailVerificationStore;
 
     @Mock
@@ -43,6 +57,7 @@ class EmailVerificationServiceTests {
     void setUp() {
         emailVerificationService = new EmailVerificationService(
                 userRepository,
+                authUserReader,
                 emailVerificationStore,
                 codeGenerator,
                 verificationMailSender
@@ -59,8 +74,8 @@ class EmailVerificationServiceTests {
         );
 
         verify(userRepository).existsByEmail(EMAIL);
-        verify(emailVerificationStore).prepareSend(EMAIL);
-        verify(emailVerificationStore).saveCode(EMAIL, "123456");
+        verify(emailVerificationStore).prepareSend(EmailVerificationPurpose.SIGN_UP, EMAIL);
+        verify(emailVerificationStore).saveCode(EmailVerificationPurpose.SIGN_UP, EMAIL, "123456");
         verify(verificationMailSender).send(EMAIL, "123456");
     }
 
@@ -76,7 +91,7 @@ class EmailVerificationServiceTests {
                 .extracting(exception -> ((GeneralException) exception).getErrorStatus())
                 .isEqualTo(AuthErrorStatus.EMAIL_ALREADY_EXISTS);
 
-        verify(emailVerificationStore, never()).prepareSend(EMAIL);
+        verify(emailVerificationStore, never()).prepareSend(EmailVerificationPurpose.SIGN_UP, EMAIL);
     }
 
     // 이메일 발송 실패 시 저장 데이터 복구 검증
@@ -94,7 +109,75 @@ class EmailVerificationServiceTests {
                 .extracting(exception -> ((GeneralException) exception).getErrorStatus())
                 .isEqualTo(AuthErrorStatus.EMAIL_SEND_FAILED);
 
-        verify(emailVerificationStore).rollbackSend(EMAIL);
+        verify(emailVerificationStore).rollbackSend(EmailVerificationPurpose.SIGN_UP, EMAIL);
+    }
+
+    // 비밀번호 재설정 인증 코드 전송 흐름 검증
+    @Test
+    void sendPasswordResetVerificationCodeCoordinatesDependencies() {
+        User user = createLocalUser();
+        when(authUserReader.findLocalByEmailForPasswordReset(EMAIL))
+                .thenReturn(Optional.of(user));
+        when(codeGenerator.generate()).thenReturn("123456");
+
+        emailVerificationService.sendPasswordResetVerificationCode(
+                new PasswordResetSendRequest(" USER@example.com ")
+        );
+
+        verify(emailVerificationStore).prepareSend(
+                EmailVerificationPurpose.PASSWORD_RESET,
+                EMAIL
+        );
+        verify(emailVerificationStore).saveCode(
+                EmailVerificationPurpose.PASSWORD_RESET,
+                EMAIL,
+                "123456"
+        );
+        verify(verificationMailSender).send(EMAIL, "123456");
+    }
+
+    // 미가입 이메일 비밀번호 재설정 인증 코드 전송 성공 응답 검증
+    @Test
+    void sendPasswordResetVerificationCodeIgnoresUnregisteredEmail() {
+        when(authUserReader.findLocalByEmailForPasswordReset(EMAIL))
+                .thenReturn(Optional.empty());
+
+        emailVerificationService.sendPasswordResetVerificationCode(
+                new PasswordResetSendRequest(EMAIL)
+        );
+
+        verify(emailVerificationStore).prepareSend(
+                EmailVerificationPurpose.PASSWORD_RESET,
+                EMAIL
+        );
+        verify(emailVerificationStore, never()).saveCode(
+                EmailVerificationPurpose.PASSWORD_RESET,
+                EMAIL,
+                "123456"
+        );
+        verify(verificationMailSender, never()).send(EMAIL, "123456");
+    }
+
+    // OAuth 이메일 비밀번호 재설정 인증 코드 전송 성공 응답 검증
+    @Test
+    void sendPasswordResetVerificationCodeIgnoresOAuthEmail() {
+        when(authUserReader.findLocalByEmailForPasswordReset(EMAIL))
+                .thenReturn(Optional.empty());
+
+        emailVerificationService.sendPasswordResetVerificationCode(
+                new PasswordResetSendRequest(EMAIL)
+        );
+
+        verify(emailVerificationStore).prepareSend(
+                EmailVerificationPurpose.PASSWORD_RESET,
+                EMAIL
+        );
+        verify(emailVerificationStore, never()).saveCode(
+                EmailVerificationPurpose.PASSWORD_RESET,
+                EMAIL,
+                "123456"
+        );
+        verify(verificationMailSender, never()).send(EMAIL, "123456");
     }
 
     // 인증 코드 확인 Store 위임 검증
@@ -107,6 +190,19 @@ class EmailVerificationServiceTests {
         verify(emailVerificationStore).confirmCode(EMAIL, "123456");
     }
 
+    // 비밀번호 재설정 인증 코드 확인과 토큰 저장 검증
+    @Test
+    void confirmPasswordResetVerificationCodeIssuesResetToken() {
+        PasswordResetTokenResponse response =
+                emailVerificationService.confirmPasswordResetVerificationCode(
+                        new PasswordResetConfirmRequest(" USER@example.com ", "123456")
+                );
+
+        org.assertj.core.api.Assertions.assertThat(response.resetToken()).isNotBlank();
+        verify(emailVerificationStore).confirmPasswordResetCode(EMAIL, "123456");
+        verify(emailVerificationStore).savePasswordResetToken(response.resetToken(), EMAIL);
+    }
+
     // 인증 상태 조회와 삭제 Store 위임 검증
     @Test
     void verificationStateOperationsDelegateToStore() {
@@ -115,5 +211,26 @@ class EmailVerificationServiceTests {
 
         verify(emailVerificationStore).validateVerified(EMAIL);
         verify(emailVerificationStore).deleteVerified(EMAIL);
+    }
+
+    // 비밀번호 재설정 토큰 소비 Store 위임 검증
+    @Test
+    void consumePasswordResetTokenDelegatesToStore() {
+        emailVerificationService.consumePasswordResetToken("reset-token");
+
+        verify(emailVerificationStore).consumePasswordResetToken("reset-token");
+    }
+
+    // LOCAL 사용자 생성
+    private User createLocalUser() {
+        return User.createLocal(
+                EMAIL,
+                "encoded-password",
+                "nickname",
+                "KR",
+                Gender.FEMALE,
+                Language.ENGLISH,
+                Set.of(ServiceInterest.COURSE)
+        );
     }
 }

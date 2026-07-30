@@ -1,6 +1,7 @@
 package com.komme.domain.auth.service;
 
 import com.komme.common.exception.GeneralException;
+import com.komme.domain.auth.enums.EmailVerificationPurpose;
 import com.komme.domain.auth.exception.AuthErrorStatus;
 import com.komme.domain.auth.properties.EmailVerificationProperties;
 
@@ -18,6 +19,7 @@ public class EmailVerificationStore {
     private static final String VERIFICATION_ATTEMPT_KEY_PREFIX = "auth:email-verification:attempt:";
     private static final String VERIFICATION_LOCK_KEY_PREFIX = "auth:email-verification:lock:";
     private static final String VERIFICATION_COOLDOWN_KEY_PREFIX = "auth:email-verification:cooldown:";
+    private static final String PASSWORD_RESET_TOKEN_KEY_PREFIX = "auth:password-reset:token:";
     private static final String VERIFIED_EMAIL_VALUE = "true";
 
     private final StringRedisTemplate redisTemplate;
@@ -25,15 +27,25 @@ public class EmailVerificationStore {
 
     // 인증 코드 전송 가능 상태 준비 기능
     public void prepareSend(String email) {
-        validateNotLocked(email);
-        acquireSendCooldown(email);
-        redisTemplate.delete(createVerificationAttemptKey(email));
+        prepareSend(EmailVerificationPurpose.SIGN_UP, email);
+    }
+
+    // 목적별 인증 코드 전송 가능 상태 준비 기능
+    public void prepareSend(EmailVerificationPurpose purpose, String email) {
+        validateNotLocked(purpose, email);
+        acquireSendCooldown(purpose, email);
+        redisTemplate.delete(createVerificationAttemptKey(purpose, email));
     }
 
     // 이메일 인증 코드 TTL 저장 기능
     public void saveCode(String email, String verificationCode) {
+        saveCode(EmailVerificationPurpose.SIGN_UP, email, verificationCode);
+    }
+
+    // 목적별 이메일 인증 코드 TTL 저장 기능
+    public void saveCode(EmailVerificationPurpose purpose, String email, String verificationCode) {
         redisTemplate.opsForValue().set(
-                createVerificationCodeKey(email),
+                createVerificationCodeKey(purpose, email),
                 verificationCode,
                 emailVerificationProperties.getCodeExpiration()
         );
@@ -41,8 +53,13 @@ public class EmailVerificationStore {
 
     // 이메일 인증 코드 확인 및 인증 완료 저장 기능
     public void confirmCode(String email, String verificationCode) {
-        validateNotLocked(email);
-        String verificationCodeKey = createVerificationCodeKey(email);
+        confirmCode(EmailVerificationPurpose.SIGN_UP, email, verificationCode);
+    }
+
+    // 목적별 이메일 인증 코드 확인 및 인증 완료 저장 기능
+    public void confirmCode(EmailVerificationPurpose purpose, String email, String verificationCode) {
+        validateNotLocked(purpose, email);
+        String verificationCodeKey = createVerificationCodeKey(purpose, email);
         String savedVerificationCode = redisTemplate.opsForValue().get(verificationCodeKey);
 
         if (savedVerificationCode == null) {
@@ -50,11 +67,40 @@ public class EmailVerificationStore {
         }
 
         if (!savedVerificationCode.equals(verificationCode)) {
-            recordFailedAttempt(email, verificationCodeKey);
+            recordFailedAttempt(purpose, email, verificationCodeKey);
             throw new GeneralException(AuthErrorStatus.INVALID_VERIFICATION_CODE);
         }
 
-        markVerified(email, verificationCodeKey);
+        markVerified(purpose, email, verificationCodeKey);
+    }
+
+    // 비밀번호 재설정 코드 확인 기능
+    public void confirmPasswordResetCode(String email, String verificationCode) {
+        validateNotLocked(EmailVerificationPurpose.PASSWORD_RESET, email);
+        String verificationCodeKey = createVerificationCodeKey(
+                EmailVerificationPurpose.PASSWORD_RESET,
+                email
+        );
+        String savedVerificationCode = redisTemplate.opsForValue().get(verificationCodeKey);
+
+        if (savedVerificationCode == null) {
+            throw new GeneralException(AuthErrorStatus.EXPIRED_VERIFICATION_CODE);
+        }
+
+        if (!savedVerificationCode.equals(verificationCode)) {
+            recordFailedAttempt(
+                    EmailVerificationPurpose.PASSWORD_RESET,
+                    email,
+                    verificationCodeKey
+            );
+            throw new GeneralException(AuthErrorStatus.INVALID_VERIFICATION_CODE);
+        }
+
+        redisTemplate.delete(verificationCodeKey);
+        redisTemplate.delete(createVerificationAttemptKey(
+                EmailVerificationPurpose.PASSWORD_RESET,
+                email
+        ));
     }
 
     // 이메일 인증 완료 여부 검증 기능
@@ -71,21 +117,47 @@ public class EmailVerificationStore {
 
     // 인증 이메일 발송 실패 데이터 정리 기능
     public void rollbackSend(String email) {
-        redisTemplate.delete(createVerificationCodeKey(email));
-        redisTemplate.delete(createVerificationCooldownKey(email));
+        rollbackSend(EmailVerificationPurpose.SIGN_UP, email);
+    }
+
+    // 목적별 인증 이메일 발송 실패 데이터 정리 기능
+    public void rollbackSend(EmailVerificationPurpose purpose, String email) {
+        redisTemplate.delete(createVerificationCodeKey(purpose, email));
+        redisTemplate.delete(createVerificationCooldownKey(purpose, email));
+    }
+
+    // 비밀번호 재설정 토큰 저장 기능
+    public void savePasswordResetToken(String resetToken, String email) {
+        redisTemplate.opsForValue().set(
+                createPasswordResetTokenKey(resetToken),
+                email,
+                emailVerificationProperties.getVerifiedExpiration()
+        );
+    }
+
+    // 비밀번호 재설정 토큰 소비 기능
+    public String consumePasswordResetToken(String resetToken) {
+        String email = redisTemplate.opsForValue()
+                .getAndDelete(createPasswordResetTokenKey(resetToken));
+
+        if (email == null) {
+            throw new GeneralException(AuthErrorStatus.INVALID_RESET_TOKEN);
+        }
+
+        return email;
     }
 
     // 이메일 인증 잠금 여부 검증 기능
-    private void validateNotLocked(String email) {
-        if (Boolean.TRUE.equals(redisTemplate.hasKey(createVerificationLockKey(email)))) {
+    private void validateNotLocked(EmailVerificationPurpose purpose, String email) {
+        if (Boolean.TRUE.equals(redisTemplate.hasKey(createVerificationLockKey(purpose, email)))) {
             throw new GeneralException(AuthErrorStatus.EMAIL_VERIFICATION_LOCKED);
         }
     }
 
     // 이메일 인증 코드 재전송 cooldown 획득 기능
-    private void acquireSendCooldown(String email) {
+    private void acquireSendCooldown(EmailVerificationPurpose purpose, String email) {
         Boolean acquired = redisTemplate.opsForValue().setIfAbsent(
-                createVerificationCooldownKey(email),
+                createVerificationCooldownKey(purpose, email),
                 "true",
                 emailVerificationProperties.getResendCooldown()
         );
@@ -96,8 +168,12 @@ public class EmailVerificationStore {
     }
 
     // 이메일 인증 코드 실패 횟수 기록 및 잠금 기능
-    private void recordFailedAttempt(String email, String verificationCodeKey) {
-        String attemptKey = createVerificationAttemptKey(email);
+    private void recordFailedAttempt(
+            EmailVerificationPurpose purpose,
+            String email,
+            String verificationCodeKey
+    ) {
+        String attemptKey = createVerificationAttemptKey(purpose, email);
         Long attempts = redisTemplate.opsForValue().increment(attemptKey);
 
         if (Long.valueOf(1L).equals(attempts)) {
@@ -108,16 +184,21 @@ public class EmailVerificationStore {
         }
 
         if (attempts != null && attempts >= emailVerificationProperties.getMaxAttempts()) {
-            lockEmail(email, verificationCodeKey, attemptKey);
+            lockEmail(purpose, email, verificationCodeKey, attemptKey);
         }
     }
 
     // 이메일 인증 코드 실패 횟수 초과 잠금 기능
-    private void lockEmail(String email, String verificationCodeKey, String attemptKey) {
+    private void lockEmail(
+            EmailVerificationPurpose purpose,
+            String email,
+            String verificationCodeKey,
+            String attemptKey
+    ) {
         redisTemplate.delete(verificationCodeKey);
         redisTemplate.delete(attemptKey);
         redisTemplate.opsForValue().set(
-                createVerificationLockKey(email),
+                createVerificationLockKey(purpose, email),
                 "true",
                 emailVerificationProperties.getLockExpiration()
         );
@@ -125,19 +206,23 @@ public class EmailVerificationStore {
     }
 
     // 이메일 인증 완료 상태 저장 기능
-    private void markVerified(String email, String verificationCodeKey) {
+    private void markVerified(
+            EmailVerificationPurpose purpose,
+            String email,
+            String verificationCodeKey
+    ) {
         redisTemplate.opsForValue().set(
                 createVerifiedEmailKey(email),
                 VERIFIED_EMAIL_VALUE,
                 emailVerificationProperties.getVerifiedExpiration()
         );
         redisTemplate.delete(verificationCodeKey);
-        redisTemplate.delete(createVerificationAttemptKey(email));
+        redisTemplate.delete(createVerificationAttemptKey(purpose, email));
     }
 
-    // 이메일별 인증 코드 Redis 키 생성
-    private String createVerificationCodeKey(String email) {
-        return VERIFICATION_CODE_KEY_PREFIX + email;
+    // 목적별 이메일 인증 코드 Redis 키 생성
+    private String createVerificationCodeKey(EmailVerificationPurpose purpose, String email) {
+        return VERIFICATION_CODE_KEY_PREFIX + purpose.name() + ":" + email;
     }
 
     // 이메일별 인증 완료 Redis 키 생성
@@ -146,17 +231,22 @@ public class EmailVerificationStore {
     }
 
     // 이메일별 인증 코드 실패 횟수 Redis 키 생성
-    private String createVerificationAttemptKey(String email) {
-        return VERIFICATION_ATTEMPT_KEY_PREFIX + email;
+    private String createVerificationAttemptKey(EmailVerificationPurpose purpose, String email) {
+        return VERIFICATION_ATTEMPT_KEY_PREFIX + purpose.name() + ":" + email;
     }
 
     // 이메일별 인증 잠금 Redis 키 생성
-    private String createVerificationLockKey(String email) {
-        return VERIFICATION_LOCK_KEY_PREFIX + email;
+    private String createVerificationLockKey(EmailVerificationPurpose purpose, String email) {
+        return VERIFICATION_LOCK_KEY_PREFIX + purpose.name() + ":" + email;
     }
 
     // 이메일별 인증 코드 재전송 cooldown Redis 키 생성
-    private String createVerificationCooldownKey(String email) {
-        return VERIFICATION_COOLDOWN_KEY_PREFIX + email;
+    private String createVerificationCooldownKey(EmailVerificationPurpose purpose, String email) {
+        return VERIFICATION_COOLDOWN_KEY_PREFIX + purpose.name() + ":" + email;
+    }
+
+    // 비밀번호 재설정 토큰 Redis 키 생성
+    private String createPasswordResetTokenKey(String resetToken) {
+        return PASSWORD_RESET_TOKEN_KEY_PREFIX + resetToken;
     }
 }

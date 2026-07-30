@@ -1,6 +1,7 @@
 package com.komme.domain.auth.service;
 
 import com.komme.common.exception.GeneralException;
+import com.komme.domain.auth.enums.EmailVerificationPurpose;
 import com.komme.domain.auth.exception.AuthErrorStatus;
 import com.komme.domain.auth.properties.EmailVerificationProperties;
 
@@ -22,11 +23,17 @@ import static org.mockito.Mockito.when;
 class EmailVerificationStoreTests {
 
     private static final String EMAIL = "user@example.com";
-    private static final String CODE_KEY = "auth:email-verification:code:" + EMAIL;
+    private static final String CODE_KEY = "auth:email-verification:code:SIGN_UP:" + EMAIL;
+    private static final String PASSWORD_RESET_CODE_KEY =
+            "auth:email-verification:code:PASSWORD_RESET:" + EMAIL;
     private static final String VERIFIED_KEY = "auth:email-verification:verified:" + EMAIL;
-    private static final String ATTEMPT_KEY = "auth:email-verification:attempt:" + EMAIL;
-    private static final String LOCK_KEY = "auth:email-verification:lock:" + EMAIL;
-    private static final String COOLDOWN_KEY = "auth:email-verification:cooldown:" + EMAIL;
+    private static final String ATTEMPT_KEY = "auth:email-verification:attempt:SIGN_UP:" + EMAIL;
+    private static final String PASSWORD_RESET_ATTEMPT_KEY =
+            "auth:email-verification:attempt:PASSWORD_RESET:" + EMAIL;
+    private static final String LOCK_KEY = "auth:email-verification:lock:SIGN_UP:" + EMAIL;
+    private static final String COOLDOWN_KEY =
+            "auth:email-verification:cooldown:SIGN_UP:" + EMAIL;
+    private static final String RESET_TOKEN_KEY = "auth:password-reset:token:reset-token";
     private static final Duration CODE_EXPIRATION = Duration.ofMinutes(5);
     private static final Duration VERIFIED_EXPIRATION = Duration.ofMinutes(30);
     private static final Duration RESEND_COOLDOWN = Duration.ofMinutes(1);
@@ -88,6 +95,20 @@ class EmailVerificationStoreTests {
         emailVerificationStore.saveCode(EMAIL, "123456");
 
         verify(valueOperations).set(CODE_KEY, "123456", CODE_EXPIRATION);
+    }
+
+    // 목적별 인증 코드 TTL 저장 검증
+    @Test
+    void saveCodeStoresPurposeScopedCodeWithExpiration() {
+        prepareValueOperations();
+
+        emailVerificationStore.saveCode(
+                EmailVerificationPurpose.PASSWORD_RESET,
+                EMAIL,
+                "123456"
+        );
+
+        verify(valueOperations).set(PASSWORD_RESET_CODE_KEY, "123456", CODE_EXPIRATION);
     }
 
     // 인증 코드 확인 성공과 인증 상태 저장 검증
@@ -154,6 +175,51 @@ class EmailVerificationStoreTests {
 
         verify(redisTemplate).delete(CODE_KEY);
         verify(redisTemplate).delete(COOLDOWN_KEY);
+    }
+
+    // 비밀번호 재설정 코드 확인 성공 시 코드와 실패 횟수 삭제 검증
+    @Test
+    void confirmPasswordResetCodeDeletesCodeAndAttempts() {
+        prepareValueOperations();
+        when(valueOperations.get(PASSWORD_RESET_CODE_KEY)).thenReturn("123456");
+
+        emailVerificationStore.confirmPasswordResetCode(EMAIL, "123456");
+
+        verify(redisTemplate).delete(PASSWORD_RESET_CODE_KEY);
+        verify(redisTemplate).delete(PASSWORD_RESET_ATTEMPT_KEY);
+    }
+
+    // 비밀번호 재설정 토큰 TTL 저장 검증
+    @Test
+    void savePasswordResetTokenStoresEmailWithExpiration() {
+        prepareValueOperations();
+
+        emailVerificationStore.savePasswordResetToken("reset-token", EMAIL);
+
+        verify(valueOperations).set(RESET_TOKEN_KEY, EMAIL, VERIFIED_EXPIRATION);
+    }
+
+    // 비밀번호 재설정 토큰 소비 검증
+    @Test
+    void consumePasswordResetTokenReturnsEmail() {
+        prepareValueOperations();
+        when(valueOperations.getAndDelete(RESET_TOKEN_KEY)).thenReturn(EMAIL);
+
+        String email = emailVerificationStore.consumePasswordResetToken("reset-token");
+
+        org.assertj.core.api.Assertions.assertThat(email).isEqualTo(EMAIL);
+    }
+
+    // 유효하지 않은 비밀번호 재설정 토큰 거부 검증
+    @Test
+    void consumePasswordResetTokenRejectsInvalidToken() {
+        prepareValueOperations();
+        when(valueOperations.getAndDelete(RESET_TOKEN_KEY)).thenReturn(null);
+
+        assertThatThrownBy(() -> emailVerificationStore.consumePasswordResetToken("reset-token"))
+                .isInstanceOf(GeneralException.class)
+                .extracting(exception -> ((GeneralException) exception).getErrorStatus())
+                .isEqualTo(AuthErrorStatus.INVALID_RESET_TOKEN);
     }
 
     // 미인증 이메일 거부 검증

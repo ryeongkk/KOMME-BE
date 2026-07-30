@@ -7,6 +7,9 @@ import com.komme.domain.auth.dto.request.LogoutRequest;
 import com.komme.domain.auth.dto.request.OAuthAppleLoginRequest;
 import com.komme.domain.auth.dto.request.OAuthGoogleLoginRequest;
 import com.komme.domain.auth.dto.request.PasswordChangeRequest;
+import com.komme.domain.auth.dto.request.PasswordResetConfirmRequest;
+import com.komme.domain.auth.dto.request.PasswordResetRequest;
+import com.komme.domain.auth.dto.request.PasswordResetSendRequest;
 import com.komme.domain.auth.dto.request.SignUpRequest;
 import com.komme.domain.auth.dto.request.TokenReissueRequest;
 import com.komme.domain.user.enums.Gender;
@@ -142,6 +145,37 @@ class AuthRequestValidationTests {
         PasswordChangeRequest request = new PasswordChangeRequest("password1", "onlyletters");
 
         assertThat(propertyNames(validator.validate(request))).contains("newPassword");
+    }
+
+    // 비밀번호 재설정 이메일 인증 요청 입력값 검증
+    @Test
+    void passwordResetVerificationRequestsRejectInvalidValues() {
+        PasswordResetSendRequest sendRequest = new PasswordResetSendRequest("invalid-email");
+        PasswordResetConfirmRequest confirmRequest = new PasswordResetConfirmRequest(
+                "user@example.com",
+                "12345a"
+        );
+
+        assertThat(propertyNames(validator.validate(sendRequest))).contains("email");
+        assertThat(propertyNames(validator.validate(confirmRequest)))
+                .contains("verificationCode");
+    }
+
+    // 비밀번호 재설정 요청 필수값과 새 비밀번호 형식 검증
+    @Test
+    void passwordResetRequestRejectsInvalidValues() {
+        PasswordResetRequest request = new PasswordResetRequest("", "onlyletters");
+
+        assertThat(propertyNames(validator.validate(request)))
+                .contains("resetToken", "newPassword");
+    }
+
+    // 비밀번호 재설정 요청 특수문자 포함 비밀번호 허용 검증
+    @Test
+    void passwordResetRequestAcceptsSpecialCharacterPassword() {
+        PasswordResetRequest request = new PasswordResetRequest("reset-token", "newpassword2!");
+
+        assertThat(validator.validate(request)).isEmpty();
     }
 
     // 정상 회원가입 요청 생성

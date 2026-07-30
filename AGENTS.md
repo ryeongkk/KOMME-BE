@@ -12,6 +12,8 @@ Within each domain, keep classes grouped by responsibility (`entity`, `enums`, `
 
 For authentication-related changes, keep the package layout grouped by responsibility (`entity`, `enums`, `repository`, `dto/request`, `dto/response`, `service`, `controller/docs`, `jwt`, and `properties`). Keep domain enums in the owning domain's `enums` package.
 
+For email verification, scope Redis keys by purpose such as `SIGN_UP` or `PASSWORD_RESET`. Sign-up may use an email verified flag, but password reset must issue a short-lived one-time reset token mapped to the email and consume that token when changing the password. Password reset is allowed only for registered `LOCAL` accounts and must invalidate all refresh tokens after success.
+
 ## Build, Test, and Development Commands
 
 Use the checked-in Gradle wrapper.
