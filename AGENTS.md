@@ -16,6 +16,8 @@ For email verification, scope Redis keys by purpose such as `SIGN_UP` or `PASSWO
 
 Keep the password format rule (regex and error message) in a single `domain.auth.util.PasswordPolicy` constant. Every request DTO that accepts a new password (sign-up, password change, password reset) must reference `PasswordPolicy.PATTERN`/`PasswordPolicy.MESSAGE` instead of declaring its own `@Pattern`, so the policy cannot drift between endpoints.
 
+Keep the nickname format rule (regex and error message) in a single `domain.user.util.NicknamePolicy` constant, since a nickname is a user profile concept rather than an auth-only one. Every request DTO that accepts a nickname (sign-up, OAuth profile completion, nickname change) must reference `NicknamePolicy.PATTERN`/`NicknamePolicy.MESSAGE` instead of declaring its own `@Size`/`@Pattern`.
+
 ## Build, Test, and Development Commands
 
 Use the checked-in Gradle wrapper.

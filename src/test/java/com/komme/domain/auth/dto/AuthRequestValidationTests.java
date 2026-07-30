@@ -6,6 +6,7 @@ import com.komme.domain.auth.dto.request.LoginRequest;
 import com.komme.domain.auth.dto.request.LogoutRequest;
 import com.komme.domain.auth.dto.request.OAuthAppleLoginRequest;
 import com.komme.domain.auth.dto.request.OAuthGoogleLoginRequest;
+import com.komme.domain.auth.dto.request.OAuthProfileCompleteRequest;
 import com.komme.domain.auth.dto.request.PasswordChangeRequest;
 import com.komme.domain.auth.dto.request.PasswordResetConfirmRequest;
 import com.komme.domain.auth.dto.request.PasswordResetRequest;
@@ -86,6 +87,22 @@ class AuthRequestValidationTests {
         assertThat(propertyNames(validator.validate(request))).doesNotContain("password");
     }
 
+    // 형식에 맞지 않는 닉네임 거부 검증
+    @Test
+    void signUpRequestRejectsInvalidNickname() {
+        SignUpRequest request = new SignUpRequest(
+                "user@example.com",
+                "password1",
+                "n",
+                "KR",
+                Gender.FEMALE,
+                Language.ENGLISH,
+                Set.of(ServiceInterest.COURSE)
+        );
+
+        assertThat(propertyNames(validator.validate(request))).contains("nickname");
+    }
+
     // 잘못된 국적과 필수 선택값 거부 검증
     @Test
     void signUpRequestRejectsInvalidProfileValues() {
@@ -144,6 +161,34 @@ class AuthRequestValidationTests {
         OAuthGoogleLoginRequest request = new OAuthGoogleLoginRequest("");
 
         assertThat(propertyNames(validator.validate(request))).contains("idToken");
+    }
+
+    // OAuth 프로필 완성 요청 올바른 값 검증 통과 확인
+    @Test
+    void oAuthProfileCompleteRequestAcceptsValidValues() {
+        OAuthProfileCompleteRequest request = new OAuthProfileCompleteRequest(
+                "nickname",
+                "KR",
+                Gender.FEMALE,
+                Language.ENGLISH,
+                Set.of(ServiceInterest.COURSE)
+        );
+
+        assertThat(validator.validate(request)).isEmpty();
+    }
+
+    // OAuth 프로필 완성 요청 형식에 맞지 않는 닉네임 거부 검증
+    @Test
+    void oAuthProfileCompleteRequestRejectsInvalidNickname() {
+        OAuthProfileCompleteRequest request = new OAuthProfileCompleteRequest(
+                "nick name!",
+                "KR",
+                Gender.FEMALE,
+                Language.ENGLISH,
+                Set.of(ServiceInterest.COURSE)
+        );
+
+        assertThat(propertyNames(validator.validate(request))).contains("nickname");
     }
 
     // 토큰 요청 필수값 검증
