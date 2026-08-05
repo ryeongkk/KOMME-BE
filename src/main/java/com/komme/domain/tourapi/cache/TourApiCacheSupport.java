@@ -20,7 +20,9 @@ import lombok.extern.slf4j.Slf4j;
 public class TourApiCacheSupport {
 
     private final StringRedisTemplate redisTemplate;
-    private final ObjectMapper objectMapper;
+    // Spring Boot 4의 기본 JSON 라이브러리(Jackson 3, tools.jackson)와 별개로,
+    // 캐시 직렬화 전용으로만 쓰는 것이라 앱 전역 빈에 의존하지 않고 직접 생성한다.
+    private final ObjectMapper objectMapper = new ObjectMapper();
 
     // 캐시 조회 후 없으면 loader를 호출해 원본을 가져오고, 결과를 TTL과 함께 캐시에 저장
     public <T> T getOrLoad(String key, Duration ttl, TypeReference<T> typeReference, Supplier<T> loader) {
