@@ -3,7 +3,9 @@ package com.komme.domain.course.client;
 import com.komme.common.exception.GeneralException;
 import com.komme.domain.course.properties.KakaoLocalProperties;
 import com.komme.domain.tourapi.cache.TourApiCacheSupport;
+import com.komme.domain.tourapi.client.TourApiQuerySupport;
 import com.komme.domain.tourapi.exception.TourApiErrorStatus;
+import com.komme.domain.tourapi.properties.TourApiProperties;
 
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
@@ -95,6 +97,7 @@ class KakaoLocalClientTests {
         return new KakaoLocalClient(
                 webClient,
                 new KakaoLocalProperties("kakao-rest-api-key"),
+                new TourApiQuerySupport(new TourApiProperties("service-key", "ETC", "KOMME")),
                 new TourApiCacheSupport(redisTemplate)
         );
     }

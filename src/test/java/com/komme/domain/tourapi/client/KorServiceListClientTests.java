@@ -26,7 +26,7 @@ import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.lenient;
 
 @ExtendWith(MockitoExtension.class)
-class KorServiceClientTests {
+class KorServiceListClientTests {
 
     private static final String AREA_BASED_LIST_JSON = """
             {
@@ -63,7 +63,7 @@ class KorServiceClientTests {
     // 지역기반 목록조회 정상 응답 파싱 검증
     @Test
     void findAreaBasedListParsesItems() {
-        KorServiceClient client = createClient(createWebClient(HttpStatus.OK, AREA_BASED_LIST_JSON));
+        KorServiceListClient client = createClient(createWebClient(HttpStatus.OK, AREA_BASED_LIST_JSON));
 
         List<AreaBasedListItem> items = client.findAreaBasedList("11", "11440", "12");
 
@@ -75,7 +75,7 @@ class KorServiceClientTests {
     // 외부 API 연결 실패(비정상 HTTP 상태) 시 GeneralException으로 변환되는지 검증
     @Test
     void findAreaBasedListMapsConnectionFailure() {
-        KorServiceClient client = createClient(createWebClient(HttpStatus.BAD_GATEWAY, ""));
+        KorServiceListClient client = createClient(createWebClient(HttpStatus.BAD_GATEWAY, ""));
 
         assertThatThrownBy(() -> client.findAreaBasedList("11", "11440", "12"))
                 .isInstanceOf(GeneralException.class)
@@ -83,11 +83,11 @@ class KorServiceClientTests {
                 .isEqualTo(TourApiErrorStatus.KOR_SERVICE_CONNECTION_FAILED);
     }
 
-    private KorServiceClient createClient(WebClient webClient) {
+    private KorServiceListClient createClient(WebClient webClient) {
         lenient().when(redisTemplate.opsForValue()).thenReturn(valueOperations);
         lenient().when(valueOperations.get(anyString())).thenReturn(null);
 
-        return new KorServiceClient(
+        return new KorServiceListClient(
                 webClient,
                 new TourApiQuerySupport(new TourApiProperties("service-key", "ETC", "KOMME")),
                 new TourApiCacheSupport(redisTemplate)

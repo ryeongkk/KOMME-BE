@@ -1,12 +1,9 @@
 package com.komme.domain.tourapi.client;
 
-import java.net.URI;
 import java.time.Duration;
 import java.util.List;
-import java.util.function.Function;
 
 import com.fasterxml.jackson.core.type.TypeReference;
-import com.komme.common.exception.GeneralException;
 import com.komme.domain.tourapi.cache.TourApiCacheSupport;
 import com.komme.domain.tourapi.cache.TourApiRedisKeys;
 import com.komme.domain.tourapi.exception.TourApiErrorStatus;
@@ -15,7 +12,6 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClient;
-import org.springframework.web.reactive.function.client.WebClientException;
 import org.springframework.web.util.UriBuilder;
 
 // 한국관광공사 관광지 집중률 방문자 추이 예측 정보 서비스(TatsCnctrRateService) 클라이언트
@@ -55,7 +51,8 @@ public class ConcentrationRateClient {
     }
 
     private List<ConcentrationRateItem> call(String areaCode, String sigunguCode, String touristSpotName) {
-        TourApiEnvelope<ConcentrationRateItem> envelope = get(
+        TourApiEnvelope<ConcentrationRateItem> envelope = tourApiQuerySupport.get(
+                concentrationRateApiWebClient,
                 uriBuilder -> {
                     UriBuilder withCommonParams = tourApiQuerySupport.withCommonParams(uriBuilder)
                             .path("/tatsCnctrRatedList")
@@ -68,24 +65,10 @@ public class ConcentrationRateClient {
                     }
                     return withCommonParams.build();
                 },
-                new ParameterizedTypeReference<>() {
-                }
+                new ParameterizedTypeReference<TourApiEnvelope<ConcentrationRateItem>>() {
+                },
+                TourApiErrorStatus.CONCENTRATION_RATE_CONNECTION_FAILED
         );
         return tourApiQuerySupport.unwrapItems(envelope, TourApiErrorStatus.CONCENTRATION_RATE_RESPONSE_INVALID);
-    }
-
-    private <T> TourApiEnvelope<T> get(
-            Function<UriBuilder, URI> uriFunction,
-            ParameterizedTypeReference<TourApiEnvelope<T>> responseType
-    ) {
-        try {
-            return concentrationRateApiWebClient.get()
-                    .uri(uriFunction::apply)
-                    .retrieve()
-                    .bodyToMono(responseType)
-                    .block();
-        } catch (WebClientException exception) {
-            throw new GeneralException(TourApiErrorStatus.CONCENTRATION_RATE_CONNECTION_FAILED, exception);
-        }
     }
 }

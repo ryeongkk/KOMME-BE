@@ -1,12 +1,9 @@
 package com.komme.domain.tourapi.client;
 
-import java.net.URI;
 import java.time.Duration;
 import java.util.List;
-import java.util.function.Function;
 
 import com.fasterxml.jackson.core.type.TypeReference;
-import com.komme.common.exception.GeneralException;
 import com.komme.domain.tourapi.cache.TourApiCacheSupport;
 import com.komme.domain.tourapi.cache.TourApiRedisKeys;
 import com.komme.domain.tourapi.exception.TourApiErrorStatus;
@@ -15,8 +12,6 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClient;
-import org.springframework.web.reactive.function.client.WebClientException;
-import org.springframework.web.util.UriBuilder;
 
 // 한국관광공사 관광지별 연관 관광지 서비스(TarRlteTarService1) 클라이언트
 // ⚠ 오퍼레이션 경로/요청 파라미터명을 매뉴얼로 확인하지 못해 KorService2 계열 네이밍 관례를 따라 추정 작성했다.
@@ -52,7 +47,8 @@ public class RelatedSpotClient {
     }
 
     private List<RelatedSpotItem> callByArea(String areaCode, String sigunguCode) {
-        TourApiEnvelope<RelatedSpotItem> envelope = get(
+        TourApiEnvelope<RelatedSpotItem> envelope = tourApiQuerySupport.get(
+                relatedSpotApiWebClient,
                 uriBuilder -> tourApiQuerySupport.withCommonParams(uriBuilder)
                         .path("/areaBasedList1")
                         .queryParam("areaCode", areaCode)
@@ -60,8 +56,9 @@ public class RelatedSpotClient {
                         .queryParam("numOfRows", 50)
                         .queryParam("pageNo", 1)
                         .build(),
-                new ParameterizedTypeReference<>() {
-                }
+                new ParameterizedTypeReference<TourApiEnvelope<RelatedSpotItem>>() {
+                },
+                TourApiErrorStatus.RELATED_SPOT_CONNECTION_FAILED
         );
         return tourApiQuerySupport.unwrapItems(envelope, TourApiErrorStatus.RELATED_SPOT_RESPONSE_INVALID);
     }
@@ -78,31 +75,18 @@ public class RelatedSpotClient {
     }
 
     private List<RelatedSpotItem> callByKeyword(String keyword) {
-        TourApiEnvelope<RelatedSpotItem> envelope = get(
+        TourApiEnvelope<RelatedSpotItem> envelope = tourApiQuerySupport.get(
+                relatedSpotApiWebClient,
                 uriBuilder -> tourApiQuerySupport.withCommonParams(uriBuilder)
                         .path("/searchKeyword1")
                         .queryParam("keyword", keyword)
                         .queryParam("numOfRows", 50)
                         .queryParam("pageNo", 1)
                         .build(),
-                new ParameterizedTypeReference<>() {
-                }
+                new ParameterizedTypeReference<TourApiEnvelope<RelatedSpotItem>>() {
+                },
+                TourApiErrorStatus.RELATED_SPOT_CONNECTION_FAILED
         );
         return tourApiQuerySupport.unwrapItems(envelope, TourApiErrorStatus.RELATED_SPOT_RESPONSE_INVALID);
-    }
-
-    private <T> TourApiEnvelope<T> get(
-            Function<UriBuilder, URI> uriFunction,
-            ParameterizedTypeReference<TourApiEnvelope<T>> responseType
-    ) {
-        try {
-            return relatedSpotApiWebClient.get()
-                    .uri(uriFunction::apply)
-                    .retrieve()
-                    .bodyToMono(responseType)
-                    .block();
-        } catch (WebClientException exception) {
-            throw new GeneralException(TourApiErrorStatus.RELATED_SPOT_CONNECTION_FAILED, exception);
-        }
     }
 }

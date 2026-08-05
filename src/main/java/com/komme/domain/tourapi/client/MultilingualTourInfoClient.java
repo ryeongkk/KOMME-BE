@@ -1,11 +1,9 @@
 package com.komme.domain.tourapi.client;
 
-import java.net.URI;
 import java.time.Duration;
 import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
-import java.util.function.Function;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.komme.common.exception.GeneralException;
@@ -18,8 +16,6 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClient;
-import org.springframework.web.reactive.function.client.WebClientException;
-import org.springframework.web.util.UriBuilder;
 
 // 한국관광공사 다국어 관광정보 서비스(언어별 별도 API - EngService2/JpnService2/ChsService2) 클라이언트
 // ⚠ base URL과 마찬가지로 오퍼레이션 경로도 KorService2와 동일한 이름(detailCommon2)일 것으로 가정한 추정치다.
@@ -66,7 +62,7 @@ public class MultilingualTourInfoClient {
             throw new GeneralException(TourApiErrorStatus.MULTILINGUAL_RESPONSE_INVALID);
         }
 
-        TourApiEnvelope<DetailCommonItem> envelope = get(
+        TourApiEnvelope<DetailCommonItem> envelope = tourApiQuerySupport.get(
                 webClient,
                 uriBuilder -> tourApiQuerySupport.withCommonParams(uriBuilder)
                         .path("/detailCommon2")
@@ -75,25 +71,10 @@ public class MultilingualTourInfoClient {
                         .queryParam("defaultYN", "Y")
                         .queryParam("overviewYN", "Y")
                         .build(),
-                new ParameterizedTypeReference<>() {
-                }
+                new ParameterizedTypeReference<TourApiEnvelope<DetailCommonItem>>() {
+                },
+                TourApiErrorStatus.MULTILINGUAL_CONNECTION_FAILED
         );
         return tourApiQuerySupport.unwrapItems(envelope, TourApiErrorStatus.MULTILINGUAL_RESPONSE_INVALID);
-    }
-
-    private <T> TourApiEnvelope<T> get(
-            WebClient webClient,
-            Function<UriBuilder, URI> uriFunction,
-            ParameterizedTypeReference<TourApiEnvelope<T>> responseType
-    ) {
-        try {
-            return webClient.get()
-                    .uri(uriFunction::apply)
-                    .retrieve()
-                    .bodyToMono(responseType)
-                    .block();
-        } catch (WebClientException exception) {
-            throw new GeneralException(TourApiErrorStatus.MULTILINGUAL_CONNECTION_FAILED, exception);
-        }
     }
 }
