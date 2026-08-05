@@ -10,6 +10,14 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class SwaggerConfigTests {
 
+    // Swagger 설정 클래스 기본 생성 검증
+    @Test
+    void swaggerConfigCanBeInstantiated() {
+        SwaggerConfig swaggerConfig = new SwaggerConfig();
+
+        assertThat(swaggerConfig).isNotNull();
+    }
+
     // Swagger OpenAPI 기본 정보 검증
     @Test
     void swaggerConfigDefinesOpenApiInfo() {

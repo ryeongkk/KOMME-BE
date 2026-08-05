@@ -34,6 +34,14 @@ class BaseEntityJpaTests {
     @Autowired
     private EntityManager entityManager;
 
+    // BaseEntity 기본 생성 검증
+    @Test
+    void baseEntityCanBeInstantiated() {
+        BaseEntity baseEntity = new BaseEntity();
+
+        assertThat(baseEntity).isNotNull();
+    }
+
     // BaseEntity 생성 및 수정 시각 자동 저장 검증
     @Test
     void baseEntityStoresAuditTimestampsOnPersist() {
