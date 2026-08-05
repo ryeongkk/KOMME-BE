@@ -100,6 +100,50 @@ class RepositoryJpaTests {
                 .isInstanceOf(DataIntegrityViolationException.class);
     }
 
+    // 사용자 ID 기반 약관 동의 전체 삭제 검증
+    @Test
+    void termsAgreementRepositoryDeletesAllByUserId() {
+        User user = userRepository.saveAndFlush(createLocalUser("user@example.com", "nickname"));
+        termsAgreementRepository.saveAndFlush(
+                TermsAgreement.create(user, TermsType.MARKETING, true)
+        );
+        termsAgreementRepository.saveAndFlush(
+                TermsAgreement.create(user, TermsType.PUSH_NOTIFICATION, false)
+        );
+
+        termsAgreementRepository.deleteAllByUserId(user.getId());
+        termsAgreementRepository.flush();
+
+        assertThat(termsAgreementRepository.findByUserIdAndTermsTypeIn(
+                user.getId(),
+                TermsType.optionalConsentTypes()
+        )).isEmpty();
+    }
+
+    // 사용자 ID 기반 OAuth 계정 전체 삭제 검증
+    @Test
+    void oAuthAccountRepositoryDeletesAllByUserId() {
+        User user = userRepository.saveAndFlush(createLocalUser("user@example.com", "nickname"));
+        oAuthAccountRepository.saveAndFlush(
+                OAuthAccount.create(user, Provider.GOOGLE, "google-id")
+        );
+        oAuthAccountRepository.saveAndFlush(
+                OAuthAccount.create(user, Provider.APPLE, "apple-id")
+        );
+
+        oAuthAccountRepository.deleteAllByUserId(user.getId());
+        oAuthAccountRepository.flush();
+
+        assertThat(oAuthAccountRepository.findByProviderAndProviderId(
+                Provider.GOOGLE,
+                "google-id"
+        )).isEmpty();
+        assertThat(oAuthAccountRepository.findByProviderAndProviderId(
+                Provider.APPLE,
+                "apple-id"
+        )).isEmpty();
+    }
+
     // 사용자 Repository 조회 메서드 검증
     @Test
     void userRepositoryFindsAndChecksUserFields() {
