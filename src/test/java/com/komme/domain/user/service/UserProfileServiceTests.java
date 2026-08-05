@@ -28,6 +28,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -110,6 +111,9 @@ class UserProfileServiceTests {
                 .isInstanceOf(com.komme.common.exception.GeneralException.class)
                 .extracting(exception -> ((com.komme.common.exception.GeneralException) exception).getErrorStatus())
                 .isEqualTo(UserErrorStatus.NICKNAME_ALREADY_EXISTS);
+
+        verify(userReader, never()).findByIdOrThrow(USER_ID);
+        verify(userRepository, never()).flush();
     }
 
     // 닉네임 unique 제약조건 오류 변환 검증

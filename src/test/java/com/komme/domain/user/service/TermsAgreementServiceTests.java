@@ -9,6 +9,7 @@ import com.komme.domain.user.repository.TermsAgreementRepository;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -48,6 +49,21 @@ class TermsAgreementServiceTests {
         )).thenReturn((long) TermsType.requiredTypes().size());
 
         assertThat(service.areRequiredTermsAgreed(USER_ID)).isTrue();
+    }
+
+    // 필수 약관 일부 미동의 상태 조회 검증
+    @Test
+    void areRequiredTermsAgreedReturnsFalseWhenAnyRequiredTermsAreMissing() {
+        TermsAgreementService service = new TermsAgreementService(
+                termsAgreementRepository,
+                userReader
+        );
+        when(termsAgreementRepository.countByUserIdAndTermsTypeInAndAgreedTrue(
+                USER_ID,
+                TermsType.requiredTypes()
+        )).thenReturn((long) TermsType.requiredTypes().size() - 1);
+
+        assertThat(service.areRequiredTermsAgreed(USER_ID)).isFalse();
     }
 
     // 사용자 약관 동의 상태 일괄 저장 검증
@@ -110,6 +126,33 @@ class TermsAgreementServiceTests {
         service.updateOptionalConsent(USER_ID, TermsType.MARKETING, true);
 
         verify(termsAgreementRepository).save(any());
+    }
+
+    // 기존 선택 약관 동의 상태 갱신 검증
+    @Test
+    void updateOptionalConsentUpdatesExistingTermsAgreement() {
+        TermsAgreementService service = new TermsAgreementService(
+                termsAgreementRepository,
+                userReader
+        );
+        User user = mock(User.class);
+        TermsAgreement termsAgreement = TermsAgreement.create(
+                user,
+                TermsType.PUSH_NOTIFICATION,
+                false
+        );
+        when(user.getId()).thenReturn(USER_ID);
+        when(userReader.findByIdOrThrow(USER_ID)).thenReturn(user);
+        when(termsAgreementRepository.findByUserIdAndTermsType(
+                USER_ID,
+                TermsType.PUSH_NOTIFICATION
+        )).thenReturn(Optional.of(termsAgreement));
+
+        service.updateOptionalConsent(USER_ID, TermsType.PUSH_NOTIFICATION, true);
+
+        assertThat(termsAgreement.isAgreed()).isTrue();
+        assertThat(termsAgreement.getAgreedAt()).isNotNull();
+        verify(termsAgreementRepository).save(termsAgreement);
     }
 
     // 필수 약관 개별 변경 거부 검증
