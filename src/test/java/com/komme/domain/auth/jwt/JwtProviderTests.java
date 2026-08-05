@@ -6,9 +6,13 @@ import com.komme.domain.auth.jwt.JwtProvider.IssuedToken;
 import com.komme.domain.auth.jwt.JwtProvider.TokenClaims;
 import com.komme.domain.auth.properties.JwtProperties;
 
+import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.time.Instant;
+import java.util.Date;
 
+import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.security.Keys;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -67,6 +71,39 @@ class JwtProviderTests {
                 .isEqualTo(AuthErrorStatus.INVALID_TOKEN);
     }
 
+    // Refresh Token 위치의 Access Token 사용 거부 검증
+    @Test
+    void parseRefreshTokenRejectsAccessToken() {
+        IssuedToken accessToken = jwtProvider.issueAccessToken(USER_ID);
+
+        assertThatThrownBy(() -> jwtProvider.parseRefreshToken(accessToken.value()))
+                .isInstanceOf(GeneralException.class)
+                .extracting(exception -> ((GeneralException) exception).getErrorStatus())
+                .isEqualTo(AuthErrorStatus.INVALID_TOKEN);
+    }
+
+    // JWT ID 누락 토큰 거부 검증
+    @Test
+    void parseTokenRejectsMissingTokenId() {
+        String token = createCustomToken(USER_ID.toString(), true);
+
+        assertThatThrownBy(() -> jwtProvider.parseAccessToken(token))
+                .isInstanceOf(GeneralException.class)
+                .extracting(exception -> ((GeneralException) exception).getErrorStatus())
+                .isEqualTo(AuthErrorStatus.INVALID_TOKEN);
+    }
+
+    // JWT subject 숫자 형식 오류 거부 검증
+    @Test
+    void parseTokenRejectsInvalidSubject() {
+        String token = createCustomToken("not-number", false);
+
+        assertThatThrownBy(() -> jwtProvider.parseAccessToken(token))
+                .isInstanceOf(GeneralException.class)
+                .extracting(exception -> ((GeneralException) exception).getErrorStatus())
+                .isEqualTo(AuthErrorStatus.INVALID_TOKEN);
+    }
+
     // 변조된 JWT 거부 검증
     @Test
     void parseTokenRejectsTamperedToken() {
@@ -95,5 +132,22 @@ class JwtProviderTests {
                 .isInstanceOf(GeneralException.class)
                 .extracting(exception -> ((GeneralException) exception).getErrorStatus())
                 .isEqualTo(AuthErrorStatus.EXPIRED_TOKEN);
+    }
+
+    // 테스트 JWT 직접 생성
+    private String createCustomToken(String subject, boolean omitTokenId) {
+        Instant now = Instant.now();
+        var builder = Jwts.builder()
+                .subject(subject)
+                .claim("tokenType", "ACCESS")
+                .issuedAt(Date.from(now))
+                .expiration(Date.from(now.plusSeconds(300)));
+
+        if (!omitTokenId) {
+            builder.id("token-id");
+        }
+
+        return builder.signWith(Keys.hmacShaKeyFor(SECRET.getBytes(StandardCharsets.UTF_8)))
+                .compact();
     }
 }

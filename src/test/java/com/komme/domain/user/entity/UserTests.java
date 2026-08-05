@@ -73,6 +73,35 @@ class UserTests {
         assertThat(user.getServiceInterests()).isEmpty();
     }
 
+    // OAuth 사용자 프로필 미완성 상태 검증
+    @Test
+    void createOAuthCreatesIncompleteProfileUser() {
+        User user = User.createOAuth("apple@example.com", Provider.APPLE);
+
+        assertThat(user.isProfileCompleted()).isFalse();
+    }
+
+    // OAuth 사용자 프로필 완성 상태 변경 검증
+    @Test
+    void completeProfileUpdatesProfileAndCompletionState() {
+        User user = User.createOAuth("google@example.com", Provider.GOOGLE);
+
+        user.completeProfile(
+                "nickname",
+                "KR",
+                Gender.MALE,
+                Language.CHINESE_SIMPLIFIED,
+                Set.of(ServiceInterest.TOURIST_SPOT)
+        );
+
+        assertThat(user.getNickname()).isEqualTo("nickname");
+        assertThat(user.getNationality()).isEqualTo("KR");
+        assertThat(user.getGender()).isEqualTo(Gender.MALE);
+        assertThat(user.getPreferredLanguage()).isEqualTo(Language.CHINESE_SIMPLIFIED);
+        assertThat(user.getServiceInterests()).containsExactly(ServiceInterest.TOURIST_SPOT);
+        assertThat(user.isProfileCompleted()).isTrue();
+    }
+
     // 테스트 LOCAL 사용자 생성
     private User createUser() {
         return User.createLocal(

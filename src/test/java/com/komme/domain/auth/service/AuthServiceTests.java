@@ -183,6 +183,22 @@ class AuthServiceTests {
         verify(userRepository, never()).saveAndFlush(any(User.class));
     }
 
+    // 이메일 미인증 회원가입 저장 금지 검증
+    @Test
+    void signUpRejectsUnverifiedEmailWithoutSavingUser() {
+        doThrow(new GeneralException(AuthErrorStatus.EMAIL_NOT_VERIFIED))
+                .when(emailVerificationService)
+                .validateVerifiedEmail(EMAIL);
+
+        assertThatThrownBy(() -> authService.signUp(createSignUpRequest()))
+                .isInstanceOf(GeneralException.class)
+                .extracting(exception -> ((GeneralException) exception).getErrorStatus())
+                .isEqualTo(AuthErrorStatus.EMAIL_NOT_VERIFIED);
+
+        verify(userRepository, never()).saveAndFlush(any(User.class));
+        verify(emailVerificationService, never()).deleteVerifiedEmail(any());
+    }
+
     // 동시 요청 이메일 unique 충돌 도메인 오류 변환 검증
     @Test
     void signUpMapsEmailUniqueConstraintViolation() {
@@ -196,6 +212,8 @@ class AuthServiceTests {
                 .isInstanceOf(GeneralException.class)
                 .extracting(error -> ((GeneralException) error).getErrorStatus())
                 .isEqualTo(AuthErrorStatus.EMAIL_ALREADY_EXISTS);
+
+        verify(emailVerificationService, never()).deleteVerifiedEmail(any());
     }
 
     // 동시 요청 닉네임 unique 충돌 도메인 오류 변환 검증
@@ -211,6 +229,8 @@ class AuthServiceTests {
                 .isInstanceOf(GeneralException.class)
                 .extracting(error -> ((GeneralException) error).getErrorStatus())
                 .isEqualTo(AuthErrorStatus.NICKNAME_ALREADY_EXISTS);
+
+        verify(emailVerificationService, never()).deleteVerifiedEmail(any());
     }
 
     // 로그인 토큰 발급과 Refresh Token 저장 검증
@@ -274,6 +294,24 @@ class AuthServiceTests {
                 "old-refresh-id"
         );
         verify(authTokenService).issueLoginTokens(USER_ID);
+    }
+
+    // Refresh Token 파싱 실패 시 새 토큰 미발급 검증
+    @Test
+    void reissueTokenRejectsInvalidRefreshTokenWithoutIssuingTokens() {
+        when(jwtProvider.parseRefreshToken("invalid-refresh-token"))
+                .thenThrow(new GeneralException(AuthErrorStatus.INVALID_TOKEN));
+
+        assertThatThrownBy(() -> authService.reissueToken(
+                new TokenReissueRequest("invalid-refresh-token")
+        ))
+                .isInstanceOf(GeneralException.class)
+                .extracting(exception -> ((GeneralException) exception).getErrorStatus())
+                .isEqualTo(AuthErrorStatus.INVALID_TOKEN);
+
+        verify(authTokenService, never()).issueLoginTokens(any());
+        verify(redisTemplate, never()).opsForValue();
+        verify(redisTemplate, never()).opsForSet();
     }
 
     // 비밀번호 변경과 전체 Refresh Token 폐기 검증
@@ -410,6 +448,34 @@ class AuthServiceTests {
                 .isInstanceOf(GeneralException.class)
                 .extracting(exception -> ((GeneralException) exception).getErrorStatus())
                 .isEqualTo(AuthErrorStatus.INVALID_TOKEN);
+    }
+
+    // 다른 사용자의 Access Token 로그아웃 토큰 소비 금지 검증
+    @Test
+    void logoutRejectsAccessTokenFromAnotherUserWithoutConsumingRefreshToken() {
+        TokenClaims accessClaims = new TokenClaims(
+                2L,
+                "access-id",
+                Instant.now().plus(ACCESS_EXPIRATION)
+        );
+        TokenClaims refreshClaims = new TokenClaims(
+                USER_ID,
+                "refresh-id",
+                Instant.now().plus(REFRESH_EXPIRATION)
+        );
+        when(jwtProvider.parseRefreshToken("refresh-token")).thenReturn(refreshClaims);
+
+        assertThatThrownBy(() -> authService.logout(
+                USER_ID,
+                accessClaims,
+                new LogoutRequest("refresh-token")
+        ))
+                .isInstanceOf(GeneralException.class)
+                .extracting(exception -> ((GeneralException) exception).getErrorStatus())
+                .isEqualTo(AuthErrorStatus.INVALID_TOKEN);
+
+        verify(redisTemplate, never()).opsForValue();
+        verify(redisTemplate, never()).opsForSet();
     }
 
     // LOCAL 사용자 탈퇴와 토큰 폐기 검증

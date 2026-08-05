@@ -21,6 +21,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -124,6 +125,21 @@ class JwtAuthenticationFilterTests {
         jwtAuthenticationFilter.doFilterInternal(request, response, filterChain);
 
         assertThat(SecurityContextHolder.getContext().getAuthentication()).isNull();
+        verify(jwtProvider, never()).parseAccessToken(org.mockito.Mockito.any());
+        verify(accessTokenBlacklistStore, never()).validateNotBlacklisted(org.mockito.Mockito.any());
+        verify(filterChain).doFilter(request, response);
+    }
+
+    // Bearer 형식이 아닌 Authorization Header 요청 통과 검증
+    @Test
+    void filterContinuesWithoutBearerAuthorizationHeader() throws Exception {
+        when(request.getHeader("Authorization")).thenReturn("Basic token");
+
+        jwtAuthenticationFilter.doFilterInternal(request, response, filterChain);
+
+        assertThat(SecurityContextHolder.getContext().getAuthentication()).isNull();
+        verify(jwtProvider, never()).parseAccessToken(org.mockito.Mockito.any());
+        verify(accessTokenBlacklistStore, never()).validateNotBlacklisted(org.mockito.Mockito.any());
         verify(filterChain).doFilter(request, response);
     }
 
