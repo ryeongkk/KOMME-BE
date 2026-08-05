@@ -2,13 +2,18 @@ package com.komme.common.config;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.komme.domain.auth.dto.request.LoginRequest;
+import com.komme.domain.auth.dto.request.LogoutRequest;
 import com.komme.domain.auth.dto.request.PasswordChangeRequest;
 import com.komme.domain.auth.dto.response.LoginResponse;
 import com.komme.domain.auth.jwt.JwtProvider;
+import com.komme.domain.auth.jwt.JwtProvider.TokenClaims;
 import com.komme.domain.auth.service.AuthService;
 import com.komme.domain.auth.service.email.EmailVerificationService;
 import com.komme.domain.auth.service.token.AccessTokenBlacklistStore;
 import com.komme.domain.user.service.TermsAgreementService;
+
+import java.time.Duration;
+import java.time.Instant;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -18,7 +23,9 @@ import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -75,5 +82,66 @@ class SecurityConfigTests {
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isUnauthorized())
                 .andExpect(jsonPath("$.isSuccess").value(false));
+    }
+
+    // 보호 인증 API Access Token 인증 성공 검증
+    @Test
+    void protectedAuthEndpointPassesAuthenticatedUserId() throws Exception {
+        PasswordChangeRequest request = new PasswordChangeRequest(
+                "password123",
+                "newpassword2"
+        );
+        TokenClaims tokenClaims = createTokenClaims();
+        when(jwtProvider.parseAccessToken("access-token")).thenReturn(tokenClaims);
+
+        mockMvc.perform(patch("/api/v1/auth/password")
+                        .header("Authorization", "Bearer access-token")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.isSuccess").value(true));
+
+        verify(accessTokenBlacklistStore).validateNotBlacklisted(tokenClaims);
+        verify(authService).changePassword(1L, request);
+    }
+
+    // 로그아웃 API 인증 정보 전달 검증
+    @Test
+    void logoutEndpointPassesTokenClaims() throws Exception {
+        LogoutRequest request = new LogoutRequest("refresh-token");
+        TokenClaims tokenClaims = createTokenClaims();
+        when(jwtProvider.parseAccessToken("access-token")).thenReturn(tokenClaims);
+
+        mockMvc.perform(post("/api/v1/auth/logout")
+                        .header("Authorization", "Bearer access-token")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.isSuccess").value(true));
+
+        verify(authService).logout(1L, tokenClaims, request);
+    }
+
+    // 계정 탈퇴 API 인증 정보 전달 검증
+    @Test
+    void withdrawEndpointPassesTokenClaims() throws Exception {
+        TokenClaims tokenClaims = createTokenClaims();
+        when(jwtProvider.parseAccessToken("access-token")).thenReturn(tokenClaims);
+
+        mockMvc.perform(delete("/api/v1/auth/withdraw")
+                        .header("Authorization", "Bearer access-token"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.isSuccess").value(true));
+
+        verify(authService).withdraw(1L, tokenClaims);
+    }
+
+    // 테스트 Access Token Claim 생성
+    private TokenClaims createTokenClaims() {
+        return new TokenClaims(
+                1L,
+                "access-id",
+                Instant.now().plus(Duration.ofHours(1))
+        );
     }
 }
