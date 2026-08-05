@@ -49,6 +49,25 @@ public class WebClientConfig {
         return createWebClient("https://dapi.kakao.com");
     }
 
+    // 한국관광공사 영문 관광정보서비스 WebClient 생성
+    // ⚠ base URL이 KorService2 네이밍 관례(EngService2) 추정치다 - data.go.kr Swagger로 실제 경로 확인 필요
+    @Bean
+    public WebClient engServiceApiWebClient() {
+        return createWebClient("http://apis.data.go.kr/B551011/EngService2");
+    }
+
+    // 한국관광공사 일문 관광정보서비스 WebClient 생성 (⚠ base URL 추정치, 위와 동일)
+    @Bean
+    public WebClient jpnServiceApiWebClient() {
+        return createWebClient("http://apis.data.go.kr/B551011/JpnService2");
+    }
+
+    // 한국관광공사 중문 간체 관광정보서비스 WebClient 생성 (⚠ base URL 추정치, 위와 동일)
+    @Bean
+    public WebClient chsServiceApiWebClient() {
+        return createWebClient("http://apis.data.go.kr/B551011/ChsService2");
+    }
+
     // 외부 OAuth/관광공사/카카오 API WebClient 생성
     private WebClient createWebClient(String baseUrl) {
         HttpClient httpClient = HttpClient.create()
