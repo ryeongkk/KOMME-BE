@@ -17,6 +17,7 @@ import org.springframework.data.redis.core.ValueOperations;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -42,6 +43,29 @@ class AccessTokenBlacklistStoreTests {
                 eq("true"),
                 any(Duration.class)
         );
+    }
+
+    // 만료된 Access Token 블랙리스트 저장 생략 검증
+    @Test
+    void blacklistSkipsExpiredToken() {
+        TokenClaims claims = new TokenClaims(
+                1L,
+                "access-id",
+                Instant.now().minus(Duration.ofSeconds(1))
+        );
+
+        new AccessTokenBlacklistStore(redisTemplate).blacklist(claims);
+
+        verify(redisTemplate, never()).opsForValue();
+    }
+
+    // 미등록 Access Token 블랙리스트 검증 통과 확인
+    @Test
+    void validateNotBlacklistedAllowsUnknownToken() {
+        when(redisTemplate.hasKey(JwtRedisKeys.accessTokenBlacklist("access-id")))
+                .thenReturn(false);
+
+        new AccessTokenBlacklistStore(redisTemplate).validateNotBlacklisted(createClaims());
     }
 
     // 블랙리스트 Access Token 거부 검증
