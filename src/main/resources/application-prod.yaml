@@ -52,3 +52,11 @@ auth:
     refresh-token-expiration: ${JWT_REFRESH_TOKEN_EXPIRATION}
   mail:
     sender: ${MAIL_SENDER}
+
+tour-api:
+  service-key: ${TOUR_API_SERVICE_KEY}
+  mobile-os: ETC
+  mobile-app: KOMME
+
+kakao:
+  rest-api-key: ${KAKAO_REST_API_KEY}
