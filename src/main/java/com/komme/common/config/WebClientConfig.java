@@ -25,7 +25,50 @@ public class WebClientConfig {
         return createWebClient("https://www.googleapis.com");
     }
 
-    // 외부 OAuth API WebClient 생성
+    // 한국관광공사 국문 관광정보 서비스(KorService2) WebClient 생성
+    @Bean
+    public WebClient korServiceApiWebClient() {
+        return createWebClient("http://apis.data.go.kr/B551011/KorService2");
+    }
+
+    // 한국관광공사 관광지별 연관 관광지 서비스 WebClient 생성
+    @Bean
+    public WebClient relatedSpotApiWebClient() {
+        return createWebClient("http://apis.data.go.kr/B551011/TarRlteTarService1");
+    }
+
+    // 한국관광공사 관광지 집중률 방문자 추이 예측 정보 서비스 WebClient 생성
+    @Bean
+    public WebClient concentrationRateApiWebClient() {
+        return createWebClient("http://apis.data.go.kr/B551011/TatsCnctrRateService");
+    }
+
+    // 카카오 로컬 API WebClient 생성
+    @Bean
+    public WebClient kakaoLocalApiWebClient() {
+        return createWebClient("https://dapi.kakao.com");
+    }
+
+    // 한국관광공사 영문 관광정보서비스 WebClient 생성
+    // ⚠ base URL이 KorService2 네이밍 관례(EngService2) 추정치다 - data.go.kr Swagger로 실제 경로 확인 필요
+    @Bean
+    public WebClient engServiceApiWebClient() {
+        return createWebClient("http://apis.data.go.kr/B551011/EngService2");
+    }
+
+    // 한국관광공사 일문 관광정보서비스 WebClient 생성 (⚠ base URL 추정치, 위와 동일)
+    @Bean
+    public WebClient jpnServiceApiWebClient() {
+        return createWebClient("http://apis.data.go.kr/B551011/JpnService2");
+    }
+
+    // 한국관광공사 중문 간체 관광정보서비스 WebClient 생성 (⚠ base URL 추정치, 위와 동일)
+    @Bean
+    public WebClient chsServiceApiWebClient() {
+        return createWebClient("http://apis.data.go.kr/B551011/ChsService2");
+    }
+
+    // 외부 OAuth/관광공사/카카오 API WebClient 생성
     private WebClient createWebClient(String baseUrl) {
         HttpClient httpClient = HttpClient.create()
                 .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, 3_000)
