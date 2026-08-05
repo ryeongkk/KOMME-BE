@@ -1,10 +1,10 @@
 package com.komme.domain.course.client;
 
 import com.komme.common.exception.GeneralException;
+import com.komme.domain.course.exception.CourseErrorStatus;
 import com.komme.domain.course.properties.KakaoLocalProperties;
 import com.komme.domain.tourapi.cache.TourApiCacheSupport;
 import com.komme.domain.tourapi.client.TourApiQuerySupport;
-import com.komme.domain.tourapi.exception.TourApiErrorStatus;
 import com.komme.domain.tourapi.properties.TourApiProperties;
 
 import java.util.List;
@@ -87,7 +87,7 @@ class KakaoLocalClientTests {
         assertThatThrownBy(() -> client.searchByKeyword("성수동"))
                 .isInstanceOf(GeneralException.class)
                 .extracting(exception -> ((GeneralException) exception).getErrorStatus())
-                .isEqualTo(TourApiErrorStatus.KAKAO_LOCAL_CONNECTION_FAILED);
+                .isEqualTo(CourseErrorStatus.KAKAO_LOCAL_CONNECTION_FAILED);
     }
 
     private KakaoLocalClient createClient(WebClient webClient) {

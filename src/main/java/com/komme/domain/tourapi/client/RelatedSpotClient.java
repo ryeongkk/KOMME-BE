@@ -38,7 +38,7 @@ public class RelatedSpotClient {
     // 지역기반 연관 관광지 목록조회 (경로명 추정: areaBasedList1)
     public List<RelatedSpotItem> findByArea(String areaCode, String sigunguCode) {
         return tourApiCacheSupport.getOrLoad(
-                TourApiRedisKeys.relatedSpot(areaCode + ":" + sigunguCode),
+                TourApiRedisKeys.relatedSpotByArea(areaCode, sigunguCode),
                 RELATED_SPOT_CACHE_TTL,
                 new TypeReference<>() {
                 },
@@ -66,7 +66,7 @@ public class RelatedSpotClient {
     // 키워드기반 연관 관광지 목록조회 (경로명 추정: searchKeyword1)
     public List<RelatedSpotItem> findByKeyword(String keyword) {
         return tourApiCacheSupport.getOrLoad(
-                TourApiRedisKeys.relatedSpot("keyword:" + keyword),
+                TourApiRedisKeys.relatedSpotByKeyword(keyword),
                 RELATED_SPOT_CACHE_TTL,
                 new TypeReference<>() {
                 },

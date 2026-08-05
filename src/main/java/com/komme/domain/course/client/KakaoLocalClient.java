@@ -5,11 +5,10 @@ import java.util.List;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.komme.common.exception.GeneralException;
+import com.komme.domain.course.exception.CourseErrorStatus;
 import com.komme.domain.course.properties.KakaoLocalProperties;
 import com.komme.domain.tourapi.cache.TourApiCacheSupport;
-import com.komme.domain.tourapi.cache.TourApiRedisKeys;
 import com.komme.domain.tourapi.client.TourApiQuerySupport;
-import com.komme.domain.tourapi.exception.TourApiErrorStatus;
 
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.core.ParameterizedTypeReference;
@@ -23,6 +22,7 @@ import org.springframework.web.reactive.function.client.WebClient;
 public class KakaoLocalClient {
 
     private static final Duration SEARCH_CACHE_TTL = Duration.ofHours(6);
+    private static final String SEARCH_CACHE_KEY_PREFIX = "course:kakao:local-search:";
     private static final String KAKAO_AUTH_HEADER_PREFIX = "KakaoAK ";
 
     private final WebClient kakaoLocalApiWebClient;
@@ -45,7 +45,7 @@ public class KakaoLocalClient {
     // 키워드로 장소 검색 (v2/local/search/keyword)
     public List<KakaoPlaceDocument> searchByKeyword(String keyword) {
         return tourApiCacheSupport.getOrLoad(
-                TourApiRedisKeys.kakaoLocalSearch(keyword),
+                SEARCH_CACHE_KEY_PREFIX + keyword,
                 SEARCH_CACHE_TTL,
                 new TypeReference<>() {
                 },
@@ -62,7 +62,7 @@ public class KakaoLocalClient {
                         .build(),
                 new ParameterizedTypeReference<KakaoLocalSearchResponse>() {
                 },
-                TourApiErrorStatus.KAKAO_LOCAL_CONNECTION_FAILED,
+                CourseErrorStatus.KAKAO_LOCAL_CONNECTION_FAILED,
                 headers -> headers.set(
                         HttpHeaders.AUTHORIZATION,
                         KAKAO_AUTH_HEADER_PREFIX + kakaoLocalProperties.getRestApiKey()
@@ -70,7 +70,7 @@ public class KakaoLocalClient {
         );
 
         if (response == null || response.documents() == null) {
-            throw new GeneralException(TourApiErrorStatus.KAKAO_LOCAL_RESPONSE_INVALID);
+            throw new GeneralException(CourseErrorStatus.KAKAO_LOCAL_RESPONSE_INVALID);
         }
         return response.documents();
     }
