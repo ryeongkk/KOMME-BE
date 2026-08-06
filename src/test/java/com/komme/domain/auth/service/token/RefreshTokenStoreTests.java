@@ -98,6 +98,22 @@ class RefreshTokenStoreTests {
                 .isEqualTo(AuthErrorStatus.INVALID_TOKEN);
     }
 
+    // 저장값은 일치하지만 사용자가 이미 탈퇴한 경우 거부 검증
+    @Test
+    void validateAndConsumeRejectsWhenUserNoLongerExists() {
+        prepareValueOperations();
+        prepareSetOperations();
+        TokenClaims claims = createClaims("refresh-id");
+        when(valueOperations.getAndDelete(JwtRedisKeys.refreshToken("refresh-id")))
+                .thenReturn(USER_ID.toString());
+        when(userReader.existsById(USER_ID)).thenReturn(false);
+
+        assertThatThrownBy(() -> createStore().validateAndConsume(claims))
+                .isInstanceOf(GeneralException.class)
+                .extracting(exception -> ((GeneralException) exception).getErrorStatus())
+                .isEqualTo(AuthErrorStatus.INVALID_TOKEN);
+    }
+
     // 사용자 전체 Refresh Token 삭제 검증
     @Test
     @SuppressWarnings("unchecked")

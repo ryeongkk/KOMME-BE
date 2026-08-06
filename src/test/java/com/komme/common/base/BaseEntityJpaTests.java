@@ -6,6 +6,7 @@ import com.komme.domain.user.enums.Gender;
 import com.komme.domain.user.enums.ServiceInterest;
 import com.komme.domain.user.repository.UserRepository;
 
+import java.time.LocalDateTime;
 import java.util.Set;
 
 import jakarta.persistence.EntityManager;
@@ -53,6 +54,25 @@ class BaseEntityJpaTests {
         assertThat(savedUser.getCreatedAt()).isNotNull();
         assertThat(savedUser.getUpdatedAt()).isNotNull();
         assertThat(savedUser.getUpdatedAt()).isAfterOrEqualTo(savedUser.getCreatedAt());
+    }
+
+    // 엔티티 수정 시 updatedAt만 갱신되고 createdAt은 유지되는지 검증
+    @Test
+    void baseEntityUpdatesLastModifiedTimestampButKeepsCreatedAtOnUpdate() throws InterruptedException {
+        User user = userRepository.saveAndFlush(createUser());
+        entityManager.clear();
+        User savedUser = userRepository.findById(user.getId()).orElseThrow();
+        LocalDateTime originalCreatedAt = savedUser.getCreatedAt();
+        LocalDateTime originalUpdatedAt = savedUser.getUpdatedAt();
+
+        Thread.sleep(10); // updatedAt 변화를 시간 해상도 이슈 없이 확인하기 위한 최소 지연
+        savedUser.changeNickname("updated-nickname");
+        userRepository.saveAndFlush(savedUser);
+        entityManager.clear();
+
+        User updatedUser = userRepository.findById(user.getId()).orElseThrow();
+        assertThat(updatedUser.getCreatedAt()).isEqualTo(originalCreatedAt);
+        assertThat(updatedUser.getUpdatedAt()).isAfter(originalUpdatedAt);
     }
 
     // 테스트 사용자 생성

@@ -83,6 +83,10 @@ class JwtProviderTests {
     }
 
     // JWT ID 누락 토큰 거부 검증
+    // 참고: "tokenId가 null이 아니지만 공백인" 케이스는 만들 수 없다. JJWT 빌더는 jti 클레임이 공백뿐이면
+    // 생략해버리고(.claim("jti", "   ")도 동일), 빌더를 우회해 바이트 단위로 직접 조립해도 결과는 같다 —
+    // JJWT 0.13.0의 Claims 구현체는 값을 읽는 시점에 공백 문자열을 null로 정규화하기 때문에(별도로 확인함),
+    // 파싱된 토큰이 claims.get(...)으로 노출하는 한 이 분기는 구조적으로 도달 불가능해 이 케이스로 수렴한다.
     @Test
     void parseTokenRejectsMissingTokenId() {
         String token = createCustomToken(USER_ID.toString(), true);

@@ -45,6 +45,20 @@ class UserConstraintExceptionMapperTests {
         assertThat(result).isSameAs(exception);
     }
 
+    // 원인 체인에 ConstraintViolationException 자체가 없으면 fallback 상태로 변환되는지 검증
+    @Test
+    void mapReturnsFallbackWhenCauseChainHasNoConstraintViolation() {
+        DataIntegrityViolationException exception =
+                new DataIntegrityViolationException("no constraint info", new RuntimeException("root cause"));
+
+        assertThatThrownBy(() -> {
+            throw mapper.map(exception, UserErrorStatus.NICKNAME_ALREADY_EXISTS);
+        })
+                .isInstanceOf(GeneralException.class)
+                .extracting(error -> ((GeneralException) error).getErrorStatus())
+                .isEqualTo(UserErrorStatus.NICKNAME_ALREADY_EXISTS);
+    }
+
     // Hibernate unique 제약조건 예외 생성
     private DataIntegrityViolationException createUniqueConstraintException(
             String constraintName

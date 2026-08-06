@@ -54,6 +54,33 @@ class KorServiceListClientTests {
             }
             """;
 
+    private static final String LOCATION_BASED_LIST_JSON = """
+            {
+              "response": {
+                "header": {"resultCode":"0000","resultMsg":"OK"},
+                "body": {
+                  "items": {"item": [{
+                    "contentid":"126508",
+                    "contenttypeid":"12",
+                    "title":"테스트 스팟",
+                    "addr1":"서울 마포구",
+                    "areacode":"11",
+                    "sigungucode":"11440",
+                    "cat1":"A01",
+                    "cat2":"A0101",
+                    "cat3":"A01010100",
+                    "mapx":"127.1",
+                    "mapy":"37.1",
+                    "firstimage":"img1",
+                    "firstimage2":"img2",
+                    "dist":"820"
+                  }]},
+                  "numOfRows":1,"pageNo":1,"totalCount":1
+                }
+              }
+            }
+            """;
+
     @Mock
     private StringRedisTemplate redisTemplate;
 
@@ -78,6 +105,51 @@ class KorServiceListClientTests {
         KorServiceListClient client = createClient(createWebClient(HttpStatus.BAD_GATEWAY, ""));
 
         assertThatThrownBy(() -> client.findAreaBasedList("11", "11440", "12"))
+                .isInstanceOf(GeneralException.class)
+                .extracting(exception -> ((GeneralException) exception).getErrorStatus())
+                .isEqualTo(TourApiErrorStatus.KOR_SERVICE_CONNECTION_FAILED);
+    }
+
+    // 좌표기반 목록조회 정상 응답 파싱 검증 (dist 필드 포함)
+    @Test
+    void findLocationBasedListParsesItems() {
+        KorServiceListClient client = createClient(createWebClient(HttpStatus.OK, LOCATION_BASED_LIST_JSON));
+
+        List<LocationBasedListItem> items = client.findLocationBasedList("127.1", "37.1", "3000", "12");
+
+        assertThat(items).hasSize(1);
+        assertThat(items.get(0).contentId()).isEqualTo("126508");
+        assertThat(items.get(0).distanceMeters()).isEqualTo("820");
+    }
+
+    // 좌표기반 목록조회 연결 실패 시 GeneralException으로 변환되는지 검증
+    @Test
+    void findLocationBasedListMapsConnectionFailure() {
+        KorServiceListClient client = createClient(createWebClient(HttpStatus.BAD_GATEWAY, ""));
+
+        assertThatThrownBy(() -> client.findLocationBasedList("127.1", "37.1", "3000", "12"))
+                .isInstanceOf(GeneralException.class)
+                .extracting(exception -> ((GeneralException) exception).getErrorStatus())
+                .isEqualTo(TourApiErrorStatus.KOR_SERVICE_CONNECTION_FAILED);
+    }
+
+    // 키워드 검색조회 정상 응답 파싱 검증
+    @Test
+    void searchByKeywordParsesItems() {
+        KorServiceListClient client = createClient(createWebClient(HttpStatus.OK, AREA_BASED_LIST_JSON));
+
+        List<AreaBasedListItem> items = client.searchByKeyword("성수동", "11");
+
+        assertThat(items).hasSize(1);
+        assertThat(items.get(0).title()).isEqualTo("테스트 스팟");
+    }
+
+    // 키워드 검색조회 연결 실패 시 GeneralException으로 변환되는지 검증
+    @Test
+    void searchByKeywordMapsConnectionFailure() {
+        KorServiceListClient client = createClient(createWebClient(HttpStatus.BAD_GATEWAY, ""));
+
+        assertThatThrownBy(() -> client.searchByKeyword("성수동", "11"))
                 .isInstanceOf(GeneralException.class)
                 .extracting(exception -> ((GeneralException) exception).getErrorStatus())
                 .isEqualTo(TourApiErrorStatus.KOR_SERVICE_CONNECTION_FAILED);
