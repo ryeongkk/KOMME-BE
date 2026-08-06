@@ -102,8 +102,6 @@ class OAuthIdentityTokenVerifierTests {
     }
 
     // OAuth identity token subject 클레임이 없으면(null) 거부되는지 검증
-    // 참고: JJWT 빌더는 sub 클레임이 공백뿐이어도(.subject()든 제네릭 .claim("sub", ...)든) 클레임 자체를 생략해버려서,
-    // "subject가 null이 아니지만 공백인" 케이스는 빌더로는 만들 수 없다 - 결국 이 케이스와 동일한 코드 경로로 수렴한다.
     @Test
     void verifyRejectsMissingSubject() {
         String token = createToken(null, ISSUER, CLIENT_ID, null, true);
@@ -119,6 +117,13 @@ class OAuthIdentityTokenVerifierTests {
                 .extracting(exception -> ((GeneralException) exception).getErrorStatus())
                 .isEqualTo(AuthErrorStatus.INVALID_GOOGLE_IDENTITY_TOKEN);
     }
+
+    // 참고: validateSubject()의 "subject가 null은 아니지만 공백뿐인" 분기는 테스트로 만들 수 없다.
+    // JJWT 빌더는 sub 클레임이 공백뿐이면 클레임 자체를 생략하고, 빌더를 완전히 우회해서
+    // JWT를 바이트 단위로 직접 조립해(payload JSON에 "sub":"   "를 그대로 넣어) 시도해봐도 결과는 같다 —
+    // Jwts.claims().add(map).build() 처럼 Claims 객체에 값을 넣는 것만으로도 get("sub")이 이미 null을 반환하는 것을
+    // 별도로 확인했다(JJWT 0.13.0 Claims 구현체가 공백 문자열 값을 읽는 시점에 null로 정규화함).
+    // 즉 파싱된 토큰이 claims.getSubject()로 노출하는 한 이 분기는 구조적으로 도달 불가능하다.
 
     // OAuth identity token issuer 클레임이 아예 없으면(null) 거부되는지 검증
     @Test
