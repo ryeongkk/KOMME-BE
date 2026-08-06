@@ -28,7 +28,7 @@ class CoursePersister {
 
     // 코스와 코스 스팟들을 함께 저장 기능 - orderedSpots/distancesToNext는 이미 동선 정렬이 끝난 상태로 들어온다
     @Transactional
-    Course persist(
+    CourseGenerationResult persist(
             User user,
             String title,
             String regionName,
@@ -50,6 +50,6 @@ class CoursePersister {
         }
         courseSpotRepository.saveAll(courseSpots);
 
-        return course;
+        return new CourseGenerationResult(course, courseSpots);
     }
 }

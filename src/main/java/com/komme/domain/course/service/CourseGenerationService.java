@@ -10,13 +10,13 @@ import java.util.stream.Collectors;
 import com.komme.common.exception.GeneralException;
 import com.komme.domain.course.enums.Duration;
 import com.komme.domain.course.enums.Topic;
-import com.komme.domain.course.entity.Course;
 import com.komme.domain.course.exception.CourseErrorStatus;
 import com.komme.domain.course.mapping.CategoryTopicMapper;
 import com.komme.domain.spot.entity.Spot;
 import com.komme.domain.spot.service.SpotService;
 import com.komme.domain.tourapi.SigunguCode;
 import com.komme.domain.user.entity.User;
+import com.komme.domain.user.service.UserReader;
 
 import org.springframework.stereotype.Service;
 
@@ -35,16 +35,18 @@ public class CourseGenerationService {
 
     private final SpotService spotService;
     private final CoursePersister coursePersister;
+    private final UserReader userReader;
 
     // 코스 생성 기능
-    public Course generate(
-            User user,
+    public CourseGenerationResult generate(
+            Long userId,
             BigDecimal longitude,
             BigDecimal latitude,
             Set<Topic> topics,
             Duration duration,
             LocalDate visitDate
     ) {
+        User user = userReader.findByIdOrThrow(userId);
         List<Spot> selectedSpots = collectCandidates(longitude, latitude, topics, duration.getSpotCount());
         List<Spot> orderedSpots = SpotRouteSequencer.sequenceFrom(longitude, latitude, selectedSpots);
         List<Integer> distancesToNext = SpotRouteSequencer.distancesBetweenConsecutive(orderedSpots);

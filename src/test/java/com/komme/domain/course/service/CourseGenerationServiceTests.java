@@ -14,6 +14,7 @@ import com.komme.domain.spot.entity.Spot;
 import com.komme.domain.spot.enums.TimeSlot;
 import com.komme.domain.spot.service.SpotService;
 import com.komme.domain.user.entity.User;
+import com.komme.domain.user.service.UserReader;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -35,6 +36,7 @@ class CourseGenerationServiceTests {
     private static final BigDecimal LONGITUDE = new BigDecimal("127.0557800");
     private static final BigDecimal LATITUDE = new BigDecimal("37.5443300");
     private static final LocalDate VISIT_DATE = LocalDate.of(2026, 8, 10);
+    private static final Long USER_ID = 1L;
 
     @Mock
     private SpotService spotService;
@@ -42,21 +44,24 @@ class CourseGenerationServiceTests {
     @Mock
     private CoursePersister coursePersister;
 
+    @Mock
+    private UserReader userReader;
+
     // 첫 반경(3km)에서 필요한 개수만큼 모이면, 주제에 안 맞는 스팟은 걸러지고 성동구로 지역명이 해석되어 저장되는지 검증
     @Test
     void generateFiltersByTopicAndPersistsWithResolvedRegionName() {
-        CourseGenerationService service = new CourseGenerationService(spotService, coursePersister);
+        CourseGenerationService service = new CourseGenerationService(spotService, coursePersister, userReader);
         stubEmptyExcept(3000, "39", List.of(
                 foodSpot("1"), foodSpot("2"), foodSpot("3"), foodSpot("4"), shoppingSpot("5")
         ));
-        User user = Mockito.mock(User.class);
-        Course expectedCourse = Mockito.mock(Course.class);
+        when(userReader.findByIdOrThrow(USER_ID)).thenReturn(Mockito.mock(User.class));
+        CourseGenerationResult expectedResult = new CourseGenerationResult(Mockito.mock(Course.class), List.of());
         when(coursePersister.persist(any(), any(), any(), any(), any(), any(), any(), any(), any()))
-                .thenReturn(expectedCourse);
+                .thenReturn(expectedResult);
 
-        Course result = service.generate(user, LONGITUDE, LATITUDE, Set.of(Topic.FOOD), Duration.HALF_DAY, VISIT_DATE);
+        CourseGenerationResult result = service.generate(USER_ID, LONGITUDE, LATITUDE, Set.of(Topic.FOOD), Duration.HALF_DAY, VISIT_DATE);
 
-        assertThat(result).isSameAs(expectedCourse);
+        assertThat(result).isSameAs(expectedResult);
 
         ArgumentCaptor<String> regionNameCaptor = ArgumentCaptor.forClass(String.class);
         ArgumentCaptor<List<Spot>> orderedSpotsCaptor = ArgumentCaptor.forClass(List.class);
@@ -71,30 +76,29 @@ class CourseGenerationServiceTests {
     // 첫 반경에서 부족하면 다음 반경(6km)으로 자동 확대해서 재시도하는지 검증
     @Test
     void generateExpandsRadiusWhenFirstRadiusHasTooFewCandidates() {
-        CourseGenerationService service = new CourseGenerationService(spotService, coursePersister);
+        CourseGenerationService service = new CourseGenerationService(spotService, coursePersister, userReader);
         stubEmptyExcept(3000, "39", List.of(foodSpot("1"), foodSpot("2"))); // 4개 필요한데 2개뿐
         stubEmptyExcept(6000, "39", List.of(foodSpot("1"), foodSpot("2"), foodSpot("3"), foodSpot("4")));
-        User user = Mockito.mock(User.class);
-        Course expectedCourse = Mockito.mock(Course.class);
+        when(userReader.findByIdOrThrow(USER_ID)).thenReturn(Mockito.mock(User.class));
+        CourseGenerationResult expectedResult = new CourseGenerationResult(Mockito.mock(Course.class), List.of());
         when(coursePersister.persist(any(), any(), any(), any(), any(), any(), any(), any(), any()))
-                .thenReturn(expectedCourse);
+                .thenReturn(expectedResult);
 
-        Course result = service.generate(user, LONGITUDE, LATITUDE, Set.of(Topic.FOOD), Duration.HALF_DAY, VISIT_DATE);
+        CourseGenerationResult result = service.generate(USER_ID, LONGITUDE, LATITUDE, Set.of(Topic.FOOD), Duration.HALF_DAY, VISIT_DATE);
 
-        assertThat(result).isSameAs(expectedCourse);
+        assertThat(result).isSameAs(expectedResult);
         verify(spotService).findNearby(LONGITUDE, LATITUDE, 6000, "39");
     }
 
     // 9km까지 넓혀도 부족하면 실패 처리되고, 저장은 시도조차 안 하는지 검증
     @Test
     void generateThrowsWhenStillInsufficientAfterMaxRadius() {
-        CourseGenerationService service = new CourseGenerationService(spotService, coursePersister);
+        CourseGenerationService service = new CourseGenerationService(spotService, coursePersister, userReader);
         stubEmptyExcept(3000, "39", List.of(foodSpot("1")));
         stubEmptyExcept(6000, "39", List.of(foodSpot("1")));
         stubEmptyExcept(9000, "39", List.of(foodSpot("1")));
-        User user = Mockito.mock(User.class);
 
-        assertThatThrownBy(() -> service.generate(user, LONGITUDE, LATITUDE, Set.of(Topic.FOOD), Duration.HALF_DAY, VISIT_DATE))
+        assertThatThrownBy(() -> service.generate(USER_ID, LONGITUDE, LATITUDE, Set.of(Topic.FOOD), Duration.HALF_DAY, VISIT_DATE))
                 .isInstanceOf(GeneralException.class)
                 .extracting(exception -> ((GeneralException) exception).getErrorStatus())
                 .isEqualTo(CourseErrorStatus.INSUFFICIENT_SPOTS);

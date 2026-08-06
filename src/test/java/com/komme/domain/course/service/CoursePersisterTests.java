@@ -5,7 +5,6 @@ import java.time.LocalDate;
 import java.util.List;
 import java.util.Set;
 
-import com.komme.domain.course.entity.Course;
 import com.komme.domain.course.entity.CourseSpot;
 import com.komme.domain.course.enums.Topic;
 import com.komme.domain.course.repository.CourseRepository;
@@ -40,7 +39,7 @@ class CoursePersisterTests {
         Spot first = spot("1", TimeSlot.MORNING);
         Spot second = spot("2", TimeSlot.LUNCH);
 
-        Course course = coursePersister.persist(
+        CourseGenerationResult result = coursePersister.persist(
                 Mockito.mock(User.class),
                 "성수동 먹방 Day",
                 "성수동", "1", "2",
@@ -50,13 +49,14 @@ class CoursePersisterTests {
                 List.of(500)
         );
 
-        assertThat(course.getTitle()).isEqualTo("성수동 먹방 Day");
-        verify(courseRepository).save(course);
+        assertThat(result.course().getTitle()).isEqualTo("성수동 먹방 Day");
+        verify(courseRepository).save(result.course());
 
         ArgumentCaptor<List<CourseSpot>> captor = ArgumentCaptor.forClass(List.class);
         verify(courseSpotRepository).saveAll(captor.capture());
         List<CourseSpot> savedCourseSpots = captor.getValue();
 
+        assertThat(result.courseSpots()).isEqualTo(savedCourseSpots);
         assertThat(savedCourseSpots).hasSize(2);
         assertThat(savedCourseSpots.get(0).getSequence()).isEqualTo(1);
         assertThat(savedCourseSpots.get(0).getDistanceToNextMeters()).isEqualTo(500);
