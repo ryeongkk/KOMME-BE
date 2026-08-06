@@ -76,6 +76,41 @@ class KakaoLocalClientTests {
         assertThat(authorizationHeader.get()).isEqualTo("KakaoAK kakao-rest-api-key");
     }
 
+    // documents 필드가 없으면(null) 응답 오류로 처리되는지 검증
+    @Test
+    void searchByKeywordThrowsWhenDocumentsMissing() {
+        WebClient webClient = WebClient.builder()
+                .exchangeFunction(request -> Mono.just(
+                        ClientResponse.create(HttpStatus.OK)
+                                .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
+                                .body("""
+                                        {"meta": {"total_count":0,"pageable_count":0,"is_end":true}}
+                                        """)
+                                .build()
+                ))
+                .build();
+        KakaoLocalClient client = createClient(webClient);
+
+        assertThatThrownBy(() -> client.searchByKeyword("성수동"))
+                .isInstanceOf(GeneralException.class)
+                .extracting(exception -> ((GeneralException) exception).getErrorStatus())
+                .isEqualTo(CourseErrorStatus.KAKAO_LOCAL_RESPONSE_INVALID);
+    }
+
+    // 응답 자체에 바디가 없으면(response == null) 응답 오류로 처리되는지 검증
+    @Test
+    void searchByKeywordThrowsWhenResponseHasNoBody() {
+        WebClient webClient = WebClient.builder()
+                .exchangeFunction(request -> Mono.just(ClientResponse.create(HttpStatus.NO_CONTENT).build()))
+                .build();
+        KakaoLocalClient client = createClient(webClient);
+
+        assertThatThrownBy(() -> client.searchByKeyword("성수동"))
+                .isInstanceOf(GeneralException.class)
+                .extracting(exception -> ((GeneralException) exception).getErrorStatus())
+                .isEqualTo(CourseErrorStatus.KAKAO_LOCAL_RESPONSE_INVALID);
+    }
+
     // 외부 API 연결 실패 시 GeneralException으로 변환되는지 검증
     @Test
     void searchByKeywordMapsConnectionFailure() {

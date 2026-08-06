@@ -52,4 +52,21 @@ class SpotAttributesMapperTests {
 
         assertThat(attributes.thumbnailUrl()).isEqualTo("https://tong.visitkorea.or.kr/full.jpg");
     }
+
+    // 축소 썸네일 필드 자체가 없으면(null) 원본 이미지로 대체되는지 검증
+    @Test
+    void fromLocationBasedItemFallsBackToFullImageWhenThumbnailNull() {
+        LocationBasedListItem item = new LocationBasedListItem(
+                "126508", "39", "성수동 카페", "서울 성동구 성수동2가",
+                "1", "2",
+                "A05", "A0502", "A05020900",
+                "127.0557800", "37.5443300",
+                "https://tong.visitkorea.or.kr/full.jpg", null,
+                "820"
+        );
+
+        Spot.Attributes attributes = SpotAttributesMapper.fromLocationBasedItem(item);
+
+        assertThat(attributes.thumbnailUrl()).isEqualTo("https://tong.visitkorea.or.kr/full.jpg");
+    }
 }

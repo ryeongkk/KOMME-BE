@@ -69,6 +69,17 @@ class AuthUserReaderTests {
                 .isEqualTo(AuthErrorStatus.INVALID_CREDENTIALS);
     }
 
+    // 비밀번호 재설정 LOCAL 사용자 조회 성공 검증
+    @Test
+    void findLocalByEmailForPasswordResetReturnsLocalUser() {
+        User user = createUser(Provider.LOCAL);
+        when(userReader.findByEmail(EMAIL)).thenReturn(Optional.of(user));
+
+        Optional<User> foundUser = authUserReader.findLocalByEmailForPasswordReset(EMAIL);
+
+        assertThat(foundUser).contains(user);
+    }
+
     // 비밀번호 재설정 LOCAL 사용자 미존재 오류 검증
     @Test
     void findLocalByEmailForPasswordResetOrThrowRejectsMissingLocalUser() {
