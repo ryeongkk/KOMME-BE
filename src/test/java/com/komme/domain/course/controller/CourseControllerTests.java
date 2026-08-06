@@ -83,4 +83,18 @@ class CourseControllerTests {
         assertThat(response.getStatusCode().is2xxSuccessful()).isTrue();
         assertThat(response.getBody().getData()).isEqualTo(summaries);
     }
+
+    // 코스 상세 조회 API가 CourseQueryService 결과를 그대로 반환하는지 검증
+    @Test
+    void getCourseDetailReturnsQueryServiceResult() {
+        CourseDetailResponse detail = new CourseDetailResponse(
+                1L, "성동구 먹방 Day", null, "성동구", Set.of(Topic.FOOD), LocalDate.of(2026, 8, 10), List.of()
+        );
+        when(courseQueryService.findDetail(1L, 10L)).thenReturn(detail);
+
+        ResponseEntity<ApiResponse<CourseDetailResponse>> response = courseController.getCourseDetail(1L, 10L);
+
+        assertThat(response.getStatusCode().is2xxSuccessful()).isTrue();
+        assertThat(response.getBody().getData()).isEqualTo(detail);
+    }
 }

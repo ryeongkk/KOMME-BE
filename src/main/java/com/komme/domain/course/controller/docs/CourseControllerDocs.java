@@ -19,6 +19,7 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -87,5 +88,36 @@ public interface CourseControllerDocs {
     ResponseEntity<ApiResponse<List<CourseSummaryResponse>>> getCourses(
             @Parameter(hidden = true) @AuthenticationPrincipal Long userId,
             @Parameter(description = "UPCOMING 또는 HISTORY") @RequestParam CourseStatus status
+    );
+
+    // 코스 상세 조회 API
+    @Operation(
+            summary = "코스 상세 조회",
+            description = "코스의 스팟 타임라인(순서/시간대/다음 스팟까지 거리)을 포함한 상세 정보를 조회합니다. "
+                    + "본인 코스가 아니면 존재 여부를 숨기기 위해 404로 응답합니다.",
+            security = @SecurityRequirement(name = "bearerAuth")
+    )
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+            responseCode = "200",
+            description = "코스 상세 조회 성공",
+            content = @Content(
+                    schema = @Schema(implementation = CourseDetailResponse.class),
+                    examples = @ExampleObject(value = CourseApiExamples.CREATE_COURSE_SUCCESS)
+            )
+    )
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+            responseCode = "401",
+            description = "Access Token 누락, 만료 또는 오류",
+            content = @Content(examples = @ExampleObject(value = CourseApiExamples.INVALID_TOKEN))
+    )
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+            responseCode = "404",
+            description = "코스가 없거나 본인 코스가 아님",
+            content = @Content(examples = @ExampleObject(value = CourseApiExamples.COURSE_NOT_FOUND))
+    )
+    @GetMapping("/{courseId}")
+    ResponseEntity<ApiResponse<CourseDetailResponse>> getCourseDetail(
+            @Parameter(hidden = true) @AuthenticationPrincipal Long userId,
+            @PathVariable Long courseId
     );
 }

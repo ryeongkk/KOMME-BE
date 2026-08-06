@@ -63,6 +63,14 @@ public final class CourseApiExamples {
             }
             """;
 
+    public static final String COURSE_NOT_FOUND = """
+            {
+              "isSuccess": false,
+              "code": "COURSE_404_2",
+              "message": "코스를 찾을 수 없습니다."
+            }
+            """;
+
     public static final String INVALID_TOKEN = """
             {
               "isSuccess": false,

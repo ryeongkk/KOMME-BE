@@ -55,4 +55,14 @@ public class CourseController implements CourseControllerDocs {
         List<CourseSummaryResponse> response = courseQueryService.findList(userId, status);
         return ApiResponse.success(SuccessStatus.COMMON_SUCCESS_STATUS, response);
     }
+
+    // 코스 상세 조회 API
+    @Override
+    public ResponseEntity<ApiResponse<CourseDetailResponse>> getCourseDetail(
+            Long userId,
+            Long courseId
+    ) {
+        CourseDetailResponse response = courseQueryService.findDetail(userId, courseId);
+        return ApiResponse.success(SuccessStatus.COMMON_SUCCESS_STATUS, response);
+    }
 }
