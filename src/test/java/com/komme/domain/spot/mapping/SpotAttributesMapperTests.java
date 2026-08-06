@@ -12,7 +12,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class SpotAttributesMapperTests {
 
-    // 정상 응답 item이 Attributes로 그대로 매핑되는지 검증 (cat1 A05 -> LUNCH)
+    // 정상 응답 item이 Attributes로 그대로 매핑되는지 검증 (이름에 "카페" 포함 -> MORNING, 이름 키워드가 cat1 매핑보다 우선)
     @Test
     void fromLocationBasedItemMapsAllFields() {
         LocationBasedListItem item = new LocationBasedListItem(
@@ -28,7 +28,7 @@ class SpotAttributesMapperTests {
 
         assertThat(attributes.name()).isEqualTo("성수동 카페");
         assertThat(attributes.category1()).isEqualTo("A05");
-        assertThat(attributes.timeSlot()).isEqualTo(TimeSlot.LUNCH);
+        assertThat(attributes.timeSlot()).isEqualTo(TimeSlot.MORNING);
         assertThat(attributes.latitude()).isEqualByComparingTo("37.5443300");
         assertThat(attributes.longitude()).isEqualByComparingTo("127.0557800");
         assertThat(attributes.areaCode()).isEqualTo("1");

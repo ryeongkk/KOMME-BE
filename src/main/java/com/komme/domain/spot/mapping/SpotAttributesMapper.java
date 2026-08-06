@@ -18,7 +18,7 @@ public final class SpotAttributesMapper {
                 item.category1(),
                 item.category2(),
                 item.category3(),
-                CategoryTimeSlotMapper.resolve(item.category1()),
+                CategoryTimeSlotMapper.resolve(item.category1(), item.title()),
                 new BigDecimal(item.mapY()),
                 new BigDecimal(item.mapX()),
                 item.areaCode(),
