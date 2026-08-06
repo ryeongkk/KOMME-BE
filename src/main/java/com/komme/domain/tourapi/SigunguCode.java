@@ -72,4 +72,11 @@ public enum SigunguCode {
                 .filter(code -> code.areaCode.equals(areaCode) && code.districtName.equals(districtName))
                 .findFirst();
     }
+
+    // areaCode + sigunguCode로 조회 - 스팟이 이미 갖고 있는 코드값으로 지역명(districtName)을 역으로 조회할 때 사용
+    public static Optional<SigunguCode> findByAreaCodeAndSigunguCode(String areaCode, String sigunguCode) {
+        return Arrays.stream(values())
+                .filter(code -> code.areaCode.equals(areaCode) && code.sigunguCode.equals(sigunguCode))
+                .findFirst();
+    }
 }

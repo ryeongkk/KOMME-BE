@@ -37,6 +37,23 @@ class SigunguCodeTests {
         assertThat(result).isEmpty();
     }
 
+    // areaCode + sigunguCode로 지역명을 역으로 조회할 수 있는지 검증
+    @Test
+    void findByAreaCodeAndSigunguCodeResolvesDistrictName() {
+        Optional<SigunguCode> result = SigunguCode.findByAreaCodeAndSigunguCode("11", "11200");
+
+        assertThat(result).contains(SigunguCode.SEONGDONG_GU);
+        assertThat(result.get().getDistrictName()).isEqualTo("성동구");
+    }
+
+    // 존재하지 않는 areaCode + sigunguCode 조합은 빈 값을 반환하는지 검증
+    @Test
+    void findByAreaCodeAndSigunguCodeReturnsEmptyWhenNotFound() {
+        Optional<SigunguCode> result = SigunguCode.findByAreaCodeAndSigunguCode("11", "00000");
+
+        assertThat(result).isEmpty();
+    }
+
     // 서울/부산 각각 정확한 개수가 등록되어 있는지 검증
     @Test
     void hasAllSeoulAndBusanDistricts() {
