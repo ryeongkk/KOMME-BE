@@ -23,7 +23,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.lenient;
 
 @ExtendWith(MockitoExtension.class)
 class OAuthIdentityTokenVerifierTests {
@@ -101,10 +101,88 @@ class OAuthIdentityTokenVerifierTests {
                 .isEqualTo(AuthErrorStatus.INVALID_APPLE_IDENTITY_TOKEN);
     }
 
-    // OAuth identity token subject 누락 거부 검증
+    // OAuth identity token subject 클레임이 없으면(null) 거부되는지 검증
+    // 참고: JJWT 빌더는 sub 클레임이 공백뿐이어도(.subject()든 제네릭 .claim("sub", ...)든) 클레임 자체를 생략해버려서,
+    // "subject가 null이 아니지만 공백인" 케이스는 빌더로는 만들 수 없다 - 결국 이 케이스와 동일한 코드 경로로 수렴한다.
     @Test
-    void verifyRejectsBlankSubject() {
-        String token = createToken("", ISSUER, CLIENT_ID, null, true);
+    void verifyRejectsMissingSubject() {
+        String token = createToken(null, ISSUER, CLIENT_ID, null, true);
+
+        assertThatThrownBy(() -> verifier.verify(
+                token,
+                jwksProvider,
+                CLIENT_ID,
+                Set.of(ISSUER),
+                AuthErrorStatus.INVALID_GOOGLE_IDENTITY_TOKEN
+        ))
+                .isInstanceOf(GeneralException.class)
+                .extracting(exception -> ((GeneralException) exception).getErrorStatus())
+                .isEqualTo(AuthErrorStatus.INVALID_GOOGLE_IDENTITY_TOKEN);
+    }
+
+    // OAuth identity token issuer 클레임이 아예 없으면(null) 거부되는지 검증
+    @Test
+    void verifyRejectsMissingIssuer() {
+        String token = createToken(SUBJECT, null, CLIENT_ID, EMAIL, true);
+
+        assertThatThrownBy(() -> verifier.verify(
+                token,
+                jwksProvider,
+                CLIENT_ID,
+                Set.of(ISSUER),
+                AuthErrorStatus.INVALID_APPLE_IDENTITY_TOKEN
+        ))
+                .isInstanceOf(GeneralException.class)
+                .extracting(exception -> ((GeneralException) exception).getErrorStatus())
+                .isEqualTo(AuthErrorStatus.INVALID_APPLE_IDENTITY_TOKEN);
+    }
+
+    // 이메일 클레임 자체가 없으면(애플의 "최초 로그인 이후 이메일 미제공" 케이스) null 이메일로 성공 처리되는지 검증
+    @Test
+    void verifyReturnsIdentityWithNullEmailWhenEmailClaimMissing() {
+        String token = createToken(SUBJECT, ISSUER, CLIENT_ID, null, true);
+
+        OAuthIdentity identity = verifier.verify(
+                token,
+                jwksProvider,
+                CLIENT_ID,
+                Set.of(ISSUER),
+                AuthErrorStatus.INVALID_APPLE_IDENTITY_TOKEN
+        );
+
+        assertThat(identity.subject()).isEqualTo(SUBJECT);
+        assertThat(identity.email()).isNull();
+    }
+
+    // 이메일 클레임이 빈 문자열이어도 null 이메일로 성공 처리되는지 검증
+    @Test
+    void verifyReturnsIdentityWithNullEmailWhenEmailClaimBlank() {
+        String token = createToken(SUBJECT, ISSUER, CLIENT_ID, "", true);
+
+        OAuthIdentity identity = verifier.verify(
+                token,
+                jwksProvider,
+                CLIENT_ID,
+                Set.of(ISSUER),
+                AuthErrorStatus.INVALID_APPLE_IDENTITY_TOKEN
+        );
+
+        assertThat(identity.email()).isNull();
+    }
+
+    // RS256이 아닌 알고리즘으로 서명된 토큰은 거부되는지 검증
+    @Test
+    void verifyRejectsTokenSignedWithUnsupportedAlgorithm() {
+        Instant now = Instant.now();
+        String token = Jwts.builder()
+                .header().keyId(KEY_ID).and()
+                .subject(SUBJECT)
+                .issuer(ISSUER)
+                .audience().add(CLIENT_ID).and()
+                .issuedAt(Date.from(now))
+                .expiration(Date.from(now.plusSeconds(300)))
+                .signWith(Jwts.SIG.HS256.key().build(), Jwts.SIG.HS256)
+                .compact();
 
         assertThatThrownBy(() -> verifier.verify(
                 token,
@@ -151,7 +229,7 @@ class OAuthIdentityTokenVerifierTests {
     // 서명 JWK Mock 구성
     private void prepareSigningJwk() {
         RSAPublicKey publicKey = (RSAPublicKey) keyPair.getPublic();
-        when(jwksProvider.getSigningJwk(KEY_ID)).thenReturn(new OAuthJwk(
+        lenient().when(jwksProvider.getSigningJwk(KEY_ID)).thenReturn(new OAuthJwk(
                 "RSA",
                 KEY_ID,
                 "sig",

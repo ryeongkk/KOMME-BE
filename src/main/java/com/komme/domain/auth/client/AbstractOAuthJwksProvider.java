@@ -7,6 +7,7 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
 
+import org.springframework.core.codec.DecodingException;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.reactive.function.client.WebClientException;
 
@@ -83,7 +84,9 @@ public abstract class AbstractOAuthJwksProvider {
                     Instant.now().plus(cacheTtl)
             );
             return cachedJwks.keys();
-        } catch (WebClientException exception) {
+        } catch (WebClientException | DecodingException exception) {
+            // WebClientException(연결/HTTP 상태 오류)뿐 아니라, 응답 바디가 비었거나 깨진 JSON이라
+            // 디코딩 자체가 실패하는 경우(DecodingException)도 서버 연결 실패로 동일하게 처리한다.
             throw new GeneralException(serverConnectionStatus, exception);
         }
     }
