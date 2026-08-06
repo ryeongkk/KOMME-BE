@@ -68,6 +68,22 @@ class GeneralExceptionAdviceTests {
                 .isEqualTo("nickname: " + NicknamePolicy.MESSAGE);
     }
 
+    // 검증 경로에 점(.)이 포함된 경우(메서드 파라미터 검증 등) 마지막 세그먼트만 추출되는지 검증
+    @Test
+    void handleConstraintViolationExceptionExtractsLastSegmentFromDottedPropertyPath() throws NoSuchMethodException {
+        Method method = ValidationTarget.class.getMethod("validate", String.class);
+        Set<ConstraintViolation<ValidationTarget>> violations =
+                validator.forExecutables().validateParameters(new ValidationTarget(), method, new Object[] { "n" });
+        ConstraintViolationException exception = new ConstraintViolationException(violations);
+
+        ResponseEntity<ApiResponse<Void>> response =
+                generalExceptionAdvice.handleConstraintViolationException(exception);
+
+        // 메서드 파라미터 검증 경로는 "validate.arg0"처럼 점이 포함되는데, 마지막 세그먼트만 남아야 한다
+        assertThat(response.getBody().getMessage()).doesNotContain("validate.");
+        assertThat(response.getBody().getMessage()).contains(NicknamePolicy.MESSAGE);
+    }
+
     // GeneralException 5xx 상태를 그대로 응답에 반영하는지 검증 (ERROR 로그 분기)
     @Test
     void handleGeneralExceptionReturnsServerErrorStatus() {
@@ -171,6 +187,15 @@ class GeneralExceptionAdviceTests {
             @Pattern(regexp = NicknamePolicy.PATTERN, message = NicknamePolicy.MESSAGE)
             String nickname
     ) {
+    }
+
+    // 메서드 파라미터 검증(점이 포함된 propertyPath)을 유발하기 위한 대상
+    public static class ValidationTarget {
+        public void validate(
+                @Pattern(regexp = NicknamePolicy.PATTERN, message = NicknamePolicy.MESSAGE)
+                String nickname
+        ) {
+        }
     }
 
     // MethodParameter 생성용 더미 - 실제로 호출되지 않고 리플렉션 대상으로만 쓰인다
