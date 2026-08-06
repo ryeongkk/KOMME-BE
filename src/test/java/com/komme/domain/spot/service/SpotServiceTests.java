@@ -14,6 +14,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -70,7 +71,7 @@ class SpotServiceTests {
 
     @SuppressWarnings("unchecked")
     private List<LocationBasedListItem> anyListOfLocationBasedListItem() {
-        return org.mockito.ArgumentMatchers.any(List.class);
+        return any(List.class);
     }
 
     private Spot existingSpot(String contentId, String name) {
