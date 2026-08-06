@@ -80,6 +80,50 @@ class ConcentrationRateClientTests {
         assertThat(requestedUri.get()).doesNotContain("tAtsNm");
     }
 
+    // tAtsNm 지정 시 요청 파라미터에 포함되는지 검증
+    @Test
+    void findConcentrationRatesIncludesTouristSpotNameWhenProvided() {
+        AtomicReference<String> requestedUri = new AtomicReference<>();
+        WebClient webClient = WebClient.builder()
+                .exchangeFunction(request -> {
+                    requestedUri.set(request.url().toString());
+                    return Mono.just(
+                            ClientResponse.create(HttpStatus.OK)
+                                    .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
+                                    .body(CONCENTRATION_RATE_JSON)
+                                    .build()
+                    );
+                })
+                .build();
+        ConcentrationRateClient client = createClient(webClient);
+
+        client.findConcentrationRates("11", "11440", "테스트 관광지");
+
+        assertThat(requestedUri.get()).contains("tAtsNm");
+    }
+
+    // tAtsNm이 null이 아니어도 공백뿐이면 요청 파라미터에서 제외되는지 검증
+    @Test
+    void findConcentrationRatesOmitsBlankTouristSpotName() {
+        AtomicReference<String> requestedUri = new AtomicReference<>();
+        WebClient webClient = WebClient.builder()
+                .exchangeFunction(request -> {
+                    requestedUri.set(request.url().toString());
+                    return Mono.just(
+                            ClientResponse.create(HttpStatus.OK)
+                                    .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
+                                    .body(CONCENTRATION_RATE_JSON)
+                                    .build()
+                    );
+                })
+                .build();
+        ConcentrationRateClient client = createClient(webClient);
+
+        client.findConcentrationRates("11", "11440", "   ");
+
+        assertThat(requestedUri.get()).doesNotContain("tAtsNm");
+    }
+
     // 외부 API 연결 실패 시 GeneralException으로 변환되는지 검증
     @Test
     void findConcentrationRatesMapsConnectionFailure() {
