@@ -189,6 +189,57 @@ class EmailVerificationStoreTests {
         verify(redisTemplate).delete(PASSWORD_RESET_ATTEMPT_KEY);
     }
 
+    // 만료된 비밀번호 재설정 코드 거부 검증
+    @Test
+    void confirmPasswordResetCodeRejectsExpiredCode() {
+        prepareValueOperations();
+        when(valueOperations.get(PASSWORD_RESET_CODE_KEY)).thenReturn(null);
+
+        assertThatThrownBy(() -> emailVerificationStore.confirmPasswordResetCode(EMAIL, "123456"))
+                .isInstanceOf(GeneralException.class)
+                .extracting(exception -> ((GeneralException) exception).getErrorStatus())
+                .isEqualTo(AuthErrorStatus.EXPIRED_VERIFICATION_CODE);
+    }
+
+    // 비밀번호 재설정 코드 불일치 시 실패 횟수 기록 검증
+    @Test
+    void confirmPasswordResetCodeRecordsFailedAttempt() {
+        prepareValueOperations();
+        when(valueOperations.get(PASSWORD_RESET_CODE_KEY)).thenReturn("654321");
+        when(valueOperations.increment(PASSWORD_RESET_ATTEMPT_KEY)).thenReturn(1L);
+
+        assertThatThrownBy(() -> emailVerificationStore.confirmPasswordResetCode(EMAIL, "123456"))
+                .isInstanceOf(GeneralException.class)
+                .extracting(exception -> ((GeneralException) exception).getErrorStatus())
+                .isEqualTo(AuthErrorStatus.INVALID_VERIFICATION_CODE);
+
+        verify(redisTemplate).expire(PASSWORD_RESET_ATTEMPT_KEY, CODE_EXPIRATION);
+    }
+
+    // 이미 잠긴 이메일이면 인증 코드 전송/확인 자체를 거부하는지 검증 (validateNotLocked 공통 분기)
+    @Test
+    void prepareSendRejectsWhenAlreadyLocked() {
+        when(redisTemplate.hasKey(LOCK_KEY)).thenReturn(true);
+
+        assertThatThrownBy(() -> emailVerificationStore.prepareSend(EMAIL))
+                .isInstanceOf(GeneralException.class)
+                .extracting(exception -> ((GeneralException) exception).getErrorStatus())
+                .isEqualTo(AuthErrorStatus.EMAIL_VERIFICATION_LOCKED);
+    }
+
+    // Redis increment가 null을 반환해도(방어적 null 체크) 잠기지 않고 넘어가는지 검증
+    @Test
+    void confirmCodeDoesNotLockWhenIncrementReturnsNull() {
+        prepareValueOperations();
+        when(valueOperations.get(CODE_KEY)).thenReturn("654321");
+        when(valueOperations.increment(ATTEMPT_KEY)).thenReturn(null);
+
+        assertThatThrownBy(() -> emailVerificationStore.confirmCode(EMAIL, "123456"))
+                .isInstanceOf(GeneralException.class)
+                .extracting(exception -> ((GeneralException) exception).getErrorStatus())
+                .isEqualTo(AuthErrorStatus.INVALID_VERIFICATION_CODE);
+    }
+
     // 비밀번호 재설정 토큰 TTL 저장 검증
     @Test
     void savePasswordResetTokenStoresEmailWithExpiration() {
@@ -231,6 +282,23 @@ class EmailVerificationStoreTests {
                 .isInstanceOf(GeneralException.class)
                 .extracting(exception -> ((GeneralException) exception).getErrorStatus())
                 .isEqualTo(AuthErrorStatus.EMAIL_NOT_VERIFIED);
+    }
+
+    // 인증된 이메일이면 예외 없이 통과하는지 검증
+    @Test
+    void validateVerifiedPassesWhenEmailIsVerified() {
+        when(redisTemplate.hasKey(VERIFIED_KEY)).thenReturn(true);
+
+        org.assertj.core.api.Assertions.assertThatCode(() -> emailVerificationStore.validateVerified(EMAIL))
+                .doesNotThrowAnyException();
+    }
+
+    // 인증 완료 플래그 삭제 검증
+    @Test
+    void deleteVerifiedDeletesVerifiedFlag() {
+        emailVerificationStore.deleteVerified(EMAIL);
+
+        verify(redisTemplate).delete(VERIFIED_KEY);
     }
 
     // Redis 문자열 연산 Mock 구성

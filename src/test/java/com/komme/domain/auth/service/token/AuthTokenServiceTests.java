@@ -4,6 +4,8 @@ import com.komme.domain.auth.dto.response.LoginResponse;
 import com.komme.domain.auth.jwt.JwtProvider;
 import com.komme.domain.auth.jwt.JwtProvider.IssuedToken;
 import com.komme.domain.auth.jwt.JwtRedisKeys;
+import com.komme.domain.user.entity.User;
+import com.komme.domain.user.enums.Provider;
 import com.komme.domain.user.service.TermsAgreementService;
 import com.komme.domain.user.service.UserReader;
 
@@ -73,5 +75,33 @@ class AuthTokenServiceTests {
                 JwtRedisKeys.userRefreshTokens(USER_ID),
                 REFRESH_EXPIRATION
         );
+    }
+
+    // 로그인 응답에 온보딩 상태(프로필 완성/필수약관 동의 여부)까지 함께 담기는지 검증
+    @Test
+    void issueLoginResponseIncludesOnboardingStatus() {
+        when(redisTemplate.opsForValue()).thenReturn(valueOperations);
+        when(redisTemplate.opsForSet()).thenReturn(setOperations);
+        when(jwtProvider.issueAccessToken(USER_ID))
+                .thenReturn(new IssuedToken("access-token", "access-id", ACCESS_EXPIRATION));
+        when(jwtProvider.issueRefreshToken(USER_ID))
+                .thenReturn(new IssuedToken("refresh-token", "refresh-id", REFRESH_EXPIRATION));
+        when(termsAgreementService.areRequiredTermsAgreed(USER_ID)).thenReturn(true);
+        User user = org.mockito.Mockito.mock(User.class);
+        when(user.getId()).thenReturn(USER_ID);
+        when(user.isProfileCompleted()).thenReturn(true);
+        UserReader userReader = org.mockito.Mockito.mock(UserReader.class);
+        AuthTokenService authTokenService = new AuthTokenService(
+                jwtProvider,
+                new RefreshTokenStore(redisTemplate, userReader),
+                termsAgreementService
+        );
+
+        LoginResponse response = authTokenService.issueLoginResponse(user);
+
+        assertThat(response.accessToken()).isEqualTo("access-token");
+        assertThat(response.refreshToken()).isEqualTo("refresh-token");
+        assertThat(response.profileCompleted()).isTrue();
+        assertThat(response.termsAgreed()).isTrue();
     }
 }
