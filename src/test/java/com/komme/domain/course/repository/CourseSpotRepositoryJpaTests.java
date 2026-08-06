@@ -70,6 +70,29 @@ class CourseSpotRepositoryJpaTests {
         assertThat(result.get(0).getSpot().getContentId()).isEqualTo("1");
     }
 
+    // deleteByCourse_Id로 코스 스팟을 먼저 지우면 course_spot -> course FK 제약 위반 없이 Course도 지울 수 있는지 검증
+    @Test
+    void deleteByCourseIdAllowsSubsequentCourseDeletionWithoutForeignKeyViolation() {
+        User user = userRepository.saveAndFlush(User.createLocal(
+                "user2@example.com", "encoded-password", "nickname2",
+                "KR", Gender.FEMALE, Language.ENGLISH, Set.of(ServiceInterest.COURSE)
+        ));
+        Course course = courseRepository.saveAndFlush(Course.create(
+                user, "성동구 먹방 Day", null, "성동구", "11", "11200",
+                Set.of(Topic.FOOD), LocalDate.of(2026, 8, 10)
+        ));
+        Spot spot = spotRepository.saveAndFlush(spot("3"));
+        courseSpotRepository.saveAndFlush(CourseSpot.create(course, spot, 1, TimeSlot.MORNING, null));
+
+        courseSpotRepository.deleteByCourse_Id(course.getId());
+        courseSpotRepository.flush();
+        courseRepository.delete(course);
+        courseRepository.flush();
+
+        assertThat(courseRepository.findById(course.getId())).isEmpty();
+        assertThat(courseSpotRepository.findByCourse_IdOrderBySequenceAsc(course.getId())).isEmpty();
+    }
+
     private Spot spot(String contentId) {
         return Spot.create(contentId, new Spot.Attributes(
                 "spot-" + contentId, "A05", "A0502", "A05020900", TimeSlot.MORNING,

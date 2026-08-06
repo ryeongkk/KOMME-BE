@@ -30,6 +30,14 @@ public final class CourseApiExamples {
             }
             """;
 
+    public static final String SUCCESS_WITHOUT_DATA = """
+            {
+              "isSuccess": true,
+              "code": "COM_200",
+              "message": "성공적으로 처리되었습니다."
+            }
+            """;
+
     public static final String LIST_SUCCESS = """
             {
               "isSuccess": true,

@@ -9,6 +9,7 @@ import com.komme.domain.course.dto.request.CreateCourseRequest;
 import com.komme.domain.course.dto.response.CourseDetailResponse;
 import com.komme.domain.course.dto.response.CourseSummaryResponse;
 import com.komme.domain.course.enums.CourseStatus;
+import com.komme.domain.course.service.CourseDeletionService;
 import com.komme.domain.course.service.CourseGenerationResult;
 import com.komme.domain.course.service.CourseGenerationService;
 import com.komme.domain.course.service.CourseQueryService;
@@ -28,6 +29,7 @@ public class CourseController implements CourseControllerDocs {
 
     private final CourseGenerationService courseGenerationService;
     private final CourseQueryService courseQueryService;
+    private final CourseDeletionService courseDeletionService;
 
     // 코스 생성 API
     @Override
@@ -64,5 +66,15 @@ public class CourseController implements CourseControllerDocs {
     ) {
         CourseDetailResponse response = courseQueryService.findDetail(userId, courseId);
         return ApiResponse.success(SuccessStatus.COMMON_SUCCESS_STATUS, response);
+    }
+
+    // 코스 삭제 API
+    @Override
+    public ResponseEntity<ApiResponse<Void>> deleteCourse(
+            Long userId,
+            Long courseId
+    ) {
+        courseDeletionService.delete(userId, courseId);
+        return ApiResponse.success(SuccessStatus.COMMON_SUCCESS_STATUS);
     }
 }

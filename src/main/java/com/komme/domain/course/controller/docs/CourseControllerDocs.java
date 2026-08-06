@@ -18,6 +18,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -117,6 +118,33 @@ public interface CourseControllerDocs {
     )
     @GetMapping("/{courseId}")
     ResponseEntity<ApiResponse<CourseDetailResponse>> getCourseDetail(
+            @Parameter(hidden = true) @AuthenticationPrincipal Long userId,
+            @PathVariable Long courseId
+    );
+
+    // 코스 삭제 API
+    @Operation(
+            summary = "코스 삭제",
+            description = "코스를 하드 삭제합니다. 본인 코스가 아니면 존재 여부를 숨기기 위해 404로 응답합니다.",
+            security = @SecurityRequirement(name = "bearerAuth")
+    )
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+            responseCode = "200",
+            description = "코스 삭제 성공",
+            content = @Content(examples = @ExampleObject(value = CourseApiExamples.SUCCESS_WITHOUT_DATA))
+    )
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+            responseCode = "401",
+            description = "Access Token 누락, 만료 또는 오류",
+            content = @Content(examples = @ExampleObject(value = CourseApiExamples.INVALID_TOKEN))
+    )
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+            responseCode = "404",
+            description = "코스가 없거나 본인 코스가 아님",
+            content = @Content(examples = @ExampleObject(value = CourseApiExamples.COURSE_NOT_FOUND))
+    )
+    @DeleteMapping("/{courseId}")
+    ResponseEntity<ApiResponse<Void>> deleteCourse(
             @Parameter(hidden = true) @AuthenticationPrincipal Long userId,
             @PathVariable Long courseId
     );

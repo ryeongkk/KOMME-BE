@@ -13,6 +13,7 @@ import com.komme.domain.course.entity.Course;
 import com.komme.domain.course.enums.CourseStatus;
 import com.komme.domain.course.enums.Duration;
 import com.komme.domain.course.enums.Topic;
+import com.komme.domain.course.service.CourseDeletionService;
 import com.komme.domain.course.service.CourseGenerationResult;
 import com.komme.domain.course.service.CourseGenerationService;
 import com.komme.domain.course.service.CourseQueryService;
@@ -30,6 +31,7 @@ class CourseControllerTests {
 
     private CourseGenerationService courseGenerationService;
     private CourseQueryService courseQueryService;
+    private CourseDeletionService courseDeletionService;
     private CourseController courseController;
 
     // 코스 컨트롤러 테스트 환경 구성
@@ -37,7 +39,8 @@ class CourseControllerTests {
     void setUp() {
         courseGenerationService = mock(CourseGenerationService.class);
         courseQueryService = mock(CourseQueryService.class);
-        courseController = new CourseController(courseGenerationService, courseQueryService);
+        courseDeletionService = mock(CourseDeletionService.class);
+        courseController = new CourseController(courseGenerationService, courseQueryService, courseDeletionService);
     }
 
     // 코스 생성 API가 서비스 생성 결과를 응답 DTO로 변환해서 반환하는지 검증
@@ -96,5 +99,14 @@ class CourseControllerTests {
 
         assertThat(response.getStatusCode().is2xxSuccessful()).isTrue();
         assertThat(response.getBody().getData()).isEqualTo(detail);
+    }
+
+    // 코스 삭제 API가 CourseDeletionService에 위임하는지 검증
+    @Test
+    void deleteCourseDelegatesToDeletionService() {
+        ResponseEntity<ApiResponse<Void>> response = courseController.deleteCourse(1L, 10L);
+
+        assertThat(response.getStatusCode().is2xxSuccessful()).isTrue();
+        verify(courseDeletionService).delete(1L, 10L);
     }
 }
