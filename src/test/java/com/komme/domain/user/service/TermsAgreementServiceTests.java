@@ -112,6 +112,26 @@ class TermsAgreementServiceTests {
         assertThat(result.get(TermsType.PUSH_NOTIFICATION)).isFalse();
     }
 
+    // 저장된 동의 기록이 있지만 명시적으로 거부한 경우도 false로 조회되는지 검증
+    @Test
+    void getOptionalConsentAgreementsReturnsFalseForExplicitlyDisagreedRecord() {
+        TermsAgreementService service = new TermsAgreementService(
+                termsAgreementRepository,
+                userReader
+        );
+        TermsAgreement marketing = mock(TermsAgreement.class);
+        when(marketing.getTermsType()).thenReturn(TermsType.MARKETING);
+        when(marketing.isAgreed()).thenReturn(false);
+        when(termsAgreementRepository.findByUserIdAndTermsTypeIn(
+                USER_ID,
+                TermsType.optionalConsentTypes()
+        )).thenReturn(List.of(marketing));
+
+        Map<TermsType, Boolean> result = service.getOptionalConsentAgreements(USER_ID);
+
+        assertThat(result.get(TermsType.MARKETING)).isFalse();
+    }
+
     // 사용자 선택 약관 동의 상태 변경 검증
     @Test
     void updateOptionalConsentSavesOptionalTermsAgreement() {
