@@ -11,6 +11,17 @@ When the user proposes a feature idea or requirement, do not edit code immediate
 3. Only modify files once the user explicitly says to execute (e.g. "작성해줘", "만들어줘", "구현해줘", "수정해줘", "적용해줘").
 4. Requests like "분석해줘", "어떻게 하면 좋을까?", "방향을 알려줘" mean read/analyze only — no file changes.
 
+### Implementation cadence
+
+Once execution starts, do not implement a whole feature in one shot. Work unit-by-unit (roughly one class/file or one tightly-related group at a time):
+
+1. Implement a single unit.
+2. Present it to the user for verification (and run relevant tests/build where applicable).
+3. Give the commit message for that unit — the user commits it themselves, not Claude.
+4. Wait for the user to confirm the commit is done before starting the next unit.
+
+Do not treat an answer to a scoping/design question (including an AskUserQuestion response) as an implicit go-ahead to start writing files — wait for an explicit execute-trigger word (step 3 above) before every implementation pass, not just the first one.
+
 ## Project
 
 KOMME-BE is a Spring Boot 4.0.7 (Java 21) REST API backend, built with Gradle. Root package: `com.komme`.
