@@ -8,11 +8,14 @@ import java.util.Set;
 import com.komme.common.response.ApiResponse;
 import com.komme.domain.course.dto.request.CreateCourseRequest;
 import com.komme.domain.course.dto.response.CourseDetailResponse;
+import com.komme.domain.course.dto.response.CourseSummaryResponse;
 import com.komme.domain.course.entity.Course;
+import com.komme.domain.course.enums.CourseStatus;
 import com.komme.domain.course.enums.Duration;
 import com.komme.domain.course.enums.Topic;
 import com.komme.domain.course.service.CourseGenerationResult;
 import com.komme.domain.course.service.CourseGenerationService;
+import com.komme.domain.course.service.CourseQueryService;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -26,13 +29,15 @@ import static org.mockito.Mockito.when;
 class CourseControllerTests {
 
     private CourseGenerationService courseGenerationService;
+    private CourseQueryService courseQueryService;
     private CourseController courseController;
 
     // 코스 컨트롤러 테스트 환경 구성
     @BeforeEach
     void setUp() {
         courseGenerationService = mock(CourseGenerationService.class);
-        courseController = new CourseController(courseGenerationService);
+        courseQueryService = mock(CourseQueryService.class);
+        courseController = new CourseController(courseGenerationService, courseQueryService);
     }
 
     // 코스 생성 API가 서비스 생성 결과를 응답 DTO로 변환해서 반환하는지 검증
@@ -62,5 +67,20 @@ class CourseControllerTests {
         verify(courseGenerationService).generate(
                 1L, request.longitude(), request.latitude(), request.topics(), request.duration(), request.visitDate()
         );
+    }
+
+    // 코스 목록 조회 API가 CourseQueryService 결과를 그대로 반환하는지 검증
+    @Test
+    void getCoursesReturnsQueryServiceResult() {
+        List<CourseSummaryResponse> summaries = List.of(
+                new CourseSummaryResponse(1L, "성동구 먹방 Day", "성동구", LocalDate.of(2026, 8, 10), Set.of(Topic.FOOD))
+        );
+        when(courseQueryService.findList(1L, CourseStatus.UPCOMING)).thenReturn(summaries);
+
+        ResponseEntity<ApiResponse<List<CourseSummaryResponse>>> response =
+                courseController.getCourses(1L, CourseStatus.UPCOMING);
+
+        assertThat(response.getStatusCode().is2xxSuccessful()).isTrue();
+        assertThat(response.getBody().getData()).isEqualTo(summaries);
     }
 }

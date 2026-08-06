@@ -30,6 +30,23 @@ public final class CourseApiExamples {
             }
             """;
 
+    public static final String LIST_SUCCESS = """
+            {
+              "isSuccess": true,
+              "code": "COM_200",
+              "message": "성공적으로 처리되었습니다.",
+              "data": [
+                {
+                  "courseId": 1,
+                  "title": "성동구 먹방 Day",
+                  "regionName": "성동구",
+                  "visitDate": "2026-08-10",
+                  "topics": ["FOOD"]
+                }
+              ]
+            }
+            """;
+
     public static final String BAD_REQUEST = """
             {
               "isSuccess": false,

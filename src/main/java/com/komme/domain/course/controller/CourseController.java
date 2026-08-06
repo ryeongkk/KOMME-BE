@@ -1,12 +1,17 @@
 package com.komme.domain.course.controller;
 
+import java.util.List;
+
 import com.komme.common.base.status.SuccessStatus;
 import com.komme.common.response.ApiResponse;
 import com.komme.domain.course.controller.docs.CourseControllerDocs;
 import com.komme.domain.course.dto.request.CreateCourseRequest;
 import com.komme.domain.course.dto.response.CourseDetailResponse;
+import com.komme.domain.course.dto.response.CourseSummaryResponse;
+import com.komme.domain.course.enums.CourseStatus;
 import com.komme.domain.course.service.CourseGenerationResult;
 import com.komme.domain.course.service.CourseGenerationService;
+import com.komme.domain.course.service.CourseQueryService;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
@@ -22,6 +27,7 @@ import lombok.RequiredArgsConstructor;
 public class CourseController implements CourseControllerDocs {
 
     private final CourseGenerationService courseGenerationService;
+    private final CourseQueryService courseQueryService;
 
     // 코스 생성 API
     @Override
@@ -38,5 +44,15 @@ public class CourseController implements CourseControllerDocs {
                 request.visitDate()
         );
         return ApiResponse.success(SuccessStatus.COMMON_SUCCESS_STATUS, CourseDetailResponse.from(result));
+    }
+
+    // 코스 목록 조회 API
+    @Override
+    public ResponseEntity<ApiResponse<List<CourseSummaryResponse>>> getCourses(
+            Long userId,
+            CourseStatus status
+    ) {
+        List<CourseSummaryResponse> response = courseQueryService.findList(userId, status);
+        return ApiResponse.success(SuccessStatus.COMMON_SUCCESS_STATUS, response);
     }
 }

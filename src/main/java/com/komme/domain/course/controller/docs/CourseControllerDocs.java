@@ -1,8 +1,12 @@
 package com.komme.domain.course.controller.docs;
 
+import java.util.List;
+
 import com.komme.common.response.ApiResponse;
 import com.komme.domain.course.dto.request.CreateCourseRequest;
 import com.komme.domain.course.dto.response.CourseDetailResponse;
+import com.komme.domain.course.dto.response.CourseSummaryResponse;
+import com.komme.domain.course.enums.CourseStatus;
 
 import jakarta.validation.Valid;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -14,8 +18,10 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 
 @Tag(name = "Course", description = "코스 생성/조회/삭제 API")
@@ -55,5 +61,31 @@ public interface CourseControllerDocs {
     ResponseEntity<ApiResponse<CourseDetailResponse>> createCourse(
             @Parameter(hidden = true) @AuthenticationPrincipal Long userId,
             @Valid @RequestBody CreateCourseRequest request
+    );
+
+    // 코스 목록 조회 API
+    @Operation(
+            summary = "코스 목록 조회",
+            description = "UPCOMING(D-day 임박순)/HISTORY(최근 완료순)로 인증된 사용자의 코스 목록을 조회합니다. "
+                    + "별도 status 컬럼 없이 visitDate와 오늘 날짜를 비교해 조회 시점에 계산됩니다.",
+            security = @SecurityRequirement(name = "bearerAuth")
+    )
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+            responseCode = "200",
+            description = "코스 목록 조회 성공",
+            content = @Content(
+                    schema = @Schema(implementation = CourseSummaryResponse.class),
+                    examples = @ExampleObject(value = CourseApiExamples.LIST_SUCCESS)
+            )
+    )
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+            responseCode = "401",
+            description = "Access Token 누락, 만료 또는 오류",
+            content = @Content(examples = @ExampleObject(value = CourseApiExamples.INVALID_TOKEN))
+    )
+    @GetMapping
+    ResponseEntity<ApiResponse<List<CourseSummaryResponse>>> getCourses(
+            @Parameter(hidden = true) @AuthenticationPrincipal Long userId,
+            @Parameter(description = "UPCOMING 또는 HISTORY") @RequestParam CourseStatus status
     );
 }
