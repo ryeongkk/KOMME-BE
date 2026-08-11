@@ -105,7 +105,7 @@ class SecurityConfigTests {
     void protectedAuthEndpointPassesAuthenticatedUserId() throws Exception {
         PasswordChangeRequest request = new PasswordChangeRequest(
                 "password123",
-                "newpassword2"
+                "newpassword2!"
         );
         TokenClaims tokenClaims = createTokenClaims();
         when(jwtProvider.parseAccessToken("access-token")).thenReturn(tokenClaims);

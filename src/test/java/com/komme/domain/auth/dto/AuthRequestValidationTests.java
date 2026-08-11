@@ -288,7 +288,7 @@ class AuthRequestValidationTests {
     private SignUpRequest createValidSignUpRequest() {
         return new SignUpRequest(
                 "user@example.com",
-                "password1",
+                "password1!",
                 "nickname",
                 "KR",
                 Gender.FEMALE,

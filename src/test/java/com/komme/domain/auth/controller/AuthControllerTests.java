@@ -107,7 +107,7 @@ class AuthControllerTests {
     void resetPasswordReturnsSuccess() throws Exception {
         PasswordResetRequest request = new PasswordResetRequest(
                 "reset-token",
-                "newpassword2"
+                "newpassword2!"
         );
 
         mockMvc.perform(patch("/api/v1/auth/password-resets")
