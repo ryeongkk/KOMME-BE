@@ -11,7 +11,6 @@ import com.komme.domain.auth.dto.request.PasswordResetRequest;
 import com.komme.domain.auth.dto.request.PasswordResetSendRequest;
 import com.komme.domain.auth.dto.request.SignUpRequest;
 import com.komme.domain.auth.dto.request.TokenReissueRequest;
-import com.komme.domain.auth.dto.request.TermsAgreementRequest;
 import com.komme.domain.auth.dto.response.LoginResponse;
 import com.komme.domain.auth.dto.response.PasswordResetTokenResponse;
 import com.komme.domain.auth.dto.response.TokenReissueResponse;
@@ -300,33 +299,6 @@ public interface AuthControllerDocs {
     @PostMapping("/login")
     ResponseEntity<ApiResponse<LoginResponse>> login(
             @Valid @RequestBody LoginRequest request
-    );
-
-    // 약관 동의 API
-    @Operation(
-            summary = "약관 동의",
-            description = "인증된 사용자의 필수 약관, 연령 확인, 마케팅 및 푸시 알림 동의 상태를 저장합니다.",
-            security = @SecurityRequirement(name = "bearerAuth")
-    )
-    @io.swagger.v3.oas.annotations.responses.ApiResponse(
-            responseCode = "200",
-            description = "약관 동의 저장 성공",
-            content = @Content(examples = @ExampleObject(value = AuthApiExamples.SUCCESS_WITHOUT_DATA))
-    )
-    @io.swagger.v3.oas.annotations.responses.ApiResponse(
-            responseCode = "400",
-            description = "필수 약관 또는 연령 확인 미동의",
-            content = @Content(examples = @ExampleObject(value = AuthApiExamples.BAD_REQUEST))
-    )
-    @io.swagger.v3.oas.annotations.responses.ApiResponse(
-            responseCode = "401",
-            description = "Access Token 누락, 만료 또는 오류",
-            content = @Content(examples = @ExampleObject(value = AuthApiExamples.INVALID_TOKEN))
-    )
-    @PostMapping("/terms")
-    ResponseEntity<ApiResponse<Void>> agreeTerms(
-            @Parameter(hidden = true) @AuthenticationPrincipal Long userId,
-            @Valid @RequestBody TermsAgreementRequest request
     );
 
     // 토큰 재발급 API

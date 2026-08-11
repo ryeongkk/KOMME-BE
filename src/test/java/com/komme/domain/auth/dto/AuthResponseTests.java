@@ -18,7 +18,6 @@ class AuthResponseTests {
         assertThat(response.accessToken()).isEqualTo("access-token");
         assertThat(response.refreshToken()).isEqualTo("refresh-token");
         assertThat(response.profileCompleted()).isFalse();
-        assertThat(response.termsAgreed()).isFalse();
     }
 
     // 온보딩 상태 포함 로그인 응답 생성 검증
@@ -27,12 +26,10 @@ class AuthResponseTests {
         LoginResponse response = LoginResponse.of(
                 "access-token",
                 "refresh-token",
-                true,
                 true
         );
 
         assertThat(response.profileCompleted()).isTrue();
-        assertThat(response.termsAgreed()).isTrue();
     }
 
     // 토큰 재발급 응답 생성 검증

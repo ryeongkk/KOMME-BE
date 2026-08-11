@@ -13,10 +13,8 @@ import com.komme.domain.auth.dto.request.PasswordResetRequest;
 import com.komme.domain.auth.dto.request.PasswordResetSendRequest;
 import com.komme.domain.auth.dto.request.SignUpRequest;
 import com.komme.domain.auth.dto.request.TokenReissueRequest;
-import com.komme.domain.auth.dto.request.TermsAgreementRequest;
 import com.komme.domain.user.enums.Gender;
 import com.komme.domain.user.enums.ServiceInterest;
-import com.komme.domain.user.enums.TermsType;
 import com.komme.domain.i18n.enums.Language;
 
 import java.util.Set;
@@ -168,13 +166,7 @@ class AuthRequestValidationTests {
     // OAuth 프로필 완성 요청 올바른 값 검증 통과 확인
     @Test
     void oAuthProfileCompleteRequestAcceptsValidValues() {
-        OAuthProfileCompleteRequest request = new OAuthProfileCompleteRequest(
-                "nickname",
-                "KR",
-                Gender.FEMALE,
-                Language.ENGLISH,
-                Set.of(ServiceInterest.COURSE)
-        );
+        OAuthProfileCompleteRequest request = new OAuthProfileCompleteRequest("nickname");
 
         assertThat(validator.validate(request)).isEmpty();
     }
@@ -182,13 +174,7 @@ class AuthRequestValidationTests {
     // OAuth 프로필 완성 요청 형식에 맞지 않는 닉네임 거부 검증
     @Test
     void oAuthProfileCompleteRequestRejectsInvalidNickname() {
-        OAuthProfileCompleteRequest request = new OAuthProfileCompleteRequest(
-                "nick name!",
-                "KR",
-                Gender.FEMALE,
-                Language.ENGLISH,
-                Set.of(ServiceInterest.COURSE)
-        );
+        OAuthProfileCompleteRequest request = new OAuthProfileCompleteRequest("nick name!");
 
         assertThat(propertyNames(validator.validate(request))).contains("nickname");
     }
@@ -200,41 +186,6 @@ class AuthRequestValidationTests {
                 .contains("refreshToken");
         assertThat(propertyNames(validator.validate(new LogoutRequest(""))))
                 .contains("refreshToken");
-    }
-
-    // 약관 동의 요청 올바른 값 검증 통과 확인
-    @Test
-    void termsAgreementRequestAcceptsValidValues() {
-        TermsAgreementRequest request = createValidTermsAgreementRequest();
-
-        assertThat(validator.validate(request)).isEmpty();
-    }
-
-    // 약관 동의 요청 필수 약관 미동의 거부 검증
-    @Test
-    void termsAgreementRequestRejectsRequiredTermsDisagreement() {
-        TermsAgreementRequest request = new TermsAgreementRequest(
-                false,
-                true,
-                true,
-                true,
-                false,
-                true,
-                true
-        );
-
-        assertThat(propertyNames(validator.validate(request))).contains("serviceTermsAgreed");
-    }
-
-    // 약관 동의 요청 동의 상태 변환 검증
-    @Test
-    void termsAgreementRequestConvertsToAgreementMap() {
-        TermsAgreementRequest request = createValidTermsAgreementRequest();
-
-        assertThat(request.toAgreements())
-                .containsEntry(TermsType.SERVICE_TERMS, true)
-                .containsEntry(TermsType.MARKETING, false)
-                .containsEntry(TermsType.PUSH_NOTIFICATION, true);
     }
 
     // 비밀번호 변경 요청 새 비밀번호 형식 검증
@@ -288,25 +239,12 @@ class AuthRequestValidationTests {
     private SignUpRequest createValidSignUpRequest() {
         return new SignUpRequest(
                 "user@example.com",
-                "password1",
+                "password1!",
                 "nickname",
                 "KR",
                 Gender.FEMALE,
                 Language.ENGLISH,
                 Set.of(ServiceInterest.COURSE)
-        );
-    }
-
-    // 정상 약관 동의 요청 생성
-    private TermsAgreementRequest createValidTermsAgreementRequest() {
-        return new TermsAgreementRequest(
-                true,
-                true,
-                true,
-                true,
-                false,
-                true,
-                true
         );
     }
 

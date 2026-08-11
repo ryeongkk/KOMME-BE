@@ -1,13 +1,12 @@
 package com.komme.domain.user.controller.docs;
 
 import com.komme.common.response.ApiResponse;
-import com.komme.domain.user.enums.TermsType;
 import com.komme.domain.user.util.NicknamePolicy;
 import com.komme.domain.user.dto.response.NicknameAvailabilityResponse;
 import com.komme.domain.user.dto.response.UserProfileResponse;
 import com.komme.domain.user.dto.request.ChangeNicknameRequest;
-import com.komme.domain.user.dto.request.UpdateTermsAgreementRequest;
 import com.komme.domain.user.dto.request.ChangePreferredLanguageRequest;
+import com.komme.domain.user.dto.request.LocationConsentRequest;
 
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Pattern;
@@ -22,7 +21,6 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
-import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -33,7 +31,7 @@ public interface UserControllerDocs {
     // 마이페이지 프로필 조회 API
     @Operation(
             summary = "마이페이지 프로필 조회",
-            description = "인증된 사용자의 닉네임, 연결 계정, 선호 언어, 마케팅 및 푸시 동의 상태를 조회합니다.",
+            description = "인증된 사용자의 닉네임, 연결 계정, 선호 언어, 위치 정보 동의 상태를 조회합니다.",
             security = @SecurityRequirement(name = "bearerAuth")
     )
     @io.swagger.v3.oas.annotations.responses.ApiResponse(
@@ -138,37 +136,30 @@ public interface UserControllerDocs {
             @Valid @RequestBody ChangePreferredLanguageRequest request
     );
 
-    // 마이페이지 선택 약관 변경 API
+    // 마이페이지 위치 정보 동의 변경 API
     @Operation(
-            summary = "마이페이지 선택 약관 변경",
-            description = "인증된 사용자의 마케팅 또는 푸시 알림 동의 상태를 변경합니다.",
+            summary = "마이페이지 위치 정보 동의 변경",
+            description = "인증된 사용자의 위치 정보 수집·이용 동의 상태를 변경합니다.",
             security = @SecurityRequirement(name = "bearerAuth")
     )
     @io.swagger.v3.oas.annotations.responses.ApiResponse(
             responseCode = "200",
-            description = "선택 약관 변경 성공",
+            description = "위치 정보 동의 변경 성공",
             content = @Content(examples = @ExampleObject(value = UserApiExamples.SUCCESS_WITHOUT_DATA))
     )
     @io.swagger.v3.oas.annotations.responses.ApiResponse(
             responseCode = "400",
-            description = "약관 유형 또는 동의 여부 입력값 오류",
-            content = @Content(examples = {
-                    @ExampleObject(name = "입력값 오류", value = UserApiExamples.BAD_REQUEST),
-                    @ExampleObject(
-                            name = "변경 불가 약관",
-                            value = UserApiExamples.UNSUPPORTED_TERMS_TYPE
-                    )
-            })
+            description = "동의 여부 입력값 오류",
+            content = @Content(examples = @ExampleObject(value = UserApiExamples.BAD_REQUEST))
     )
     @io.swagger.v3.oas.annotations.responses.ApiResponse(
             responseCode = "401",
             description = "Access Token 누락, 만료 또는 오류",
             content = @Content(examples = @ExampleObject(value = UserApiExamples.INVALID_TOKEN))
     )
-    @PatchMapping("/me/terms/{type}")
-    ResponseEntity<ApiResponse<Void>> updateOptionalTermsAgreement(
+    @PatchMapping("/me/location-consent")
+    ResponseEntity<ApiResponse<Void>> updateLocationConsent(
             @Parameter(hidden = true) @AuthenticationPrincipal Long userId,
-            @PathVariable("type") TermsType termsType,
-            @Valid @RequestBody UpdateTermsAgreementRequest request
+            @Valid @RequestBody LocationConsentRequest request
     );
 }

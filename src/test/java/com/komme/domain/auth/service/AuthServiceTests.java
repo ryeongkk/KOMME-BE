@@ -24,7 +24,6 @@ import com.komme.domain.auth.service.token.AuthTokenService;
 import com.komme.domain.auth.service.token.RefreshTokenStore;
 import com.komme.domain.auth.service.token.WithdrawalStore;
 import com.komme.domain.user.repository.UserRepository;
-import com.komme.domain.user.repository.TermsAgreementRepository;
 import com.komme.domain.user.service.UserReader;
 import com.komme.domain.i18n.enums.Language;
 
@@ -70,9 +69,6 @@ class AuthServiceTests {
     private OAuthAccountRepository oAuthAccountRepository;
 
     @Mock
-    private TermsAgreementRepository termsAgreementRepository;
-
-    @Mock
     private UserReader userReader;
 
     @Mock
@@ -107,7 +103,6 @@ class AuthServiceTests {
         authService = new AuthService(
                 userRepository,
                 oAuthAccountRepository,
-                termsAgreementRepository,
                 userReader,
                 authUserReader,
                 emailVerificationService,
@@ -496,7 +491,6 @@ class AuthServiceTests {
         authService.withdraw(USER_ID, accessClaims);
 
         verify(oAuthAccountRepository).deleteAllByUserId(USER_ID);
-        verify(termsAgreementRepository).deleteAllByUserId(USER_ID);
         verify(userRepository).delete(user);
         verify(userRepository).flush();
         ArgumentCaptor<Collection<String>> keysCaptor = ArgumentCaptor.forClass(Collection.class);
@@ -535,7 +529,6 @@ class AuthServiceTests {
         authService.withdraw(USER_ID, accessClaims);
 
         verify(oAuthAccountRepository).deleteAllByUserId(USER_ID);
-        verify(termsAgreementRepository).deleteAllByUserId(USER_ID);
         verify(userRepository).delete(user);
         verify(userRepository).flush();
         verify(redisTemplate).delete(JwtRedisKeys.userRefreshTokens(USER_ID));

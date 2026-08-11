@@ -3,7 +3,7 @@ package com.komme.domain.user.dto;
 import com.komme.domain.i18n.enums.Language;
 import com.komme.domain.user.dto.request.ChangeNicknameRequest;
 import com.komme.domain.user.dto.request.ChangePreferredLanguageRequest;
-import com.komme.domain.user.dto.request.UpdateTermsAgreementRequest;
+import com.komme.domain.user.dto.request.LocationConsentRequest;
 
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -70,18 +70,18 @@ class UserRequestValidationTests {
         assertThat(propertyNames(validator.validate(request))).contains("preferredLanguage");
     }
 
-    // 선택 약관 변경 요청 올바른 값 검증 통과 확인
+    // 위치 정보 동의 요청 올바른 값 검증 통과 확인
     @Test
-    void updateTermsAgreementRequestAcceptsValidValue() {
-        UpdateTermsAgreementRequest request = new UpdateTermsAgreementRequest(false);
+    void locationConsentRequestAcceptsValidValue() {
+        LocationConsentRequest request = new LocationConsentRequest(false);
 
         assertThat(validator.validate(request)).isEmpty();
     }
 
-    // 선택 약관 변경 요청 필수값 거부 검증
+    // 위치 정보 동의 요청 필수값 거부 검증
     @Test
-    void updateTermsAgreementRequestRejectsNullValue() {
-        UpdateTermsAgreementRequest request = new UpdateTermsAgreementRequest(null);
+    void locationConsentRequestRejectsNullValue() {
+        LocationConsentRequest request = new LocationConsentRequest(null);
 
         assertThat(propertyNames(validator.validate(request))).contains("agreed");
     }

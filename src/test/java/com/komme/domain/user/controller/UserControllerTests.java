@@ -5,11 +5,10 @@ import com.komme.common.response.ApiResponse;
 import com.komme.domain.i18n.enums.Language;
 import com.komme.domain.user.dto.request.ChangeNicknameRequest;
 import com.komme.domain.user.dto.request.ChangePreferredLanguageRequest;
-import com.komme.domain.user.dto.request.UpdateTermsAgreementRequest;
+import com.komme.domain.user.dto.request.LocationConsentRequest;
 import com.komme.domain.user.dto.response.NicknameAvailabilityResponse;
 import com.komme.domain.user.dto.response.UserProfileResponse;
 import com.komme.domain.user.enums.Provider;
-import com.komme.domain.user.enums.TermsType;
 import com.komme.domain.user.service.UserProfileService;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -49,8 +48,7 @@ class UserControllerTests {
                 "nickname",
                 Provider.LOCAL,
                 Language.ENGLISH,
-                true,
-                false
+                true
         );
         when(userProfileService.getMyProfile(1L)).thenReturn(profileResponse);
 
@@ -105,22 +103,15 @@ class UserControllerTests {
         verify(userProfileService).changePreferredLanguage(1L, request);
     }
 
-    // 마이페이지 선택 약관 변경 API 위임 검증
+    // 마이페이지 위치 정보 동의 변경 API 위임 검증
     @Test
-    void updateOptionalTermsAgreementDelegatesToService() {
-        UpdateTermsAgreementRequest request = new UpdateTermsAgreementRequest(true);
+    void updateLocationConsentDelegatesToService() {
+        LocationConsentRequest request = new LocationConsentRequest(true);
 
-        ResponseEntity<ApiResponse<Void>> response = userController.updateOptionalTermsAgreement(
-                1L,
-                TermsType.MARKETING,
-                request
-        );
+        ResponseEntity<ApiResponse<Void>> response =
+                userController.updateLocationConsent(1L, request);
 
         assertThat(response.getStatusCode().is2xxSuccessful()).isTrue();
-        verify(userProfileService).updateOptionalTermsAgreement(
-                1L,
-                TermsType.MARKETING,
-                request
-        );
+        verify(userProfileService).updateLocationConsent(1L, request);
     }
 }

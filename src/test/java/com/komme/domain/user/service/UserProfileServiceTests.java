@@ -1,11 +1,9 @@
 package com.komme.domain.user.service;
 
 import com.komme.domain.user.enums.Provider;
-import com.komme.domain.user.enums.TermsType;
-import com.komme.domain.user.service.TermsAgreementService;
 import com.komme.domain.user.dto.request.ChangeNicknameRequest;
 import com.komme.domain.user.dto.request.ChangePreferredLanguageRequest;
-import com.komme.domain.user.dto.request.UpdateTermsAgreementRequest;
+import com.komme.domain.user.dto.request.LocationConsentRequest;
 import com.komme.domain.user.dto.response.NicknameAvailabilityResponse;
 import com.komme.domain.user.dto.response.UserProfileResponse;
 import com.komme.domain.user.entity.User;
@@ -13,8 +11,6 @@ import com.komme.domain.user.exception.UserConstraintExceptionMapper;
 import com.komme.domain.user.exception.UserErrorStatus;
 import com.komme.domain.user.repository.UserRepository;
 import com.komme.domain.i18n.enums.Language;
-
-import java.util.Map;
 
 import org.hibernate.exception.ConstraintViolationException;
 import org.junit.jupiter.api.BeforeEach;
@@ -43,9 +39,6 @@ class UserProfileServiceTests {
     @Mock
     private UserRepository userRepository;
 
-    @Mock
-    private TermsAgreementService termsAgreementService;
-
     private UserProfileService userProfileService;
 
     // 사용자 프로필 서비스 테스트 환경 구성
@@ -54,34 +47,26 @@ class UserProfileServiceTests {
         userProfileService = new UserProfileService(
                 userReader,
                 userRepository,
-                termsAgreementService,
                 new UserConstraintExceptionMapper()
         );
     }
 
     // 마이페이지 프로필 조회 응답 검증
     @Test
-    void getMyProfileReturnsUserAndOptionalTermsAgreements() {
+    void getMyProfileReturnsUserProfile() {
         User user = mock(User.class);
         when(user.getNickname()).thenReturn("nickname");
         when(user.getProvider()).thenReturn(Provider.LOCAL);
         when(user.getPreferredLanguage()).thenReturn(Language.JAPANESE);
+        when(user.isLocationConsentAgreed()).thenReturn(true);
         when(userReader.findByIdOrThrow(USER_ID)).thenReturn(user);
-        when(termsAgreementService.getOptionalConsentAgreements(USER_ID))
-                .thenReturn(Map.of(
-                        TermsType.MARKETING,
-                        true,
-                        TermsType.PUSH_NOTIFICATION,
-                        false
-                ));
 
         UserProfileResponse response = userProfileService.getMyProfile(USER_ID);
 
         assertThat(response.nickname()).isEqualTo("nickname");
         assertThat(response.provider()).isEqualTo(Provider.LOCAL);
         assertThat(response.preferredLanguage()).isEqualTo(Language.JAPANESE);
-        assertThat(response.marketingAgreed()).isTrue();
-        assertThat(response.pushNotificationAgreed()).isFalse();
+        assertThat(response.locationConsentAgreed()).isTrue();
     }
 
     // 닉네임 변경 검증
@@ -168,20 +153,18 @@ class UserProfileServiceTests {
         verify(user).changePreferredLanguage(Language.ENGLISH);
     }
 
-    // 선택 약관 동의 상태 변경 위임 검증
+    // 위치 정보 동의 상태 변경 검증
     @Test
-    void updateOptionalTermsAgreementDelegatesToTermsService() {
-        userProfileService.updateOptionalTermsAgreement(
+    void updateLocationConsentUpdatesUserAgreement() {
+        User user = mock(User.class);
+        when(userReader.findByIdOrThrow(USER_ID)).thenReturn(user);
+
+        userProfileService.updateLocationConsent(
                 USER_ID,
-                TermsType.PUSH_NOTIFICATION,
-                new UpdateTermsAgreementRequest(true)
+                new LocationConsentRequest(true)
         );
 
-        verify(termsAgreementService).updateOptionalConsent(
-                USER_ID,
-                TermsType.PUSH_NOTIFICATION,
-                true
-        );
+        verify(user).changeLocationConsent(true);
     }
 
     // Hibernate unique 제약조건 예외 생성

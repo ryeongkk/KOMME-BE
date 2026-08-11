@@ -4,7 +4,6 @@ import com.komme.domain.auth.dto.response.LoginResponse;
 import com.komme.domain.auth.jwt.JwtProvider;
 import com.komme.domain.auth.jwt.JwtProvider.IssuedToken;
 import com.komme.domain.user.entity.User;
-import com.komme.domain.user.service.TermsAgreementService;
 
 import org.springframework.stereotype.Service;
 
@@ -16,7 +15,6 @@ public class AuthTokenService {
 
     private final JwtProvider jwtProvider;
     private final RefreshTokenStore refreshTokenStore;
-    private final TermsAgreementService termsAgreementService;
 
     // 사용자 로그인 토큰 발급 기능
     public LoginResponse issueLoginTokens(Long userId) {
@@ -36,8 +34,7 @@ public class AuthTokenService {
         return LoginResponse.of(
                 accessToken.value(),
                 refreshToken.value(),
-                user.isProfileCompleted(),
-                termsAgreementService.areRequiredTermsAgreed(user.getId())
+                user.isProfileCompleted()
         );
     }
 

@@ -23,7 +23,6 @@ import com.komme.domain.i18n.enums.Language;
 import com.komme.domain.user.entity.User;
 import com.komme.domain.user.enums.Gender;
 import com.komme.domain.user.enums.ServiceInterest;
-import com.komme.domain.user.repository.TermsAgreementRepository;
 import com.komme.domain.user.repository.UserRepository;
 import com.komme.domain.user.service.UserReader;
 
@@ -43,7 +42,6 @@ public class AuthService {
 
     private final UserRepository userRepository;
     private final OAuthAccountRepository oAuthAccountRepository;
-    private final TermsAgreementRepository termsAgreementRepository;
     private final UserReader userReader;
     private final AuthUserReader authUserReader;
     private final EmailVerificationService emailVerificationService;
@@ -133,7 +131,6 @@ public class AuthService {
         String email = user.getEmail();
 
         oAuthAccountRepository.deleteAllByUserId(userId);
-        termsAgreementRepository.deleteAllByUserId(userId);
         deleteUser(user);
         refreshTokenStore.invalidateAll(userId);
         accessTokenBlacklistStore.blacklist(accessTokenClaims);
