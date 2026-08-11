@@ -18,9 +18,7 @@ public final class UserApiExamples {
               "data": {
                 "nickname": "komme",
                 "provider": "LOCAL",
-                "preferredLanguage": "KOREAN",
-                "marketingAgreed": false,
-                "pushNotificationAgreed": true
+                "preferredLanguage": "KOREAN"
               }
             }
             """;
@@ -41,14 +39,6 @@ public final class UserApiExamples {
               "isSuccess": false,
               "code": "COM_400",
               "message": "nickname: 닉네임은 필수입니다."
-            }
-            """;
-
-    public static final String UNSUPPORTED_TERMS_TYPE = """
-            {
-              "isSuccess": false,
-              "code": "USER_400_1",
-              "message": "변경할 수 없는 약관 유형입니다."
             }
             """;
 

@@ -5,11 +5,9 @@ import com.komme.common.response.ApiResponse;
 import com.komme.domain.i18n.enums.Language;
 import com.komme.domain.user.dto.request.ChangeNicknameRequest;
 import com.komme.domain.user.dto.request.ChangePreferredLanguageRequest;
-import com.komme.domain.user.dto.request.UpdateTermsAgreementRequest;
 import com.komme.domain.user.dto.response.NicknameAvailabilityResponse;
 import com.komme.domain.user.dto.response.UserProfileResponse;
 import com.komme.domain.user.enums.Provider;
-import com.komme.domain.user.enums.TermsType;
 import com.komme.domain.user.service.UserProfileService;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -48,9 +46,7 @@ class UserControllerTests {
         UserProfileResponse profileResponse = new UserProfileResponse(
                 "nickname",
                 Provider.LOCAL,
-                Language.ENGLISH,
-                true,
-                false
+                Language.ENGLISH
         );
         when(userProfileService.getMyProfile(1L)).thenReturn(profileResponse);
 
@@ -103,24 +99,5 @@ class UserControllerTests {
 
         assertThat(response.getStatusCode().is2xxSuccessful()).isTrue();
         verify(userProfileService).changePreferredLanguage(1L, request);
-    }
-
-    // 마이페이지 선택 약관 변경 API 위임 검증
-    @Test
-    void updateOptionalTermsAgreementDelegatesToService() {
-        UpdateTermsAgreementRequest request = new UpdateTermsAgreementRequest(true);
-
-        ResponseEntity<ApiResponse<Void>> response = userController.updateOptionalTermsAgreement(
-                1L,
-                TermsType.MARKETING,
-                request
-        );
-
-        assertThat(response.getStatusCode().is2xxSuccessful()).isTrue();
-        verify(userProfileService).updateOptionalTermsAgreement(
-                1L,
-                TermsType.MARKETING,
-                request
-        );
     }
 }

@@ -15,7 +15,6 @@ import com.komme.domain.auth.service.token.AccessTokenBlacklistStore;
 import com.komme.domain.i18n.enums.Language;
 import com.komme.domain.user.dto.response.UserProfileResponse;
 import com.komme.domain.user.enums.Provider;
-import com.komme.domain.user.service.TermsAgreementService;
 import com.komme.domain.user.service.UserProfileService;
 
 import java.time.Duration;
@@ -61,9 +60,6 @@ class SecurityConfigTests {
 
     @MockitoBean
     private EmailVerificationService emailVerificationService;
-
-    @MockitoBean
-    private TermsAgreementService termsAgreementService;
 
     @MockitoBean
     private UserProfileService userProfileService;
@@ -157,9 +153,7 @@ class SecurityConfigTests {
         when(userProfileService.getMyProfile(1L)).thenReturn(new UserProfileResponse(
                 "nickname",
                 Provider.LOCAL,
-                Language.ENGLISH,
-                true,
-                false
+                Language.ENGLISH
         ));
 
         mockMvc.perform(get("/api/v1/users/me")

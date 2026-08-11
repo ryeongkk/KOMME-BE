@@ -1,10 +1,8 @@
 package com.komme.domain.user.service;
 
 import com.komme.common.exception.GeneralException;
-import com.komme.domain.user.enums.TermsType;
 import com.komme.domain.user.dto.request.ChangeNicknameRequest;
 import com.komme.domain.user.dto.request.ChangePreferredLanguageRequest;
-import com.komme.domain.user.dto.request.UpdateTermsAgreementRequest;
 import com.komme.domain.user.dto.response.NicknameAvailabilityResponse;
 import com.komme.domain.user.dto.response.UserProfileResponse;
 import com.komme.domain.user.entity.User;
@@ -24,17 +22,13 @@ public class UserProfileService {
 
     private final UserReader userReader;
     private final UserRepository userRepository;
-    private final TermsAgreementService termsAgreementService;
     private final UserConstraintExceptionMapper userConstraintExceptionMapper;
 
     // 사용자 마이페이지 프로필 조회 기능
     @Transactional(readOnly = true)
     public UserProfileResponse getMyProfile(Long userId) {
         User user = userReader.findByIdOrThrow(userId);
-        return UserProfileResponse.of(
-                user,
-                termsAgreementService.getOptionalConsentAgreements(userId)
-        );
+        return UserProfileResponse.of(user);
     }
 
     // 사용자 닉네임 변경 기능
@@ -63,15 +57,6 @@ public class UserProfileService {
     ) {
         User user = userReader.findByIdOrThrow(userId);
         user.changePreferredLanguage(request.preferredLanguage());
-    }
-
-    // 사용자 선택 약관 동의 상태 변경 기능
-    public void updateOptionalTermsAgreement(
-            Long userId,
-            TermsType termsType,
-            UpdateTermsAgreementRequest request
-    ) {
-        termsAgreementService.updateOptionalConsent(userId, termsType, request.agreed());
     }
 
     // 본인 제외 닉네임 중복 검증 기능

@@ -3,12 +3,10 @@ package com.komme.domain.user.repository;
 import com.komme.domain.auth.entity.OAuthAccount;
 import com.komme.domain.auth.repository.OAuthAccountRepository;
 import com.komme.domain.i18n.enums.Language;
-import com.komme.domain.user.entity.TermsAgreement;
 import com.komme.domain.user.entity.User;
 import com.komme.domain.user.enums.Gender;
 import com.komme.domain.user.enums.Provider;
 import com.komme.domain.user.enums.ServiceInterest;
-import com.komme.domain.user.enums.TermsType;
 
 import java.util.Set;
 
@@ -36,9 +34,6 @@ class RepositoryJpaTests {
     private UserRepository userRepository;
 
     @Autowired
-    private TermsAgreementRepository termsAgreementRepository;
-
-    @Autowired
     private OAuthAccountRepository oAuthAccountRepository;
 
     // 사용자 이메일 유니크 제약조건 검증
@@ -63,21 +58,6 @@ class RepositoryJpaTests {
                 .isInstanceOf(DataIntegrityViolationException.class);
     }
 
-    // 약관 동의 사용자와 약관 유형 유니크 제약조건 검증
-    @Test
-    void termsAgreementRepositoryEnforcesUniqueUserAndTermsType() {
-        User user = userRepository.saveAndFlush(createLocalUser("user@example.com", "nickname"));
-        termsAgreementRepository.saveAndFlush(
-                TermsAgreement.create(user, TermsType.MARKETING, true)
-        );
-
-        TermsAgreement duplicateAgreement =
-                TermsAgreement.create(user, TermsType.MARKETING, false);
-
-        assertThatThrownBy(() -> termsAgreementRepository.saveAndFlush(duplicateAgreement))
-                .isInstanceOf(DataIntegrityViolationException.class);
-    }
-
     // OAuth 계정 provider와 provider ID 유니크 제약조건 검증
     @Test
     void oAuthAccountRepositoryEnforcesUniqueProviderAndProviderId() {
@@ -98,26 +78,6 @@ class RepositoryJpaTests {
 
         assertThatThrownBy(() -> oAuthAccountRepository.saveAndFlush(duplicateAccount))
                 .isInstanceOf(DataIntegrityViolationException.class);
-    }
-
-    // 사용자 ID 기반 약관 동의 전체 삭제 검증
-    @Test
-    void termsAgreementRepositoryDeletesAllByUserId() {
-        User user = userRepository.saveAndFlush(createLocalUser("user@example.com", "nickname"));
-        termsAgreementRepository.saveAndFlush(
-                TermsAgreement.create(user, TermsType.MARKETING, true)
-        );
-        termsAgreementRepository.saveAndFlush(
-                TermsAgreement.create(user, TermsType.PUSH_NOTIFICATION, false)
-        );
-
-        termsAgreementRepository.deleteAllByUserId(user.getId());
-        termsAgreementRepository.flush();
-
-        assertThat(termsAgreementRepository.findByUserIdAndTermsTypeIn(
-                user.getId(),
-                TermsType.optionalConsentTypes()
-        )).isEmpty();
     }
 
     // 사용자 ID 기반 OAuth 계정 전체 삭제 검증
