@@ -136,18 +136,8 @@ public class User extends BaseEntity {
     }
 
     // OAuth 사용자 프로필 완성 기능
-    public void completeProfile(
-            String nickname,
-            String nationality,
-            Gender gender,
-            Language preferredLanguage,
-            Set<ServiceInterest> serviceInterests
-    ) {
+    public void completeProfile(String nickname) {
         this.nickname = nickname;
-        this.nationality = nationality;
-        this.gender = gender;
-        this.preferredLanguage = preferredLanguage;
-        this.serviceInterests = new HashSet<>(serviceInterests);
     }
 
     // 비밀번호 변경 기능
@@ -166,12 +156,9 @@ public class User extends BaseEntity {
     }
 
     // 사용자 프로필 완성 여부 조회 기능
+    // OAuth 최소 프로필 사용자는 닉네임 설정 전까지 미완성 상태다.
+    // 국적/성별/선호언어/관심서비스는 별도 온보딩 단계에서 채워지며 이 판단에 관여하지 않는다.
     public boolean isProfileCompleted() {
-        return nickname != null
-                && nationality != null
-                && gender != null
-                && preferredLanguage != null
-                && serviceInterests != null
-                && !serviceInterests.isEmpty();
+        return nickname != null;
     }
 }

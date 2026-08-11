@@ -14,15 +14,12 @@ import com.komme.domain.auth.service.oauth.OAuthService;
 import com.komme.domain.auth.service.token.AccessTokenBlacklistStore;
 import com.komme.domain.i18n.enums.Language;
 import com.komme.domain.user.dto.response.UserProfileResponse;
-import com.komme.domain.user.enums.Gender;
 import com.komme.domain.user.enums.Provider;
-import com.komme.domain.user.enums.ServiceInterest;
 import com.komme.domain.user.service.TermsAgreementService;
 import com.komme.domain.user.service.UserProfileService;
 
 import java.time.Duration;
 import java.time.Instant;
-import java.util.Set;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -177,13 +174,7 @@ class SecurityConfigTests {
     // 보호 OAuth 프로필 API Access Token 인증 성공 검증
     @Test
     void protectedOAuthProfileEndpointPassesAuthenticatedUserId() throws Exception {
-        OAuthProfileCompleteRequest request = new OAuthProfileCompleteRequest(
-                "nickname",
-                "KR",
-                Gender.FEMALE,
-                Language.ENGLISH,
-                Set.of(ServiceInterest.COURSE)
-        );
+        OAuthProfileCompleteRequest request = new OAuthProfileCompleteRequest("nickname");
         TokenClaims tokenClaims = createTokenClaims();
         when(jwtProvider.parseAccessToken("access-token")).thenReturn(tokenClaims);
 

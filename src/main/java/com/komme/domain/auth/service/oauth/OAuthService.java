@@ -14,10 +14,6 @@ import com.komme.domain.auth.exception.AuthErrorStatus;
 import com.komme.domain.auth.service.token.AuthTokenService;
 import com.komme.domain.user.repository.UserRepository;
 import com.komme.domain.user.service.UserReader;
-import com.komme.domain.i18n.enums.Language;
-
-import java.util.Locale;
-
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -53,13 +49,7 @@ public class OAuthService {
         User user = userReader.findByIdOrThrow(userId);
 
         try {
-            user.completeProfile(
-                    request.nickname().trim(),
-                    request.nationality().toUpperCase(Locale.ROOT),
-                    request.gender(),
-                    request.preferredLanguage(),
-                    request.serviceInterests()
-            );
+            user.completeProfile(request.nickname().trim());
             userRepository.flush();
         } catch (DataIntegrityViolationException exception) {
             throw new GeneralException(

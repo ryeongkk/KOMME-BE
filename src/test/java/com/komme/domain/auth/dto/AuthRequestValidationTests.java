@@ -168,13 +168,7 @@ class AuthRequestValidationTests {
     // OAuth 프로필 완성 요청 올바른 값 검증 통과 확인
     @Test
     void oAuthProfileCompleteRequestAcceptsValidValues() {
-        OAuthProfileCompleteRequest request = new OAuthProfileCompleteRequest(
-                "nickname",
-                "KR",
-                Gender.FEMALE,
-                Language.ENGLISH,
-                Set.of(ServiceInterest.COURSE)
-        );
+        OAuthProfileCompleteRequest request = new OAuthProfileCompleteRequest("nickname");
 
         assertThat(validator.validate(request)).isEmpty();
     }
@@ -182,13 +176,7 @@ class AuthRequestValidationTests {
     // OAuth 프로필 완성 요청 형식에 맞지 않는 닉네임 거부 검증
     @Test
     void oAuthProfileCompleteRequestRejectsInvalidNickname() {
-        OAuthProfileCompleteRequest request = new OAuthProfileCompleteRequest(
-                "nick name!",
-                "KR",
-                Gender.FEMALE,
-                Language.ENGLISH,
-                Set.of(ServiceInterest.COURSE)
-        );
+        OAuthProfileCompleteRequest request = new OAuthProfileCompleteRequest("nick name!");
 
         assertThat(propertyNames(validator.validate(request))).contains("nickname");
     }

@@ -10,9 +10,7 @@ import com.komme.domain.auth.dto.request.OAuthProfileCompleteRequest;
 import com.komme.domain.auth.dto.response.LoginResponse;
 import com.komme.domain.auth.entity.OAuthAccount;
 import com.komme.domain.user.entity.User;
-import com.komme.domain.user.enums.Gender;
 import com.komme.domain.user.enums.Provider;
-import com.komme.domain.user.enums.ServiceInterest;
 import com.komme.domain.auth.exception.AuthErrorStatus;
 import com.komme.domain.auth.repository.OAuthAccountRepository;
 import com.komme.domain.auth.service.AuthConstraintExceptionMapper;
@@ -20,10 +18,8 @@ import com.komme.domain.auth.service.token.AuthTokenService;
 import com.komme.domain.auth.service.token.WithdrawalStore;
 import com.komme.domain.user.repository.UserRepository;
 import com.komme.domain.user.service.UserReader;
-import com.komme.domain.i18n.enums.Language;
 
 import java.util.Optional;
-import java.util.Set;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -231,20 +227,10 @@ class OAuthServiceTests {
 
         oAuthService.completeProfile(
                 USER_ID,
-                new OAuthProfileCompleteRequest(
-                        " nickname ",
-                        "kr",
-                        Gender.FEMALE,
-                        Language.ENGLISH,
-                        Set.of(ServiceInterest.COURSE)
-                )
+                new OAuthProfileCompleteRequest(" nickname ")
         );
 
         assertThat(user.getNickname()).isEqualTo("nickname");
-        assertThat(user.getNationality()).isEqualTo("KR");
-        assertThat(user.getGender()).isEqualTo(Gender.FEMALE);
-        assertThat(user.getPreferredLanguage()).isEqualTo(Language.ENGLISH);
-        assertThat(user.getServiceInterests()).containsExactly(ServiceInterest.COURSE);
         verify(userRepository).flush();
     }
 
