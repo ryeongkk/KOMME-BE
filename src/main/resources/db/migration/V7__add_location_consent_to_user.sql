@@ -1,0 +1,1 @@
+ALTER TABLE `user` ADD COLUMN location_consent_agreed BOOLEAN NOT NULL DEFAULT FALSE;

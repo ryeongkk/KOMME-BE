@@ -3,6 +3,7 @@ package com.komme.domain.user.service;
 import com.komme.domain.user.enums.Provider;
 import com.komme.domain.user.dto.request.ChangeNicknameRequest;
 import com.komme.domain.user.dto.request.ChangePreferredLanguageRequest;
+import com.komme.domain.user.dto.request.LocationConsentRequest;
 import com.komme.domain.user.dto.response.NicknameAvailabilityResponse;
 import com.komme.domain.user.dto.response.UserProfileResponse;
 import com.komme.domain.user.entity.User;
@@ -57,6 +58,7 @@ class UserProfileServiceTests {
         when(user.getNickname()).thenReturn("nickname");
         when(user.getProvider()).thenReturn(Provider.LOCAL);
         when(user.getPreferredLanguage()).thenReturn(Language.JAPANESE);
+        when(user.isLocationConsentAgreed()).thenReturn(true);
         when(userReader.findByIdOrThrow(USER_ID)).thenReturn(user);
 
         UserProfileResponse response = userProfileService.getMyProfile(USER_ID);
@@ -64,6 +66,7 @@ class UserProfileServiceTests {
         assertThat(response.nickname()).isEqualTo("nickname");
         assertThat(response.provider()).isEqualTo(Provider.LOCAL);
         assertThat(response.preferredLanguage()).isEqualTo(Language.JAPANESE);
+        assertThat(response.locationConsentAgreed()).isTrue();
     }
 
     // 닉네임 변경 검증
@@ -148,6 +151,20 @@ class UserProfileServiceTests {
         );
 
         verify(user).changePreferredLanguage(Language.ENGLISH);
+    }
+
+    // 위치 정보 동의 상태 변경 검증
+    @Test
+    void updateLocationConsentUpdatesUserAgreement() {
+        User user = mock(User.class);
+        when(userReader.findByIdOrThrow(USER_ID)).thenReturn(user);
+
+        userProfileService.updateLocationConsent(
+                USER_ID,
+                new LocationConsentRequest(true)
+        );
+
+        verify(user).changeLocationConsent(true);
     }
 
     // Hibernate unique 제약조건 예외 생성

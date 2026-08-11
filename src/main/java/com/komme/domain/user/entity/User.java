@@ -77,6 +77,9 @@ public class User extends BaseEntity {
     @Column(name = "service_interest", nullable = false, length = 30)
     private Set<ServiceInterest> serviceInterests = new HashSet<>();
 
+    @Column(nullable = false)
+    private boolean locationConsentAgreed;
+
     // 사용자 엔티티 생성
     @Builder(access = AccessLevel.PRIVATE)
     private User(
@@ -153,6 +156,11 @@ public class User extends BaseEntity {
     // 선호 언어 변경 기능
     public void changePreferredLanguage(Language preferredLanguage) {
         this.preferredLanguage = preferredLanguage;
+    }
+
+    // 위치 정보 동의 상태 변경 기능
+    public void changeLocationConsent(boolean agreed) {
+        this.locationConsentAgreed = agreed;
     }
 
     // 사용자 프로필 완성 여부 조회 기능

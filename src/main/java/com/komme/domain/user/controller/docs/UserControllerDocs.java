@@ -6,6 +6,7 @@ import com.komme.domain.user.dto.response.NicknameAvailabilityResponse;
 import com.komme.domain.user.dto.response.UserProfileResponse;
 import com.komme.domain.user.dto.request.ChangeNicknameRequest;
 import com.komme.domain.user.dto.request.ChangePreferredLanguageRequest;
+import com.komme.domain.user.dto.request.LocationConsentRequest;
 
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Pattern;
@@ -30,7 +31,7 @@ public interface UserControllerDocs {
     // 마이페이지 프로필 조회 API
     @Operation(
             summary = "마이페이지 프로필 조회",
-            description = "인증된 사용자의 닉네임, 연결 계정, 선호 언어를 조회합니다.",
+            description = "인증된 사용자의 닉네임, 연결 계정, 선호 언어, 위치 정보 동의 상태를 조회합니다.",
             security = @SecurityRequirement(name = "bearerAuth")
     )
     @io.swagger.v3.oas.annotations.responses.ApiResponse(
@@ -133,5 +134,32 @@ public interface UserControllerDocs {
     ResponseEntity<ApiResponse<Void>> changePreferredLanguage(
             @Parameter(hidden = true) @AuthenticationPrincipal Long userId,
             @Valid @RequestBody ChangePreferredLanguageRequest request
+    );
+
+    // 마이페이지 위치 정보 동의 변경 API
+    @Operation(
+            summary = "마이페이지 위치 정보 동의 변경",
+            description = "인증된 사용자의 위치 정보 수집·이용 동의 상태를 변경합니다.",
+            security = @SecurityRequirement(name = "bearerAuth")
+    )
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+            responseCode = "200",
+            description = "위치 정보 동의 변경 성공",
+            content = @Content(examples = @ExampleObject(value = UserApiExamples.SUCCESS_WITHOUT_DATA))
+    )
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+            responseCode = "400",
+            description = "동의 여부 입력값 오류",
+            content = @Content(examples = @ExampleObject(value = UserApiExamples.BAD_REQUEST))
+    )
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+            responseCode = "401",
+            description = "Access Token 누락, 만료 또는 오류",
+            content = @Content(examples = @ExampleObject(value = UserApiExamples.INVALID_TOKEN))
+    )
+    @PatchMapping("/me/location-consent")
+    ResponseEntity<ApiResponse<Void>> updateLocationConsent(
+            @Parameter(hidden = true) @AuthenticationPrincipal Long userId,
+            @Valid @RequestBody LocationConsentRequest request
     );
 }

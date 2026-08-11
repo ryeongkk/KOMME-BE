@@ -18,7 +18,8 @@ public final class UserApiExamples {
               "data": {
                 "nickname": "komme",
                 "provider": "LOCAL",
-                "preferredLanguage": "KOREAN"
+                "preferredLanguage": "KOREAN",
+                "locationConsentAgreed": false
               }
             }
             """;

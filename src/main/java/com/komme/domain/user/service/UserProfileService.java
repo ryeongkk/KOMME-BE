@@ -3,6 +3,7 @@ package com.komme.domain.user.service;
 import com.komme.common.exception.GeneralException;
 import com.komme.domain.user.dto.request.ChangeNicknameRequest;
 import com.komme.domain.user.dto.request.ChangePreferredLanguageRequest;
+import com.komme.domain.user.dto.request.LocationConsentRequest;
 import com.komme.domain.user.dto.response.NicknameAvailabilityResponse;
 import com.komme.domain.user.dto.response.UserProfileResponse;
 import com.komme.domain.user.entity.User;
@@ -57,6 +58,13 @@ public class UserProfileService {
     ) {
         User user = userReader.findByIdOrThrow(userId);
         user.changePreferredLanguage(request.preferredLanguage());
+    }
+
+    // 사용자 위치 정보 동의 상태 변경 기능
+    @Transactional
+    public void updateLocationConsent(Long userId, LocationConsentRequest request) {
+        User user = userReader.findByIdOrThrow(userId);
+        user.changeLocationConsent(request.agreed());
     }
 
     // 본인 제외 닉네임 중복 검증 기능

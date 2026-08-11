@@ -7,7 +7,8 @@ import com.komme.domain.i18n.enums.Language;
 public record UserProfileResponse(
         String nickname,
         Provider provider,
-        Language preferredLanguage
+        Language preferredLanguage,
+        boolean locationConsentAgreed
 ) {
 
     // 사용자 프로필 응답 생성 기능
@@ -15,7 +16,8 @@ public record UserProfileResponse(
         return new UserProfileResponse(
                 user.getNickname(),
                 user.getProvider(),
-                user.getPreferredLanguage()
+                user.getPreferredLanguage(),
+                user.isLocationConsentAgreed()
         );
     }
 }

@@ -9,6 +9,7 @@ import com.komme.common.response.ApiResponse;
 import com.komme.domain.user.dto.response.UserProfileResponse;
 import com.komme.domain.user.dto.response.NicknameAvailabilityResponse;
 import com.komme.domain.user.dto.request.ChangePreferredLanguageRequest;
+import com.komme.domain.user.dto.request.LocationConsentRequest;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
@@ -58,6 +59,16 @@ public class UserController implements UserControllerDocs {
             ChangePreferredLanguageRequest request
     ) {
         userProfileService.changePreferredLanguage(userId, request);
+        return ApiResponse.success(SuccessStatus.COMMON_SUCCESS_STATUS);
+    }
+
+    // 마이페이지 위치 정보 동의 변경 API
+    @Override
+    public ResponseEntity<ApiResponse<Void>> updateLocationConsent(
+            Long userId,
+            LocationConsentRequest request
+    ) {
+        userProfileService.updateLocationConsent(userId, request);
         return ApiResponse.success(SuccessStatus.COMMON_SUCCESS_STATUS);
     }
 }

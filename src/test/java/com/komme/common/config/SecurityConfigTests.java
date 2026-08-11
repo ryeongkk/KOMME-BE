@@ -153,7 +153,8 @@ class SecurityConfigTests {
         when(userProfileService.getMyProfile(1L)).thenReturn(new UserProfileResponse(
                 "nickname",
                 Provider.LOCAL,
-                Language.ENGLISH
+                Language.ENGLISH,
+                false
         ));
 
         mockMvc.perform(get("/api/v1/users/me")

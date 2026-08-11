@@ -3,6 +3,7 @@ package com.komme.domain.user.dto;
 import com.komme.domain.i18n.enums.Language;
 import com.komme.domain.user.dto.request.ChangeNicknameRequest;
 import com.komme.domain.user.dto.request.ChangePreferredLanguageRequest;
+import com.komme.domain.user.dto.request.LocationConsentRequest;
 
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -67,6 +68,22 @@ class UserRequestValidationTests {
         ChangePreferredLanguageRequest request = new ChangePreferredLanguageRequest(null);
 
         assertThat(propertyNames(validator.validate(request))).contains("preferredLanguage");
+    }
+
+    // 위치 정보 동의 요청 올바른 값 검증 통과 확인
+    @Test
+    void locationConsentRequestAcceptsValidValue() {
+        LocationConsentRequest request = new LocationConsentRequest(false);
+
+        assertThat(validator.validate(request)).isEmpty();
+    }
+
+    // 위치 정보 동의 요청 필수값 거부 검증
+    @Test
+    void locationConsentRequestRejectsNullValue() {
+        LocationConsentRequest request = new LocationConsentRequest(null);
+
+        assertThat(propertyNames(validator.validate(request))).contains("agreed");
     }
 
     // ConstraintViolation 속성명 집합 생성

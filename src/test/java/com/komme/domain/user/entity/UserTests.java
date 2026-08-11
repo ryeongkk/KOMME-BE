@@ -101,6 +101,19 @@ class UserTests {
         assertThat(user.isProfileCompleted()).isFalse();
     }
 
+    // 위치 정보 동의 상태 기본값 및 변경 검증
+    @Test
+    void changeLocationConsentUpdatesAgreedState() {
+        User user = createUser();
+        assertThat(user.isLocationConsentAgreed()).isFalse();
+
+        user.changeLocationConsent(true);
+        assertThat(user.isLocationConsentAgreed()).isTrue();
+
+        user.changeLocationConsent(false);
+        assertThat(user.isLocationConsentAgreed()).isFalse();
+    }
+
     // 테스트 LOCAL 사용자 생성
     private User createUser() {
         return User.createLocal(
