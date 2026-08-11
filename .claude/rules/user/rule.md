@@ -14,5 +14,5 @@ KOMME 사용자 계정/프로필의 단일 진실 소스(`User` 엔티티)를 �
 - 도메인 실패는 `GeneralException` + 전용 `BaseStatus` enum(`UserErrorStatus`)으로 표현한다. auth 쪽에서 발생하는 같은 종류의 실패(예: 회원가입 중 닉네임 중복)는 `AuthErrorStatus`를 쓰고, user 쪽 자체 액션(프로필/닉네임 변경)은 `UserErrorStatus`를 쓴다 — 실패를 감지한 도메인의 상태 enum을 쓴다는 원칙을 따른다.
 - 컨트롤러는 `ApiResponse.success/error` 정적 팩토리로만 응답을 만든다.
 - 엔티티는 `BaseEntity`를 상속한다.
-- `TermsAgreement`는 (user, termsType) 조합에 유니크 제약을 건 별도 엔티티다. 필수 약관 동의는 회원가입/로그인 흐름(auth)에서, 선택 약관 동의 변경은 이 도메인의 `TermsAgreementService`가 담당한다.
+- `TermsAgreement`는 (user, termsType) 조합에 유니크 제약을 건 별도 엔티티다. 필수 약관(서비스이용약관/개인정보처리방침/위치정보 이용약관/위치정보 수집·이용/만14세 확인) 동의는 프론트에서만 관리하며 서버에 기록을 남기지 않는다 — 이 엔티티/`TermsAgreementService`는 선택 약관(마케팅 수신/푸시 알림) 동의 조회·변경(마이페이지)에만 쓰인다. `TermsType`에 필수 약관 유형 상수는 남아있지만 실제로 `TermsAgreement` row를 생성하는 코드 경로는 없다.
 - auth 도메인은 이 도메인(`User` 엔티티, `UserReader`, `NicknamePolicy` 등)에 의존한다 — 반대 방향(user가 auth에 의존)은 만들지 않는다.

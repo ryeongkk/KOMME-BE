@@ -3,8 +3,7 @@ package com.komme.domain.auth.dto.response;
 public record LoginResponse(
         String accessToken,
         String refreshToken,
-        boolean profileCompleted,
-        boolean termsAgreed
+        boolean profileCompleted
 ) {
 
     // 로그인 토큰 응답 생성 기능
@@ -15,7 +14,6 @@ public record LoginResponse(
         return new LoginResponse(
                 accessToken,
                 refreshToken,
-                false,
                 false
         );
     }
@@ -24,14 +22,12 @@ public record LoginResponse(
     public static LoginResponse of(
             String accessToken,
             String refreshToken,
-            boolean profileCompleted,
-            boolean termsAgreed
+            boolean profileCompleted
     ) {
         return new LoginResponse(
                 accessToken,
                 refreshToken,
-                profileCompleted,
-                termsAgreed
+                profileCompleted
         );
     }
 }

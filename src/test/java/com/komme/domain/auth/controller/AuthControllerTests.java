@@ -13,7 +13,6 @@ import com.komme.domain.auth.dto.request.PasswordResetConfirmRequest;
 import com.komme.domain.auth.dto.request.PasswordResetRequest;
 import com.komme.domain.auth.dto.request.PasswordResetSendRequest;
 import com.komme.domain.auth.dto.request.SignUpRequest;
-import com.komme.domain.auth.dto.request.TermsAgreementRequest;
 import com.komme.domain.auth.dto.request.TokenReissueRequest;
 import com.komme.domain.auth.dto.response.LoginResponse;
 import com.komme.domain.auth.dto.response.PasswordResetTokenResponse;
@@ -24,7 +23,6 @@ import com.komme.domain.auth.service.AuthService;
 import com.komme.domain.auth.service.email.EmailVerificationService;
 import com.komme.domain.user.enums.Gender;
 import com.komme.domain.user.enums.ServiceInterest;
-import com.komme.domain.user.service.TermsAgreementService;
 import com.komme.domain.i18n.enums.Language;
 
 import java.time.Instant;
@@ -53,7 +51,6 @@ class AuthControllerTests {
     private final ObjectMapper objectMapper = new ObjectMapper();
     private AuthService authService;
     private EmailVerificationService emailVerificationService;
-    private TermsAgreementService termsAgreementService;
     private AuthController authController;
     private MockMvc mockMvc;
 
@@ -62,8 +59,7 @@ class AuthControllerTests {
     void setUp() {
         authService = mock(AuthService.class);
         emailVerificationService = mock(EmailVerificationService.class);
-        termsAgreementService = mock(TermsAgreementService.class);
-        authController = new AuthController(authService, emailVerificationService, termsAgreementService);
+        authController = new AuthController(authService, emailVerificationService);
         mockMvc = MockMvcBuilders.standaloneSetup(authController)
                 .setControllerAdvice(new GeneralExceptionAdvice())
                 .build();
@@ -124,7 +120,7 @@ class AuthControllerTests {
     void loginReturnsLoginResponse() throws Exception {
         LoginRequest request = new LoginRequest("user@example.com", "password123");
         when(authService.login(request))
-                .thenReturn(LoginResponse.of("access-token", "refresh-token", true, true));
+                .thenReturn(LoginResponse.of("access-token", "refresh-token", true));
 
         mockMvc.perform(post("/api/v1/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -133,8 +129,7 @@ class AuthControllerTests {
                 .andExpect(jsonPath("$.isSuccess").value(true))
                 .andExpect(jsonPath("$.data.accessToken").value("access-token"))
                 .andExpect(jsonPath("$.data.refreshToken").value("refresh-token"))
-                .andExpect(jsonPath("$.data.profileCompleted").value(true))
-                .andExpect(jsonPath("$.data.termsAgreed").value(true));
+                .andExpect(jsonPath("$.data.profileCompleted").value(true));
     }
 
     // 로그인 API 입력값 오류 응답 검증
@@ -209,19 +204,6 @@ class AuthControllerTests {
                 .andExpect(jsonPath("$.isSuccess").value(true));
 
         verify(authService).signUp(request);
-    }
-
-    // 약관 동의 API가 요청을 Map으로 변환해 서비스에 위임하는지 검증 (직접 호출 - @AuthenticationPrincipal)
-    @Test
-    void agreeTermsDelegatesToTermsAgreementService() {
-        TermsAgreementRequest request = new TermsAgreementRequest(
-                true, true, true, true, false, false, true
-        );
-
-        ResponseEntity<ApiResponse<Void>> response = authController.agreeTerms(1L, request);
-
-        assertThat(response.getStatusCode().is2xxSuccessful()).isTrue();
-        verify(termsAgreementService).agree(1L, request.toAgreements());
     }
 
     // 비밀번호 변경 API가 서비스에 위임하는지 검증 (직접 호출 - @AuthenticationPrincipal)

@@ -5,8 +5,6 @@ import com.komme.domain.auth.jwt.JwtProvider;
 import com.komme.domain.auth.jwt.JwtProvider.IssuedToken;
 import com.komme.domain.auth.jwt.JwtRedisKeys;
 import com.komme.domain.user.entity.User;
-import com.komme.domain.user.enums.Provider;
-import com.komme.domain.user.service.TermsAgreementService;
 import com.komme.domain.user.service.UserReader;
 
 import java.time.Duration;
@@ -34,9 +32,6 @@ class AuthTokenServiceTests {
     private JwtProvider jwtProvider;
 
     @Mock
-    private TermsAgreementService termsAgreementService;
-
-    @Mock
     private StringRedisTemplate redisTemplate;
 
     @Mock
@@ -57,8 +52,7 @@ class AuthTokenServiceTests {
         UserReader userReader = org.mockito.Mockito.mock(UserReader.class);
         AuthTokenService authTokenService = new AuthTokenService(
                 jwtProvider,
-                new RefreshTokenStore(redisTemplate, userReader),
-                termsAgreementService
+                new RefreshTokenStore(redisTemplate, userReader)
         );
 
         LoginResponse response = authTokenService.issueLoginTokens(USER_ID);
@@ -77,7 +71,7 @@ class AuthTokenServiceTests {
         );
     }
 
-    // 로그인 응답에 온보딩 상태(프로필 완성/필수약관 동의 여부)까지 함께 담기는지 검증
+    // 로그인 응답에 온보딩 상태(프로필 완성 여부)까지 함께 담기는지 검증
     @Test
     void issueLoginResponseIncludesOnboardingStatus() {
         when(redisTemplate.opsForValue()).thenReturn(valueOperations);
@@ -86,15 +80,13 @@ class AuthTokenServiceTests {
                 .thenReturn(new IssuedToken("access-token", "access-id", ACCESS_EXPIRATION));
         when(jwtProvider.issueRefreshToken(USER_ID))
                 .thenReturn(new IssuedToken("refresh-token", "refresh-id", REFRESH_EXPIRATION));
-        when(termsAgreementService.areRequiredTermsAgreed(USER_ID)).thenReturn(true);
         User user = org.mockito.Mockito.mock(User.class);
         when(user.getId()).thenReturn(USER_ID);
         when(user.isProfileCompleted()).thenReturn(true);
         UserReader userReader = org.mockito.Mockito.mock(UserReader.class);
         AuthTokenService authTokenService = new AuthTokenService(
                 jwtProvider,
-                new RefreshTokenStore(redisTemplate, userReader),
-                termsAgreementService
+                new RefreshTokenStore(redisTemplate, userReader)
         );
 
         LoginResponse response = authTokenService.issueLoginResponse(user);
@@ -102,6 +94,5 @@ class AuthTokenServiceTests {
         assertThat(response.accessToken()).isEqualTo("access-token");
         assertThat(response.refreshToken()).isEqualTo("refresh-token");
         assertThat(response.profileCompleted()).isTrue();
-        assertThat(response.termsAgreed()).isTrue();
     }
 }

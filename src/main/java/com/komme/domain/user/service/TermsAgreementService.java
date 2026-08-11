@@ -24,22 +24,6 @@ public class TermsAgreementService {
     private final TermsAgreementRepository termsAgreementRepository;
     private final UserReader userReader;
 
-    // 사용자 약관 동의 저장 기능
-    @Transactional
-    public void agree(Long userId, Map<TermsType, Boolean> agreements) {
-        User user = userReader.findByIdOrThrow(userId);
-        agreements.forEach((termsType, agreed) -> saveOrUpdate(user, termsType, agreed));
-    }
-
-    // 사용자 필수 약관 동의 여부 조회 기능
-    @Transactional(readOnly = true)
-    public boolean areRequiredTermsAgreed(Long userId) {
-        return termsAgreementRepository.countByUserIdAndTermsTypeInAndAgreedTrue(
-                userId,
-                TermsType.requiredTypes()
-        ) == TermsType.requiredTypes().size();
-    }
-
     // 사용자 선택 약관 동의 상태 조회 기능
     @Transactional(readOnly = true)
     public Map<TermsType, Boolean> getOptionalConsentAgreements(Long userId) {

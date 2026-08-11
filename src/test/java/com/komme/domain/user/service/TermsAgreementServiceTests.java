@@ -21,7 +21,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -35,61 +34,6 @@ class TermsAgreementServiceTests {
 
     @Mock
     private UserReader userReader;
-
-    // 필수 약관 전체 동의 상태 조회 검증
-    @Test
-    void areRequiredTermsAgreedReturnsTrueWhenAllRequiredTermsAreAgreed() {
-        TermsAgreementService service = new TermsAgreementService(
-                termsAgreementRepository,
-                userReader
-        );
-        when(termsAgreementRepository.countByUserIdAndTermsTypeInAndAgreedTrue(
-                USER_ID,
-                TermsType.requiredTypes()
-        )).thenReturn((long) TermsType.requiredTypes().size());
-
-        assertThat(service.areRequiredTermsAgreed(USER_ID)).isTrue();
-    }
-
-    // 필수 약관 일부 미동의 상태 조회 검증
-    @Test
-    void areRequiredTermsAgreedReturnsFalseWhenAnyRequiredTermsAreMissing() {
-        TermsAgreementService service = new TermsAgreementService(
-                termsAgreementRepository,
-                userReader
-        );
-        when(termsAgreementRepository.countByUserIdAndTermsTypeInAndAgreedTrue(
-                USER_ID,
-                TermsType.requiredTypes()
-        )).thenReturn((long) TermsType.requiredTypes().size() - 1);
-
-        assertThat(service.areRequiredTermsAgreed(USER_ID)).isFalse();
-    }
-
-    // 사용자 약관 동의 상태 일괄 저장 검증
-    @Test
-    void agreeSavesAllTermsForUser() {
-        TermsAgreementService service = new TermsAgreementService(
-                termsAgreementRepository,
-                userReader
-        );
-        User user = mock(User.class);
-        when(user.getId()).thenReturn(USER_ID);
-        when(userReader.findByIdOrThrow(USER_ID)).thenReturn(user);
-
-        service.agree(USER_ID, Map.of(
-                TermsType.SERVICE_TERMS, true,
-                TermsType.PRIVACY_POLICY, true,
-                TermsType.LOCATION_TERMS, true,
-                TermsType.LOCATION_COLLECTION, true,
-                TermsType.MARKETING, false,
-                TermsType.PUSH_NOTIFICATION, true,
-                TermsType.AGE_CONFIRMATION, true
-        ));
-
-        verify(termsAgreementRepository, times(7))
-                .save(any());
-    }
 
     // 사용자 선택 약관 동의 상태 조회 검증
     @Test

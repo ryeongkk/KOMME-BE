@@ -20,12 +20,6 @@ public interface TermsAgreementRepository extends JpaRepository<TermsAgreement, 
             Collection<TermsType> termsTypes
     );
 
-    // 사용자 필수 약관 동의 개수 조회 기능
-    long countByUserIdAndTermsTypeInAndAgreedTrue(
-            Long userId,
-            Collection<TermsType> termsTypes
-    );
-
     // 사용자 ID 기반 약관 동의 전체 삭제 기능
     void deleteAllByUserId(Long userId);
 }
