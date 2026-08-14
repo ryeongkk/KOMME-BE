@@ -9,7 +9,7 @@ public final class CourseApiExamples {
               "message": "성공적으로 처리되었습니다.",
               "data": {
                 "courseId": 1,
-                "title": "성동구 먹방 Day",
+                "title": "성동구 음식 Day",
                 "description": null,
                 "regionName": "성동구",
                 "topics": ["FOOD"],
@@ -46,7 +46,7 @@ public final class CourseApiExamples {
               "data": [
                 {
                   "courseId": 1,
-                  "title": "성동구 먹방 Day",
+                  "title": "성동구 음식 Day",
                   "regionName": "성동구",
                   "visitDate": "2026-08-10",
                   "topics": ["FOOD"]
