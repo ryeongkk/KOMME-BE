@@ -12,3 +12,4 @@ KOMME의 '맞춤형 데일리 코스 생성'과 '즉시 체험 추천' 기능이
 - 컨트롤러는 `ApiResponse.success/error` 정적 팩토리로만 응답을 만든다.
 - 도메인 실패는 `GeneralException` + 전용 `BaseStatus` enum(예: `CourseErrorStatus`)으로 표현하고, `ErrorStatus`를 무한정 늘리지 않는다.
 - 엔티티는 `BaseEntity`를 상속한다.
+- "생성"과 "저장"은 다른 개념이다. `Course`는 생성 시점에 무조건 DB에 저장되지만 제목이 없고, `Course.user`는 "생성자"일 뿐 저장 전 코스에 대한 소유권 체크(존재 숨김용 404)에만 쓰인다. 실제 "내 코스 목록"에 뜨려면 `UserCourse`((user, course) 유니크, 사용자가 저장 시 입력한 `title` 보유)가 별도로 생성돼야 한다 — `CourseQueryService.findList`는 `Course`가 아니라 `UserCourse` 기준으로 조회한다. 코스 삭제 시 `CourseSpot`과 `UserCourse`를 `Course`보다 먼저 지운다.

@@ -6,6 +6,7 @@ import com.komme.common.base.status.SuccessStatus;
 import com.komme.common.response.ApiResponse;
 import com.komme.domain.course.controller.docs.CourseControllerDocs;
 import com.komme.domain.course.dto.request.CreateCourseRequest;
+import com.komme.domain.course.dto.request.SaveCourseRequest;
 import com.komme.domain.course.dto.response.CourseDetailResponse;
 import com.komme.domain.course.dto.response.CourseSummaryResponse;
 import com.komme.domain.course.enums.CourseStatus;
@@ -13,6 +14,7 @@ import com.komme.domain.course.service.CourseDeletionService;
 import com.komme.domain.course.service.CourseGenerationResult;
 import com.komme.domain.course.service.CourseGenerationService;
 import com.komme.domain.course.service.CourseQueryService;
+import com.komme.domain.course.service.CourseSaveService;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
@@ -30,6 +32,7 @@ public class CourseController implements CourseControllerDocs {
     private final CourseGenerationService courseGenerationService;
     private final CourseQueryService courseQueryService;
     private final CourseDeletionService courseDeletionService;
+    private final CourseSaveService courseSaveService;
 
     // 코스 생성 API
     @Override
@@ -37,14 +40,7 @@ public class CourseController implements CourseControllerDocs {
             Long userId,
             CreateCourseRequest request
     ) {
-        CourseGenerationResult result = courseGenerationService.generate(
-                userId,
-                request.longitude(),
-                request.latitude(),
-                request.topics(),
-                request.duration(),
-                request.visitDate()
-        );
+        CourseGenerationResult result = courseGenerationService.generate(userId, request);
         return ApiResponse.success(SuccessStatus.COMMON_SUCCESS_STATUS, CourseDetailResponse.from(result));
     }
 
@@ -75,6 +71,17 @@ public class CourseController implements CourseControllerDocs {
             Long courseId
     ) {
         courseDeletionService.delete(userId, courseId);
+        return ApiResponse.success(SuccessStatus.COMMON_SUCCESS_STATUS);
+    }
+
+    // 코스 저장 API
+    @Override
+    public ResponseEntity<ApiResponse<Void>> saveCourse(
+            Long userId,
+            Long courseId,
+            SaveCourseRequest request
+    ) {
+        courseSaveService.save(userId, courseId, request);
         return ApiResponse.success(SuccessStatus.COMMON_SUCCESS_STATUS);
     }
 }

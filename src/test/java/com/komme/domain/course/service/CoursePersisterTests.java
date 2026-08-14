@@ -5,6 +5,7 @@ import java.time.LocalDate;
 import java.util.List;
 import java.util.Set;
 
+import com.komme.domain.course.entity.Course;
 import com.komme.domain.course.entity.CourseSpot;
 import com.komme.domain.course.enums.Topic;
 import com.komme.domain.course.repository.CourseRepository;
@@ -38,19 +39,17 @@ class CoursePersisterTests {
         CoursePersister coursePersister = new CoursePersister(courseRepository, courseSpotRepository);
         Spot first = spot("1", TimeSlot.MORNING);
         Spot second = spot("2", TimeSlot.LUNCH);
-
-        CourseGenerationResult result = coursePersister.persist(
+        Course course = Course.create(
                 Mockito.mock(User.class),
-                "성수동 먹방 Day",
                 "성수동", "1", "2",
                 Set.of(Topic.FOOD),
-                LocalDate.of(2026, 8, 10),
-                List.of(first, second),
-                List.of(500)
+                LocalDate.of(2026, 8, 10)
         );
 
-        assertThat(result.course().getTitle()).isEqualTo("성수동 먹방 Day");
-        verify(courseRepository).save(result.course());
+        CourseGenerationResult result = coursePersister.persist(course, List.of(first, second), List.of(500));
+
+        assertThat(result.course()).isSameAs(course);
+        verify(courseRepository).save(course);
 
         ArgumentCaptor<List<CourseSpot>> captor = ArgumentCaptor.forClass(List.class);
         verify(courseSpotRepository).saveAll(captor.capture());
