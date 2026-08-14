@@ -102,4 +102,22 @@ class CourseRequestValidationTests {
 
         assertThat(violations).hasSize(1);
     }
+
+    // 코스명이 30자를 넘으면 검증 실패하는지 확인
+    @Test
+    void saveCourseRequestFailsWhenTitleExceedsMaxLength() {
+        SaveCourseRequest request = new SaveCourseRequest("가".repeat(31));
+
+        Set<ConstraintViolation<SaveCourseRequest>> violations = validator.validate(request);
+
+        assertThat(violations).hasSize(1);
+    }
+
+    // 코스명이 정확히 30자면 검증을 통과하는지 확인
+    @Test
+    void saveCourseRequestPassesWhenTitleIsExactlyMaxLength() {
+        SaveCourseRequest request = new SaveCourseRequest("가".repeat(30));
+
+        assertThat(validator.validate(request)).isEmpty();
+    }
 }

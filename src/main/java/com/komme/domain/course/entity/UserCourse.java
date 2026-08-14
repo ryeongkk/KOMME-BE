@@ -44,7 +44,7 @@ public class UserCourse extends BaseEntity {
     @JoinColumn(name = "course_id", nullable = false)
     private Course course;
 
-    @Column(nullable = false, length = 255)
+    @Column(nullable = false, length = 30)
     private String title;
 
     // 코스 저장 엔티티 생성
