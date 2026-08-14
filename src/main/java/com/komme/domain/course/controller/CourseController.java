@@ -37,14 +37,7 @@ public class CourseController implements CourseControllerDocs {
             Long userId,
             CreateCourseRequest request
     ) {
-        CourseGenerationResult result = courseGenerationService.generate(
-                userId,
-                request.longitude(),
-                request.latitude(),
-                request.topics(),
-                request.spotCount().getValue(),
-                request.visitDate()
-        );
+        CourseGenerationResult result = courseGenerationService.generate(userId, request);
         return ApiResponse.success(SuccessStatus.COMMON_SUCCESS_STATUS, CourseDetailResponse.from(result));
     }
 

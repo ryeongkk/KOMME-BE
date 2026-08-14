@@ -71,6 +71,22 @@ public final class CourseApiExamples {
             }
             """;
 
+    public static final String REGION_NOT_FOUND = """
+            {
+              "isSuccess": false,
+              "code": "COURSE_404_3",
+              "message": "해당 지역을 찾을 수 없습니다."
+            }
+            """;
+
+    public static final String REGION_NOT_SUPPORTED = """
+            {
+              "isSuccess": false,
+              "code": "COURSE_400_1",
+              "message": "서울/부산 지역만 지원합니다."
+            }
+            """;
+
     public static final String COURSE_NOT_FOUND = """
             {
               "isSuccess": false,

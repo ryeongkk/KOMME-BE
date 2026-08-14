@@ -32,8 +32,8 @@ public interface CourseControllerDocs {
     // 코스 생성 API
     @Operation(
             summary = "코스 생성",
-            description = "좌표+반경 기준으로 주제에 맞는 스팟을 모아 시간대별 하루 코스를 생성합니다. "
-                    + "스팟이 부족하면 반경을 자동으로 넓혀 재시도하고, 그래도 부족하면 실패합니다.",
+            description = "지역 키워드로 중심 좌표를 찾고, 그 주변에서 주제에 맞는 스팟을 모아 시간대별 하루 코스를 생성합니다. "
+                    + "서울/부산 지역만 지원하며, 스팟이 부족하면 반경을 자동으로 넓혀 재시도하고 그래도 부족하면 실패합니다.",
             security = @SecurityRequirement(name = "bearerAuth")
     )
     @io.swagger.v3.oas.annotations.responses.ApiResponse(
@@ -46,8 +46,11 @@ public interface CourseControllerDocs {
     )
     @io.swagger.v3.oas.annotations.responses.ApiResponse(
             responseCode = "400",
-            description = "요청값 검증 실패",
-            content = @Content(examples = @ExampleObject(value = CourseApiExamples.BAD_REQUEST))
+            description = "요청값 검증 실패 또는 서울/부산 외 지역",
+            content = @Content(examples = {
+                    @ExampleObject(name = "입력값 오류", value = CourseApiExamples.BAD_REQUEST),
+                    @ExampleObject(name = "미지원 지역", value = CourseApiExamples.REGION_NOT_SUPPORTED)
+            })
     )
     @io.swagger.v3.oas.annotations.responses.ApiResponse(
             responseCode = "401",
@@ -56,8 +59,11 @@ public interface CourseControllerDocs {
     )
     @io.swagger.v3.oas.annotations.responses.ApiResponse(
             responseCode = "404",
-            description = "코스를 구성할 스팟이 부족함 (반경을 최대로 넓혀도 부족)",
-            content = @Content(examples = @ExampleObject(value = CourseApiExamples.INSUFFICIENT_SPOTS))
+            description = "지역을 찾을 수 없거나, 코스를 구성할 스팟이 부족함 (반경을 최대로 넓혀도 부족)",
+            content = @Content(examples = {
+                    @ExampleObject(name = "지역 없음", value = CourseApiExamples.REGION_NOT_FOUND),
+                    @ExampleObject(name = "스팟 부족", value = CourseApiExamples.INSUFFICIENT_SPOTS)
+            })
     )
     @PostMapping
     ResponseEntity<ApiResponse<CourseDetailResponse>> createCourse(

@@ -1,6 +1,5 @@
 package com.komme.domain.course.dto;
 
-import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.Set;
 
@@ -41,8 +40,7 @@ class CourseRequestValidationTests {
     @Test
     void createCourseRequestPassesWithValidValues() {
         CreateCourseRequest request = new CreateCourseRequest(
-                new BigDecimal("127.05578"), new BigDecimal("37.54433"),
-                Set.of(Topic.FOOD), SpotCount.FOUR_OR_MORE, LocalDate.of(2026, 8, 10)
+                "성수동", Set.of(Topic.FOOD), SpotCount.FOUR_OR_MORE, LocalDate.of(2026, 8, 10)
         );
 
         Set<ConstraintViolation<CreateCourseRequest>> violations = validator.validate(request);
@@ -50,24 +48,23 @@ class CourseRequestValidationTests {
         assertThat(violations).isEmpty();
     }
 
-    // 좌표가 없으면 검증 실패하는지 확인
+    // 지역 키워드가 없으면 검증 실패하는지 확인
     @Test
-    void createCourseRequestFailsWhenCoordinatesMissing() {
+    void createCourseRequestFailsWhenRegionKeywordBlank() {
         CreateCourseRequest request = new CreateCourseRequest(
-                null, null, Set.of(Topic.FOOD), SpotCount.FOUR_OR_MORE, LocalDate.of(2026, 8, 10)
+                " ", Set.of(Topic.FOOD), SpotCount.FOUR_OR_MORE, LocalDate.of(2026, 8, 10)
         );
 
         Set<ConstraintViolation<CreateCourseRequest>> violations = validator.validate(request);
 
-        assertThat(violations).hasSize(2);
+        assertThat(violations).hasSize(1);
     }
 
     // 주제가 비어있으면 검증 실패하는지 확인
     @Test
     void createCourseRequestFailsWhenTopicsEmpty() {
         CreateCourseRequest request = new CreateCourseRequest(
-                new BigDecimal("127.05578"), new BigDecimal("37.54433"),
-                Set.of(), SpotCount.FOUR_OR_MORE, LocalDate.of(2026, 8, 10)
+                "성수동", Set.of(), SpotCount.FOUR_OR_MORE, LocalDate.of(2026, 8, 10)
         );
 
         Set<ConstraintViolation<CreateCourseRequest>> violations = validator.validate(request);
@@ -79,8 +76,7 @@ class CourseRequestValidationTests {
     @Test
     void createCourseRequestFailsWhenSpotCountOrVisitDateMissing() {
         CreateCourseRequest request = new CreateCourseRequest(
-                new BigDecimal("127.05578"), new BigDecimal("37.54433"),
-                Set.of(Topic.FOOD), null, null
+                "성수동", Set.of(Topic.FOOD), null, null
         );
 
         Set<ConstraintViolation<CreateCourseRequest>> violations = validator.validate(request);

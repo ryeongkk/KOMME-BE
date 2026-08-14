@@ -1,6 +1,5 @@
 package com.komme.domain.course.controller;
 
-import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Set;
@@ -47,8 +46,7 @@ class CourseControllerTests {
     @Test
     void createCourseReturnsCourseDetailResponse() {
         CreateCourseRequest request = new CreateCourseRequest(
-                new BigDecimal("127.05578"), new BigDecimal("37.54433"),
-                Set.of(Topic.FOOD), SpotCount.FOUR_OR_MORE, LocalDate.of(2026, 8, 10)
+                "성수동", Set.of(Topic.FOOD), SpotCount.FOUR_OR_MORE, LocalDate.of(2026, 8, 10)
         );
         Course course = mock(Course.class);
         when(course.getId()).thenReturn(1L);
@@ -57,10 +55,7 @@ class CourseControllerTests {
         when(course.getVisitDate()).thenReturn(LocalDate.of(2026, 8, 10));
         when(course.getRegionName()).thenReturn("성동구");
         CourseGenerationResult result = new CourseGenerationResult(course, List.of());
-        when(courseGenerationService.generate(
-                1L, request.longitude(), request.latitude(), request.topics(),
-                request.spotCount().getValue(), request.visitDate()
-        )).thenReturn(result);
+        when(courseGenerationService.generate(1L, request)).thenReturn(result);
 
         ResponseEntity<ApiResponse<CourseDetailResponse>> response = courseController.createCourse(1L, request);
 
@@ -68,10 +63,7 @@ class CourseControllerTests {
         assertThat(response.getBody().getData().courseId()).isEqualTo(1L);
         assertThat(response.getBody().getData().title()).isEqualTo("성동구 음식 Day");
         assertThat(response.getBody().getData().regionName()).isEqualTo("성동구");
-        verify(courseGenerationService).generate(
-                1L, request.longitude(), request.latitude(), request.topics(),
-                request.spotCount().getValue(), request.visitDate()
-        );
+        verify(courseGenerationService).generate(1L, request);
     }
 
     // 코스 목록 조회 API가 CourseQueryService 결과를 그대로 반환하는지 검증

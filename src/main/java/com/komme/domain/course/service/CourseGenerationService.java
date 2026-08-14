@@ -1,13 +1,16 @@
 package com.komme.domain.course.service;
 
 import java.math.BigDecimal;
-import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
 import com.komme.common.exception.GeneralException;
+import com.komme.domain.course.client.KakaoLocalClient;
+import com.komme.domain.course.client.KakaoPlaceDocument;
+import com.komme.domain.course.dto.request.CreateCourseRequest;
+import com.komme.domain.course.entity.Course;
 import com.komme.domain.course.enums.Topic;
 import com.komme.domain.course.exception.CourseErrorStatus;
 import com.komme.domain.course.mapping.CategoryTopicMapper;
@@ -21,8 +24,8 @@ import org.springframework.stereotype.Service;
 
 import lombok.RequiredArgsConstructor;
 
-// 코스 생성 파이프라인 - 좌표+반경으로 후보 스팟을 모아 주제로 거르고, 동선을 정렬해 저장한다.
-// 외부 API 호출(SpotService 경유)은 트랜잭션 밖에서 실행하고, DB 쓰기만 CoursePersister의 트랜잭션 안에서 처리한다.
+// 코스 생성 파이프라인 - 지역 키워드로 중심 좌표를 찾고, 그 좌표+반경으로 후보 스팟을 모아 주제로 거르고, 동선을 정렬해 저장한다.
+// 외부 API 호출(KakaoLocalClient/SpotService 경유)은 트랜잭션 밖에서 실행하고, DB 쓰기만 CoursePersister의 트랜잭션 안에서 처리한다.
 @Service
 @RequiredArgsConstructor
 public class CourseGenerationService {
@@ -31,40 +34,72 @@ public class CourseGenerationService {
     private static final List<String> CANDIDATE_CONTENT_TYPE_IDS = List.of("12", "14", "28", "39");
     // 스팟이 부족하면 3km -> 6km -> 9km로 넓혀가며 재시도, 그래도 부족하면 실패 처리
     private static final List<Integer> RADIUS_EXPANSION_METERS = List.of(3000, 6000, 9000);
+    // MVP 서비스 지역 - 서울/부산만 지원
+    private static final List<String> SUPPORTED_REGION_PREFIXES = List.of("서울", "부산");
 
+    private final KakaoLocalClient kakaoLocalClient;
     private final SpotService spotService;
     private final CoursePersister coursePersister;
     private final UserReader userReader;
 
     // 코스 생성 기능
-    public CourseGenerationResult generate(
-            Long userId,
-            BigDecimal longitude,
-            BigDecimal latitude,
-            Set<Topic> topics,
-            int spotCount,
-            LocalDate visitDate
-    ) {
+    public CourseGenerationResult generate(Long userId, CreateCourseRequest request) {
         User user = userReader.findByIdOrThrow(userId);
-        List<Spot> selectedSpots = collectCandidates(longitude, latitude, topics, spotCount);
-        List<Spot> orderedSpots = SpotRouteSequencer.sequenceFrom(longitude, latitude, selectedSpots);
-        List<Integer> distancesToNext = SpotRouteSequencer.distancesBetweenConsecutive(orderedSpots);
+        RoutePlan routePlan = planRoute(request);
 
-        Spot representativeSpot = orderedSpots.get(0);
+        Spot representativeSpot = routePlan.orderedSpots().get(0);
         String regionName = resolveRegionName(representativeSpot);
-        String fallbackTitle = buildFallbackTitle(regionName, topics);
-
-        return coursePersister.persist(
+        String fallbackTitle = buildFallbackTitle(regionName, request.topics());
+        Course course = Course.create(
                 user,
                 fallbackTitle,
+                null,
                 regionName,
                 representativeSpot.getAreaCode(),
                 representativeSpot.getSigunguCode(),
-                topics,
-                visitDate,
-                orderedSpots,
-                distancesToNext
+                request.topics(),
+                request.visitDate()
         );
+
+        return coursePersister.persist(course, routePlan.orderedSpots(), routePlan.distancesToNext());
+    }
+
+    // 지역 키워드로 중심 좌표를 찾고, 주변 스팟을 모아 동선까지 정렬하는 기능
+    private RoutePlan planRoute(CreateCourseRequest request) {
+        KakaoPlaceDocument region = resolveRegion(request.regionKeyword());
+        BigDecimal longitude = new BigDecimal(region.longitude());
+        BigDecimal latitude = new BigDecimal(region.latitude());
+
+        List<Spot> selectedSpots = collectCandidates(
+                longitude, latitude, request.topics(), request.spotCount().getValue()
+        );
+        List<Spot> orderedSpots = SpotRouteSequencer.sequenceFrom(longitude, latitude, selectedSpots);
+        List<Integer> distancesToNext = SpotRouteSequencer.distancesBetweenConsecutive(orderedSpots);
+        return new RoutePlan(orderedSpots, distancesToNext);
+    }
+
+    // 동선 정렬 결과 - 방문 순서대로 정렬된 스팟과, 그 사이 구간별 거리(m)
+    private record RoutePlan(List<Spot> orderedSpots, List<Integer> distancesToNext) {
+    }
+
+    // 지역 키워드로 카카오 로컬 API를 검색해 서울/부산 안에 있는 첫 결과를 찾는 기능
+    private KakaoPlaceDocument resolveRegion(String regionKeyword) {
+        List<KakaoPlaceDocument> results = kakaoLocalClient.searchByKeyword(regionKeyword);
+        return results.stream()
+                .filter(this::isInSupportedRegion)
+                .findFirst()
+                .orElseThrow(() -> new GeneralException(
+                        results.isEmpty()
+                                ? CourseErrorStatus.REGION_NOT_FOUND
+                                : CourseErrorStatus.REGION_NOT_SUPPORTED
+                ));
+    }
+
+    // 검색 결과가 서울/부산 안에 있는지 확인하는 기능
+    private boolean isInSupportedRegion(KakaoPlaceDocument place) {
+        String addressName = place.addressName();
+        return addressName != null
+                && SUPPORTED_REGION_PREFIXES.stream().anyMatch(addressName::startsWith);
     }
 
     // 반경을 넓혀가며 주제에 맞는 후보를 필요한 개수만큼 모을 때까지 재시도하는 기능
