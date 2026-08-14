@@ -8,7 +8,6 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import com.komme.common.exception.GeneralException;
-import com.komme.domain.course.enums.Duration;
 import com.komme.domain.course.enums.Topic;
 import com.komme.domain.course.exception.CourseErrorStatus;
 import com.komme.domain.course.mapping.CategoryTopicMapper;
@@ -43,11 +42,11 @@ public class CourseGenerationService {
             BigDecimal longitude,
             BigDecimal latitude,
             Set<Topic> topics,
-            Duration duration,
+            int spotCount,
             LocalDate visitDate
     ) {
         User user = userReader.findByIdOrThrow(userId);
-        List<Spot> selectedSpots = collectCandidates(longitude, latitude, topics, duration.getSpotCount());
+        List<Spot> selectedSpots = collectCandidates(longitude, latitude, topics, spotCount);
         List<Spot> orderedSpots = SpotRouteSequencer.sequenceFrom(longitude, latitude, selectedSpots);
         List<Integer> distancesToNext = SpotRouteSequencer.distancesBetweenConsecutive(orderedSpots);
 

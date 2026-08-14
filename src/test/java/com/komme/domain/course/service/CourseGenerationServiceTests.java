@@ -7,7 +7,6 @@ import java.util.Set;
 
 import com.komme.common.exception.GeneralException;
 import com.komme.domain.course.entity.Course;
-import com.komme.domain.course.enums.Duration;
 import com.komme.domain.course.enums.Topic;
 import com.komme.domain.course.exception.CourseErrorStatus;
 import com.komme.domain.spot.entity.Spot;
@@ -59,7 +58,7 @@ class CourseGenerationServiceTests {
         when(coursePersister.persist(any(), any(), any(), any(), any(), any(), any(), any(), any()))
                 .thenReturn(expectedResult);
 
-        CourseGenerationResult result = service.generate(USER_ID, LONGITUDE, LATITUDE, Set.of(Topic.FOOD), Duration.HALF_DAY, VISIT_DATE);
+        CourseGenerationResult result = service.generate(USER_ID, LONGITUDE, LATITUDE, Set.of(Topic.FOOD), 4, VISIT_DATE);
 
         assertThat(result).isSameAs(expectedResult);
 
@@ -84,7 +83,7 @@ class CourseGenerationServiceTests {
         when(coursePersister.persist(any(), any(), any(), any(), any(), any(), any(), any(), any()))
                 .thenReturn(expectedResult);
 
-        CourseGenerationResult result = service.generate(USER_ID, LONGITUDE, LATITUDE, Set.of(Topic.FOOD), Duration.HALF_DAY, VISIT_DATE);
+        CourseGenerationResult result = service.generate(USER_ID, LONGITUDE, LATITUDE, Set.of(Topic.FOOD), 4, VISIT_DATE);
 
         assertThat(result).isSameAs(expectedResult);
         verify(spotService).findNearby(LONGITUDE, LATITUDE, 6000, "39");
@@ -98,7 +97,7 @@ class CourseGenerationServiceTests {
         stubEmptyExcept(6000, "39", List.of(foodSpot("1")));
         stubEmptyExcept(9000, "39", List.of(foodSpot("1")));
 
-        assertThatThrownBy(() -> service.generate(USER_ID, LONGITUDE, LATITUDE, Set.of(Topic.FOOD), Duration.HALF_DAY, VISIT_DATE))
+        assertThatThrownBy(() -> service.generate(USER_ID, LONGITUDE, LATITUDE, Set.of(Topic.FOOD), 4, VISIT_DATE))
                 .isInstanceOf(GeneralException.class)
                 .extracting(exception -> ((GeneralException) exception).getErrorStatus())
                 .isEqualTo(CourseErrorStatus.INSUFFICIENT_SPOTS);

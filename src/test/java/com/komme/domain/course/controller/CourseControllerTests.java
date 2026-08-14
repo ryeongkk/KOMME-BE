@@ -11,7 +11,7 @@ import com.komme.domain.course.dto.response.CourseDetailResponse;
 import com.komme.domain.course.dto.response.CourseSummaryResponse;
 import com.komme.domain.course.entity.Course;
 import com.komme.domain.course.enums.CourseStatus;
-import com.komme.domain.course.enums.Duration;
+import com.komme.domain.course.enums.SpotCount;
 import com.komme.domain.course.enums.Topic;
 import com.komme.domain.course.service.CourseDeletionService;
 import com.komme.domain.course.service.CourseGenerationResult;
@@ -48,27 +48,29 @@ class CourseControllerTests {
     void createCourseReturnsCourseDetailResponse() {
         CreateCourseRequest request = new CreateCourseRequest(
                 new BigDecimal("127.05578"), new BigDecimal("37.54433"),
-                Set.of(Topic.FOOD), Duration.HALF_DAY, LocalDate.of(2026, 8, 10)
+                Set.of(Topic.FOOD), SpotCount.FOUR_OR_MORE, LocalDate.of(2026, 8, 10)
         );
         Course course = mock(Course.class);
         when(course.getId()).thenReturn(1L);
-        when(course.getTitle()).thenReturn("성동구 먹방 Day");
+        when(course.getTitle()).thenReturn("성동구 음식 Day");
         when(course.getTopics()).thenReturn(Set.of(Topic.FOOD));
         when(course.getVisitDate()).thenReturn(LocalDate.of(2026, 8, 10));
         when(course.getRegionName()).thenReturn("성동구");
         CourseGenerationResult result = new CourseGenerationResult(course, List.of());
         when(courseGenerationService.generate(
-                1L, request.longitude(), request.latitude(), request.topics(), request.duration(), request.visitDate()
+                1L, request.longitude(), request.latitude(), request.topics(),
+                request.spotCount().getValue(), request.visitDate()
         )).thenReturn(result);
 
         ResponseEntity<ApiResponse<CourseDetailResponse>> response = courseController.createCourse(1L, request);
 
         assertThat(response.getStatusCode().is2xxSuccessful()).isTrue();
         assertThat(response.getBody().getData().courseId()).isEqualTo(1L);
-        assertThat(response.getBody().getData().title()).isEqualTo("성동구 먹방 Day");
+        assertThat(response.getBody().getData().title()).isEqualTo("성동구 음식 Day");
         assertThat(response.getBody().getData().regionName()).isEqualTo("성동구");
         verify(courseGenerationService).generate(
-                1L, request.longitude(), request.latitude(), request.topics(), request.duration(), request.visitDate()
+                1L, request.longitude(), request.latitude(), request.topics(),
+                request.spotCount().getValue(), request.visitDate()
         );
     }
 
@@ -76,7 +78,7 @@ class CourseControllerTests {
     @Test
     void getCoursesReturnsQueryServiceResult() {
         List<CourseSummaryResponse> summaries = List.of(
-                new CourseSummaryResponse(1L, "성동구 먹방 Day", "성동구", LocalDate.of(2026, 8, 10), Set.of(Topic.FOOD))
+                new CourseSummaryResponse(1L, "성동구 음식 Day", "성동구", LocalDate.of(2026, 8, 10), Set.of(Topic.FOOD))
         );
         when(courseQueryService.findList(1L, CourseStatus.UPCOMING)).thenReturn(summaries);
 
@@ -91,7 +93,7 @@ class CourseControllerTests {
     @Test
     void getCourseDetailReturnsQueryServiceResult() {
         CourseDetailResponse detail = new CourseDetailResponse(
-                1L, "성동구 먹방 Day", null, "성동구", Set.of(Topic.FOOD), LocalDate.of(2026, 8, 10), List.of()
+                1L, "성동구 음식 Day", null, "성동구", Set.of(Topic.FOOD), LocalDate.of(2026, 8, 10), List.of()
         );
         when(courseQueryService.findDetail(1L, 10L)).thenReturn(detail);
 

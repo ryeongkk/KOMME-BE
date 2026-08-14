@@ -5,7 +5,7 @@ import java.time.LocalDate;
 import java.util.Set;
 
 import com.komme.domain.course.dto.request.CreateCourseRequest;
-import com.komme.domain.course.enums.Duration;
+import com.komme.domain.course.enums.SpotCount;
 import com.komme.domain.course.enums.Topic;
 
 import jakarta.validation.ConstraintViolation;
@@ -42,7 +42,7 @@ class CourseRequestValidationTests {
     void createCourseRequestPassesWithValidValues() {
         CreateCourseRequest request = new CreateCourseRequest(
                 new BigDecimal("127.05578"), new BigDecimal("37.54433"),
-                Set.of(Topic.FOOD), Duration.HALF_DAY, LocalDate.of(2026, 8, 10)
+                Set.of(Topic.FOOD), SpotCount.FOUR_OR_MORE, LocalDate.of(2026, 8, 10)
         );
 
         Set<ConstraintViolation<CreateCourseRequest>> violations = validator.validate(request);
@@ -54,7 +54,7 @@ class CourseRequestValidationTests {
     @Test
     void createCourseRequestFailsWhenCoordinatesMissing() {
         CreateCourseRequest request = new CreateCourseRequest(
-                null, null, Set.of(Topic.FOOD), Duration.HALF_DAY, LocalDate.of(2026, 8, 10)
+                null, null, Set.of(Topic.FOOD), SpotCount.FOUR_OR_MORE, LocalDate.of(2026, 8, 10)
         );
 
         Set<ConstraintViolation<CreateCourseRequest>> violations = validator.validate(request);
@@ -67,7 +67,7 @@ class CourseRequestValidationTests {
     void createCourseRequestFailsWhenTopicsEmpty() {
         CreateCourseRequest request = new CreateCourseRequest(
                 new BigDecimal("127.05578"), new BigDecimal("37.54433"),
-                Set.of(), Duration.HALF_DAY, LocalDate.of(2026, 8, 10)
+                Set.of(), SpotCount.FOUR_OR_MORE, LocalDate.of(2026, 8, 10)
         );
 
         Set<ConstraintViolation<CreateCourseRequest>> violations = validator.validate(request);
@@ -75,9 +75,9 @@ class CourseRequestValidationTests {
         assertThat(violations).hasSize(1);
     }
 
-    // 체류시간/방문날짜가 없으면 검증 실패하는지 확인
+    // 장소 개수/방문날짜가 없으면 검증 실패하는지 확인
     @Test
-    void createCourseRequestFailsWhenDurationOrVisitDateMissing() {
+    void createCourseRequestFailsWhenSpotCountOrVisitDateMissing() {
         CreateCourseRequest request = new CreateCourseRequest(
                 new BigDecimal("127.05578"), new BigDecimal("37.54433"),
                 Set.of(Topic.FOOD), null, null

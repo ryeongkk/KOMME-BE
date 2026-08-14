@@ -42,7 +42,7 @@ public class CourseController implements CourseControllerDocs {
                 request.longitude(),
                 request.latitude(),
                 request.topics(),
-                request.duration(),
+                request.spotCount().getValue(),
                 request.visitDate()
         );
         return ApiResponse.success(SuccessStatus.COMMON_SUCCESS_STATUS, CourseDetailResponse.from(result));
