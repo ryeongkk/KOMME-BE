@@ -15,11 +15,13 @@ import com.komme.domain.user.entity.User;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InOrder;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -50,9 +52,10 @@ class CourseDeletionServiceTests {
 
         service.delete(USER_ID, COURSE_ID);
 
-        verify(courseSpotRepository).deleteByCourse_Id(COURSE_ID);
-        verify(userCourseRepository).deleteByCourse_Id(COURSE_ID);
-        verify(courseRepository).delete(course);
+        InOrder order = inOrder(courseSpotRepository, userCourseRepository, courseRepository);
+        order.verify(courseSpotRepository).deleteByCourse_Id(COURSE_ID);
+        order.verify(userCourseRepository).deleteByCourse_Id(COURSE_ID);
+        order.verify(courseRepository).delete(course);
     }
 
     // 본인 코스가 아니면 존재 여부를 숨기기 위해 404로 처리되고, 아무것도 삭제되지 않는지 검증
