@@ -42,20 +42,21 @@ class UserCourseRepositoryJpaTests {
     @Autowired
     private UserCourseRepository userCourseRepository;
 
-    // UPCOMING 조회가 오늘 이후 저장된 코스만 D-day 임박순으로 반환하는지 검증
+    // UPCOMING 조회가 오늘 이후(오늘 포함) 저장된 코스만 D-day 임박순으로 반환하는지 검증
     @Test
     void findUpcomingUserCoursesReturnsFutureCoursesInAscendingOrder() {
         User user = userRepository.saveAndFlush(createLocalUser());
         LocalDate today = LocalDate.now();
         userCourseRepository.saveAndFlush(userCourse(user, today.plusDays(10), "먼 코스"));
         userCourseRepository.saveAndFlush(userCourse(user, today.plusDays(1), "가까운 코스"));
+        userCourseRepository.saveAndFlush(userCourse(user, today, "오늘 코스")); // 오늘 - 경계값, 포함되어야 함
         userCourseRepository.saveAndFlush(userCourse(user, today.minusDays(1), "지난 코스")); // 과거 - 제외되어야 함
 
         List<UserCourse> result = userCourseRepository
                 .findByUser_IdAndCourse_VisitDateGreaterThanEqualOrderByCourse_VisitDateAsc(user.getId(), today);
 
         assertThat(result).extracting(UserCourse::getTitle)
-                .containsExactly("가까운 코스", "먼 코스");
+                .containsExactly("오늘 코스", "가까운 코스", "먼 코스");
     }
 
     // HISTORY 조회가 오늘 이전 저장된 코스만 최근 완료순으로 반환하는지 검증
