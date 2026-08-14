@@ -20,13 +20,12 @@ class CourseDetailResponseTests {
     @Test
     void ofMapsCourseAndCourseSpots() {
         Course course = Course.create(
-                Mockito.mock(User.class), "성동구 음식 Day", "성동구", "11", "11200",
+                Mockito.mock(User.class), "성동구", "11", "11200",
                 Set.of(Topic.FOOD), LocalDate.of(2026, 8, 10)
         );
 
         CourseDetailResponse response = CourseDetailResponse.of(course, List.of());
 
-        assertThat(response.title()).isEqualTo("성동구 음식 Day");
         assertThat(response.regionName()).isEqualTo("성동구");
         assertThat(response.spots()).isEmpty();
     }
@@ -35,14 +34,14 @@ class CourseDetailResponseTests {
     @Test
     void fromBuildsResponseFromGenerationResult() {
         Course course = Course.create(
-                Mockito.mock(User.class), "성동구 음식 Day", "성동구", "11", "11200",
+                Mockito.mock(User.class), "성동구", "11", "11200",
                 Set.of(Topic.FOOD), LocalDate.of(2026, 8, 10)
         );
         CourseGenerationResult result = new CourseGenerationResult(course, List.of());
 
         CourseDetailResponse response = CourseDetailResponse.from(result);
 
-        assertThat(response.title()).isEqualTo("성동구 음식 Day");
+        assertThat(response.regionName()).isEqualTo("성동구");
         assertThat(response.spots()).isEmpty();
     }
 }

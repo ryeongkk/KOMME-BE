@@ -41,7 +41,6 @@ class CoursePersisterTests {
         Spot second = spot("2", TimeSlot.LUNCH);
         Course course = Course.create(
                 Mockito.mock(User.class),
-                "성수동 음식 Day",
                 "성수동", "1", "2",
                 Set.of(Topic.FOOD),
                 LocalDate.of(2026, 8, 10)

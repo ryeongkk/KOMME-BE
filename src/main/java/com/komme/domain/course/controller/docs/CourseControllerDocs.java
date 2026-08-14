@@ -4,6 +4,7 @@ import java.util.List;
 
 import com.komme.common.response.ApiResponse;
 import com.komme.domain.course.dto.request.CreateCourseRequest;
+import com.komme.domain.course.dto.request.SaveCourseRequest;
 import com.komme.domain.course.dto.response.CourseDetailResponse;
 import com.komme.domain.course.dto.response.CourseSummaryResponse;
 import com.komme.domain.course.enums.CourseStatus;
@@ -20,6 +21,7 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -74,7 +76,8 @@ public interface CourseControllerDocs {
     // 코스 목록 조회 API
     @Operation(
             summary = "코스 목록 조회",
-            description = "UPCOMING(D-day 임박순)/HISTORY(최근 완료순)로 인증된 사용자의 코스 목록을 조회합니다. "
+            description = "UPCOMING(D-day 임박순)/HISTORY(최근 완료순)로 인증된 사용자가 저장한 코스 목록을 조회합니다. "
+                    + "저장(코스 저장 API 호출)하지 않은 코스는 목록에 뜨지 않습니다. "
                     + "별도 status 컬럼 없이 visitDate와 오늘 날짜를 비교해 조회 시점에 계산됩니다.",
             security = @SecurityRequirement(name = "bearerAuth")
     )
@@ -153,5 +156,39 @@ public interface CourseControllerDocs {
     ResponseEntity<ApiResponse<Void>> deleteCourse(
             @Parameter(hidden = true) @AuthenticationPrincipal Long userId,
             @PathVariable Long courseId
+    );
+
+    // 코스 저장 API
+    @Operation(
+            summary = "코스 저장",
+            description = "생성된 코스에 사용자가 입력한 이름을 붙여 저장합니다. 저장해야 코스 목록(다가오는 코스/지난 코스)에 노출됩니다. "
+                    + "이미 저장한 코스를 다시 저장하면 이름만 갱신됩니다. 생성자 본인이 아니면 존재 여부를 숨기기 위해 404로 응답합니다.",
+            security = @SecurityRequirement(name = "bearerAuth")
+    )
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+            responseCode = "200",
+            description = "코스 저장 성공",
+            content = @Content(examples = @ExampleObject(value = CourseApiExamples.SUCCESS_WITHOUT_DATA))
+    )
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+            responseCode = "400",
+            description = "코스명 입력값 오류",
+            content = @Content(examples = @ExampleObject(value = CourseApiExamples.BAD_REQUEST))
+    )
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+            responseCode = "401",
+            description = "Access Token 누락, 만료 또는 오류",
+            content = @Content(examples = @ExampleObject(value = CourseApiExamples.INVALID_TOKEN))
+    )
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+            responseCode = "404",
+            description = "코스가 없거나 본인 코스가 아님",
+            content = @Content(examples = @ExampleObject(value = CourseApiExamples.COURSE_NOT_FOUND))
+    )
+    @PatchMapping("/{courseId}/save")
+    ResponseEntity<ApiResponse<Void>> saveCourse(
+            @Parameter(hidden = true) @AuthenticationPrincipal Long userId,
+            @PathVariable Long courseId,
+            @Valid @RequestBody SaveCourseRequest request
     );
 }

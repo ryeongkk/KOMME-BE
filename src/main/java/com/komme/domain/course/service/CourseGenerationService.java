@@ -4,7 +4,6 @@ import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 import com.komme.common.exception.GeneralException;
 import com.komme.domain.course.client.KakaoLocalClient;
@@ -49,10 +48,8 @@ public class CourseGenerationService {
 
         Spot representativeSpot = routePlan.orderedSpots().get(0);
         String regionName = resolveRegionName(representativeSpot);
-        String title = buildTitle(regionName, request.topics());
         Course course = Course.create(
                 user,
-                title,
                 regionName,
                 representativeSpot.getAreaCode(),
                 representativeSpot.getSigunguCode(),
@@ -131,9 +128,4 @@ public class CourseGenerationService {
                 .orElse(representativeSpot.getAreaCode() + "-" + representativeSpot.getSigunguCode());
     }
 
-    // "{지역명} {주제 라벨들} Day" 형식으로 코스 제목을 생성하는 기능
-    private String buildTitle(String regionName, Set<Topic> topics) {
-        String topicLabel = topics.stream().map(Topic::getLabel).collect(Collectors.joining("·"));
-        return regionName + " " + topicLabel + " Day";
-    }
 }

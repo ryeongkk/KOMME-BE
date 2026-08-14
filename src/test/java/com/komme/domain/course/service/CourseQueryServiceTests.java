@@ -9,11 +9,13 @@ import com.komme.common.exception.GeneralException;
 import com.komme.domain.course.dto.response.CourseDetailResponse;
 import com.komme.domain.course.dto.response.CourseSummaryResponse;
 import com.komme.domain.course.entity.Course;
+import com.komme.domain.course.entity.UserCourse;
 import com.komme.domain.course.enums.CourseStatus;
 import com.komme.domain.course.enums.Topic;
 import com.komme.domain.course.exception.CourseErrorStatus;
 import com.komme.domain.course.repository.CourseRepository;
 import com.komme.domain.course.repository.CourseSpotRepository;
+import com.komme.domain.course.repository.UserCourseRepository;
 import com.komme.domain.user.entity.User;
 
 import org.junit.jupiter.api.Test;
@@ -40,27 +42,30 @@ class CourseQueryServiceTests {
     @Mock
     private CourseSpotRepository courseSpotRepository;
 
+    @Mock
+    private UserCourseRepository userCourseRepository;
+
     // UPCOMING 조회 시 오름차순(D-day 임박순) 조회 메서드를 타는지 검증
     @Test
     void findListUsesAscendingQueryForUpcoming() {
-        CourseQueryService service = new CourseQueryService(courseRepository, courseSpotRepository);
-        Course course = course("성동구 먹방 Day", LocalDate.of(2026, 8, 10));
-        when(courseRepository.findByUser_IdAndVisitDateGreaterThanEqualOrderByVisitDateAsc(eq(USER_ID), any()))
-                .thenReturn(List.of(course));
+        CourseQueryService service = new CourseQueryService(courseRepository, courseSpotRepository, userCourseRepository);
+        UserCourse userCourse = userCourse("성동구 음식 Day", LocalDate.of(2026, 8, 10));
+        when(userCourseRepository.findByUser_IdAndCourse_VisitDateGreaterThanEqualOrderByCourse_VisitDateAsc(eq(USER_ID), any()))
+                .thenReturn(List.of(userCourse));
 
         List<CourseSummaryResponse> result = service.findList(USER_ID, CourseStatus.UPCOMING);
 
         assertThat(result).hasSize(1);
-        assertThat(result.get(0).title()).isEqualTo("성동구 먹방 Day");
+        assertThat(result.get(0).title()).isEqualTo("성동구 음식 Day");
     }
 
     // HISTORY 조회 시 내림차순(최근 완료순) 조회 메서드를 타는지 검증
     @Test
     void findListUsesDescendingQueryForHistory() {
-        CourseQueryService service = new CourseQueryService(courseRepository, courseSpotRepository);
-        Course course = course("성동구 힐링 Day", LocalDate.of(2026, 7, 1));
-        when(courseRepository.findByUser_IdAndVisitDateLessThanOrderByVisitDateDesc(eq(USER_ID), any()))
-                .thenReturn(List.of(course));
+        CourseQueryService service = new CourseQueryService(courseRepository, courseSpotRepository, userCourseRepository);
+        UserCourse userCourse = userCourse("성동구 힐링 Day", LocalDate.of(2026, 7, 1));
+        when(userCourseRepository.findByUser_IdAndCourse_VisitDateLessThanOrderByCourse_VisitDateDesc(eq(USER_ID), any()))
+                .thenReturn(List.of(userCourse));
 
         List<CourseSummaryResponse> result = service.findList(USER_ID, CourseStatus.HISTORY);
 
@@ -71,25 +76,25 @@ class CourseQueryServiceTests {
     // 본인 코스면 스팟 타임라인과 함께 상세 정보가 반환되는지 검증
     @Test
     void findDetailReturnsDetailWhenOwnedByUser() {
-        CourseQueryService service = new CourseQueryService(courseRepository, courseSpotRepository);
+        CourseQueryService service = new CourseQueryService(courseRepository, courseSpotRepository, userCourseRepository);
         User owner = Mockito.mock(User.class);
         when(owner.getId()).thenReturn(USER_ID);
-        Course course = course(owner, "성동구 먹방 Day", LocalDate.of(2026, 8, 10));
+        Course course = course(owner, LocalDate.of(2026, 8, 10));
         when(courseRepository.findById(COURSE_ID)).thenReturn(Optional.of(course));
         when(courseSpotRepository.findByCourse_IdOrderBySequenceAsc(COURSE_ID)).thenReturn(List.of());
 
         CourseDetailResponse response = service.findDetail(USER_ID, COURSE_ID);
 
-        assertThat(response.title()).isEqualTo("성동구 먹방 Day");
+        assertThat(response.regionName()).isEqualTo("성동구");
     }
 
     // 본인 코스가 아니면 존재 여부를 숨기기 위해 404(COURSE_NOT_FOUND)로 처리되는지 검증
     @Test
     void findDetailThrowsNotFoundWhenNotOwnedByUser() {
-        CourseQueryService service = new CourseQueryService(courseRepository, courseSpotRepository);
+        CourseQueryService service = new CourseQueryService(courseRepository, courseSpotRepository, userCourseRepository);
         User otherOwner = Mockito.mock(User.class);
         when(otherOwner.getId()).thenReturn(999L);
-        Course course = course(otherOwner, "다른 사람 코스", LocalDate.of(2026, 8, 10));
+        Course course = course(otherOwner, LocalDate.of(2026, 8, 10));
         when(courseRepository.findById(COURSE_ID)).thenReturn(Optional.of(course));
 
         assertThatThrownBy(() -> service.findDetail(USER_ID, COURSE_ID))
@@ -101,7 +106,7 @@ class CourseQueryServiceTests {
     // 존재하지 않는 코스도 동일하게 404로 처리되는지 검증
     @Test
     void findDetailThrowsNotFoundWhenCourseDoesNotExist() {
-        CourseQueryService service = new CourseQueryService(courseRepository, courseSpotRepository);
+        CourseQueryService service = new CourseQueryService(courseRepository, courseSpotRepository, userCourseRepository);
         when(courseRepository.findById(COURSE_ID)).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> service.findDetail(USER_ID, COURSE_ID))
@@ -110,14 +115,15 @@ class CourseQueryServiceTests {
                 .isEqualTo(CourseErrorStatus.COURSE_NOT_FOUND);
     }
 
-    private Course course(String title, LocalDate visitDate) {
-        return course(Mockito.mock(User.class), title, visitDate);
-    }
-
-    private Course course(User user, String title, LocalDate visitDate) {
+    private Course course(User user, LocalDate visitDate) {
         return Course.create(
-                user, title, "성동구", "11", "11200",
+                user, "성동구", "11", "11200",
                 Set.of(Topic.FOOD), visitDate
         );
+    }
+
+    private UserCourse userCourse(String title, LocalDate visitDate) {
+        Course course = course(Mockito.mock(User.class), visitDate);
+        return UserCourse.create(Mockito.mock(User.class), course, title);
     }
 }

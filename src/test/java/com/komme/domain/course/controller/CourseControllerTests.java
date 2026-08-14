@@ -6,6 +6,7 @@ import java.util.Set;
 
 import com.komme.common.response.ApiResponse;
 import com.komme.domain.course.dto.request.CreateCourseRequest;
+import com.komme.domain.course.dto.request.SaveCourseRequest;
 import com.komme.domain.course.dto.response.CourseDetailResponse;
 import com.komme.domain.course.dto.response.CourseSummaryResponse;
 import com.komme.domain.course.entity.Course;
@@ -16,6 +17,7 @@ import com.komme.domain.course.service.CourseDeletionService;
 import com.komme.domain.course.service.CourseGenerationResult;
 import com.komme.domain.course.service.CourseGenerationService;
 import com.komme.domain.course.service.CourseQueryService;
+import com.komme.domain.course.service.CourseSaveService;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -31,6 +33,7 @@ class CourseControllerTests {
     private CourseGenerationService courseGenerationService;
     private CourseQueryService courseQueryService;
     private CourseDeletionService courseDeletionService;
+    private CourseSaveService courseSaveService;
     private CourseController courseController;
 
     // 코스 컨트롤러 테스트 환경 구성
@@ -39,7 +42,10 @@ class CourseControllerTests {
         courseGenerationService = mock(CourseGenerationService.class);
         courseQueryService = mock(CourseQueryService.class);
         courseDeletionService = mock(CourseDeletionService.class);
-        courseController = new CourseController(courseGenerationService, courseQueryService, courseDeletionService);
+        courseSaveService = mock(CourseSaveService.class);
+        courseController = new CourseController(
+                courseGenerationService, courseQueryService, courseDeletionService, courseSaveService
+        );
     }
 
     // 코스 생성 API가 서비스 생성 결과를 응답 DTO로 변환해서 반환하는지 검증
@@ -50,7 +56,6 @@ class CourseControllerTests {
         );
         Course course = mock(Course.class);
         when(course.getId()).thenReturn(1L);
-        when(course.getTitle()).thenReturn("성동구 음식 Day");
         when(course.getTopics()).thenReturn(Set.of(Topic.FOOD));
         when(course.getVisitDate()).thenReturn(LocalDate.of(2026, 8, 10));
         when(course.getRegionName()).thenReturn("성동구");
@@ -61,7 +66,6 @@ class CourseControllerTests {
 
         assertThat(response.getStatusCode().is2xxSuccessful()).isTrue();
         assertThat(response.getBody().getData().courseId()).isEqualTo(1L);
-        assertThat(response.getBody().getData().title()).isEqualTo("성동구 음식 Day");
         assertThat(response.getBody().getData().regionName()).isEqualTo("성동구");
         verify(courseGenerationService).generate(1L, request);
     }
@@ -85,7 +89,7 @@ class CourseControllerTests {
     @Test
     void getCourseDetailReturnsQueryServiceResult() {
         CourseDetailResponse detail = new CourseDetailResponse(
-                1L, "성동구 음식 Day", "성동구", Set.of(Topic.FOOD), LocalDate.of(2026, 8, 10), List.of()
+                1L, "성동구", Set.of(Topic.FOOD), LocalDate.of(2026, 8, 10), List.of()
         );
         when(courseQueryService.findDetail(1L, 10L)).thenReturn(detail);
 
@@ -102,5 +106,16 @@ class CourseControllerTests {
 
         assertThat(response.getStatusCode().is2xxSuccessful()).isTrue();
         verify(courseDeletionService).delete(1L, 10L);
+    }
+
+    // 코스 저장 API가 CourseSaveService에 위임하는지 검증
+    @Test
+    void saveCourseDelegatesToSaveService() {
+        SaveCourseRequest request = new SaveCourseRequest("성수동 데이트 코스");
+
+        ResponseEntity<ApiResponse<Void>> response = courseController.saveCourse(1L, 10L, request);
+
+        assertThat(response.getStatusCode().is2xxSuccessful()).isTrue();
+        verify(courseSaveService).save(1L, 10L, request);
     }
 }

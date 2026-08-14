@@ -20,12 +20,11 @@ class CourseTests {
         LocalDate visitDate = LocalDate.of(2026, 8, 10);
 
         Course course = Course.create(
-                user, "성수동 음식 Day", "성수동", "1", "2",
+                user, "성수동", "1", "2",
                 Set.of(Topic.FOOD), visitDate
         );
 
         assertThat(course.getUser()).isSameAs(user);
-        assertThat(course.getTitle()).isEqualTo("성수동 음식 Day");
         assertThat(course.getRegionName()).isEqualTo("성수동");
         assertThat(course.getAreaCode()).isEqualTo("1");
         assertThat(course.getSigunguCode()).isEqualTo("2");

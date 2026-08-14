@@ -26,7 +26,9 @@ import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
-// 사용자가 생성한 하루 코스 - Upcoming/History는 컬럼이 아니라 visitDate 기준으로 조회 시점에 계산한다
+// 생성된 하루 코스 - 제목은 없다. user는 "생성자"일 뿐이며, 저장 전 코스에 대한 소유권 체크에만 쓰인다.
+// 실제로 "내 코스 목록"에 뜨는지는 UserCourse(저장) row의 존재 여부로 결정된다.
+// Upcoming/History는 컬럼이 아니라 UserCourse 조회 시점에 visitDate 기준으로 계산한다
 @Getter
 @Entity
 @Table(name = "course")
@@ -40,9 +42,6 @@ public class Course extends BaseEntity {
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
-
-    @Column(nullable = false, length = 255)
-    private String title;
 
     @Column(name = "region_name", nullable = false, length = 100)
     private String regionName;
@@ -65,10 +64,9 @@ public class Course extends BaseEntity {
     @Column(name = "visit_date", nullable = false)
     private LocalDate visitDate;
 
-    // 코스 엔티티 생성 - title은 "{지역명} {주제} Day" 형식으로 기계적으로 생성된다
+    // 코스 엔티티 생성
     private Course(
             User user,
-            String title,
             String regionName,
             String areaCode,
             String sigunguCode,
@@ -76,7 +74,6 @@ public class Course extends BaseEntity {
             LocalDate visitDate
     ) {
         this.user = user;
-        this.title = title;
         this.regionName = regionName;
         this.areaCode = areaCode;
         this.sigunguCode = sigunguCode;
@@ -87,13 +84,12 @@ public class Course extends BaseEntity {
     // 코스 엔티티 생성 기능
     public static Course create(
             User user,
-            String title,
             String regionName,
             String areaCode,
             String sigunguCode,
             Set<Topic> topics,
             LocalDate visitDate
     ) {
-        return new Course(user, title, regionName, areaCode, sigunguCode, topics, visitDate);
+        return new Course(user, regionName, areaCode, sigunguCode, topics, visitDate);
     }
 }

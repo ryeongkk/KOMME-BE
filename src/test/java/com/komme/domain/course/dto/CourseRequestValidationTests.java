@@ -4,6 +4,7 @@ import java.time.LocalDate;
 import java.util.Set;
 
 import com.komme.domain.course.dto.request.CreateCourseRequest;
+import com.komme.domain.course.dto.request.SaveCourseRequest;
 import com.komme.domain.course.enums.SpotCount;
 import com.komme.domain.course.enums.Topic;
 
@@ -82,5 +83,23 @@ class CourseRequestValidationTests {
         Set<ConstraintViolation<CreateCourseRequest>> violations = validator.validate(request);
 
         assertThat(violations).hasSize(2);
+    }
+
+    // 코스 저장 요청 올바른 값 검증 통과 확인
+    @Test
+    void saveCourseRequestPassesWithValidValue() {
+        SaveCourseRequest request = new SaveCourseRequest("성수동 데이트 코스");
+
+        assertThat(validator.validate(request)).isEmpty();
+    }
+
+    // 코스명이 비어있으면 검증 실패하는지 확인
+    @Test
+    void saveCourseRequestFailsWhenTitleBlank() {
+        SaveCourseRequest request = new SaveCourseRequest(" ");
+
+        Set<ConstraintViolation<SaveCourseRequest>> violations = validator.validate(request);
+
+        assertThat(violations).hasSize(1);
     }
 }
