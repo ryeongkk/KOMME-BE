@@ -55,7 +55,7 @@ class CourseSpotRepositoryJpaTests {
                 "KR", Gender.FEMALE, Language.ENGLISH, Set.of(ServiceInterest.COURSE)
         ));
         Course course = courseRepository.saveAndFlush(Course.create(
-                user, "성동구 먹방 Day", null, "성동구", "11", "11200",
+                user, "성동구 음식 Day", "성동구", "11", "11200",
                 Set.of(Topic.FOOD), LocalDate.of(2026, 8, 10)
         ));
         Spot first = spotRepository.saveAndFlush(spot("1"));
@@ -78,7 +78,7 @@ class CourseSpotRepositoryJpaTests {
                 "KR", Gender.FEMALE, Language.ENGLISH, Set.of(ServiceInterest.COURSE)
         ));
         Course course = courseRepository.saveAndFlush(Course.create(
-                user, "성동구 먹방 Day", null, "성동구", "11", "11200",
+                user, "성동구 음식 Day", "성동구", "11", "11200",
                 Set.of(Topic.FOOD), LocalDate.of(2026, 8, 10)
         ));
         Spot spot = spotRepository.saveAndFlush(spot("3"));

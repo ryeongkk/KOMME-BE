@@ -71,7 +71,7 @@ class CourseRepositoryJpaTests {
     }
 
     private Course course(User user, LocalDate visitDate) {
-        return Course.create(user, "테스트 코스", null, "성동구", "11", "11200", Set.of(Topic.FOOD), visitDate);
+        return Course.create(user, "테스트 코스", "성동구", "11", "11200", Set.of(Topic.FOOD), visitDate);
     }
 
     private User createLocalUser() {

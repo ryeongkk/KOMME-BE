@@ -18,13 +18,13 @@ class CourseSummaryResponseTests {
     @Test
     void ofMapsCourseFields() {
         Course course = Course.create(
-                Mockito.mock(User.class), "성동구 먹방 Day", "설명", "성동구", "11", "11200",
+                Mockito.mock(User.class), "성동구 음식 Day", "성동구", "11", "11200",
                 Set.of(Topic.FOOD), LocalDate.of(2026, 8, 10)
         );
 
         CourseSummaryResponse response = CourseSummaryResponse.of(course);
 
-        assertThat(response.title()).isEqualTo("성동구 먹방 Day");
+        assertThat(response.title()).isEqualTo("성동구 음식 Day");
         assertThat(response.regionName()).isEqualTo("성동구");
         assertThat(response.visitDate()).isEqualTo(LocalDate.of(2026, 8, 10));
         assertThat(response.topics()).containsExactly(Topic.FOOD);

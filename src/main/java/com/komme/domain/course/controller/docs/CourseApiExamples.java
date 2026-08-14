@@ -10,7 +10,6 @@ public final class CourseApiExamples {
               "data": {
                 "courseId": 1,
                 "title": "성동구 음식 Day",
-                "description": null,
                 "regionName": "성동구",
                 "topics": ["FOOD"],
                 "visitDate": "2026-08-10",

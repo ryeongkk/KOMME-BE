@@ -12,7 +12,6 @@ import com.komme.domain.course.service.CourseGenerationResult;
 public record CourseDetailResponse(
         Long courseId,
         String title,
-        String description,
         String regionName,
         Set<Topic> topics,
         LocalDate visitDate,
@@ -24,7 +23,6 @@ public record CourseDetailResponse(
         return new CourseDetailResponse(
                 course.getId(),
                 course.getTitle(),
-                course.getDescription(),
                 course.getRegionName(),
                 course.getTopics(),
                 course.getVisitDate(),

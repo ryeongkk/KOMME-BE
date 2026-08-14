@@ -44,9 +44,6 @@ public class Course extends BaseEntity {
     @Column(nullable = false, length = 255)
     private String title;
 
-    @Column(length = 1000)
-    private String description;
-
     @Column(name = "region_name", nullable = false, length = 100)
     private String regionName;
 
@@ -68,11 +65,10 @@ public class Course extends BaseEntity {
     @Column(name = "visit_date", nullable = false)
     private LocalDate visitDate;
 
-    // 코스 엔티티 생성 - title은 LLM 생성 결과 또는 폴백("{지역명} {주제} Day")이 항상 채워진 채로 들어온다
+    // 코스 엔티티 생성 - title은 "{지역명} {주제} Day" 형식으로 기계적으로 생성된다
     private Course(
             User user,
             String title,
-            String description,
             String regionName,
             String areaCode,
             String sigunguCode,
@@ -81,7 +77,6 @@ public class Course extends BaseEntity {
     ) {
         this.user = user;
         this.title = title;
-        this.description = description;
         this.regionName = regionName;
         this.areaCode = areaCode;
         this.sigunguCode = sigunguCode;
@@ -93,19 +88,12 @@ public class Course extends BaseEntity {
     public static Course create(
             User user,
             String title,
-            String description,
             String regionName,
             String areaCode,
             String sigunguCode,
             Set<Topic> topics,
             LocalDate visitDate
     ) {
-        return new Course(user, title, description, regionName, areaCode, sigunguCode, topics, visitDate);
-    }
-
-    // LLM 생성 결과로 title/description 갱신 기능 (non-blocking 파이프라인에서 폴백 title로 먼저 저장한 뒤 비동기로 덮어쓸 때 사용)
-    public void updateGeneratedContent(String title, String description) {
-        this.title = title;
-        this.description = description;
+        return new Course(user, title, regionName, areaCode, sigunguCode, topics, visitDate);
     }
 }

@@ -49,11 +49,10 @@ public class CourseGenerationService {
 
         Spot representativeSpot = routePlan.orderedSpots().get(0);
         String regionName = resolveRegionName(representativeSpot);
-        String fallbackTitle = buildFallbackTitle(regionName, request.topics());
+        String title = buildTitle(regionName, request.topics());
         Course course = Course.create(
                 user,
-                fallbackTitle,
-                null,
+                title,
                 regionName,
                 representativeSpot.getAreaCode(),
                 representativeSpot.getSigunguCode(),
@@ -132,7 +131,8 @@ public class CourseGenerationService {
                 .orElse(representativeSpot.getAreaCode() + "-" + representativeSpot.getSigunguCode());
     }
 
-    private String buildFallbackTitle(String regionName, Set<Topic> topics) {
+    // "{지역명} {주제 라벨들} Day" 형식으로 코스 제목을 생성하는 기능
+    private String buildTitle(String regionName, Set<Topic> topics) {
         String topicLabel = topics.stream().map(Topic::getLabel).collect(Collectors.joining("·"));
         return regionName + " " + topicLabel + " Day";
     }

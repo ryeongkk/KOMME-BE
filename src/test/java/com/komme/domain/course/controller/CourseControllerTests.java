@@ -85,7 +85,7 @@ class CourseControllerTests {
     @Test
     void getCourseDetailReturnsQueryServiceResult() {
         CourseDetailResponse detail = new CourseDetailResponse(
-                1L, "성동구 음식 Day", null, "성동구", Set.of(Topic.FOOD), LocalDate.of(2026, 8, 10), List.of()
+                1L, "성동구 음식 Day", "성동구", Set.of(Topic.FOOD), LocalDate.of(2026, 8, 10), List.of()
         );
         when(courseQueryService.findDetail(1L, 10L)).thenReturn(detail);
 

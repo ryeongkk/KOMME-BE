@@ -116,7 +116,7 @@ class CourseQueryServiceTests {
 
     private Course course(User user, String title, LocalDate visitDate) {
         return Course.create(
-                user, title, null, "성동구", "11", "11200",
+                user, title, "성동구", "11", "11200",
                 Set.of(Topic.FOOD), visitDate
         );
     }

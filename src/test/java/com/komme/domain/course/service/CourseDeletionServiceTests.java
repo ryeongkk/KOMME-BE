@@ -82,7 +82,7 @@ class CourseDeletionServiceTests {
 
     private Course course(User user) {
         return Course.create(
-                user, "성동구 먹방 Day", null, "성동구", "11", "11200",
+                user, "성동구 음식 Day", "성동구", "11", "11200",
                 Set.of(Topic.FOOD), LocalDate.of(2026, 8, 10)
         );
     }
