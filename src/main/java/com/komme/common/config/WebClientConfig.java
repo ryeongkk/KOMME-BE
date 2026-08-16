@@ -92,6 +92,7 @@ public class WebClientConfig {
                 .build();
     }
 
+    // 연결/응답 타임아웃이 설정된 공통 HTTP 커넥터 생성 기능
     private ReactorClientHttpConnector clientConnector() {
         HttpClient httpClient = HttpClient.create()
                 .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, 3_000)

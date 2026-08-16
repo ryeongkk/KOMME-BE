@@ -91,13 +91,13 @@ public class TourApiQuerySupport {
     // 서비스키가 담긴 원본 예외 메시지를 노출하지 않고, 안전한 필드만 골라 로그로 남기는 기능
     private void logConnectionFailure(String callerLabel, WebClientException exception) {
         if (exception instanceof WebClientResponseException responseException) {
-            // 응답 바디는 우리가 보낸 요청이 아니라 상대 서버(카카오/관광공사)가 돌려준 응답이라
-            // 서비스키를 담고 있지 않다 - 구체적인 거부 사유(예: 서비스 미활성화)가 여기 담겨오는 경우가 많다.
+            // 응답 바디는 원칙적으로 상대 서버(카카오/관광공사)가 돌려준 응답이라 서비스키를 담고 있지 않지만,
+            // 게이트웨이/프록시 에러 페이지가 요청 URL을 그대로 반사하는 경우가 있어 방어적으로 마스킹한다.
             log.warn(
                     "[*] TourApi 외부 호출 실패 - caller={}, httpStatus={}, body={}",
                     callerLabel,
                     responseException.getStatusCode(),
-                    truncate(responseException.getResponseBodyAsString())
+                    truncate(redactServiceKey(responseException.getResponseBodyAsString()))
             );
         } else {
             // 최하위 원인(NestedExceptionUtils)은 ConnectException/SocketTimeoutException 등 순수 I/O 예외라
@@ -110,6 +110,22 @@ public class TourApiQuerySupport {
                     rootCause.getMessage()
             );
         }
+    }
+
+    // 응답 바디에 원본/URL 인코딩된 서비스키가 그대로 반사되어 있으면 마스킹하고, 개행도 제거하는 기능
+    // (로그 위조/여러 줄 스팸 방지 겸) - package-private, 같은 패키지 테스트에서 직접 검증한다.
+    String redactServiceKey(String responseBody) {
+        if (responseBody == null) {
+            return null;
+        }
+
+        String serviceKey = tourApiProperties.getServiceKey();
+        String redacted = responseBody;
+        if (serviceKey != null && !serviceKey.isBlank()) {
+            redacted = redacted.replace(serviceKey, "[REDACTED]")
+                    .replace(encode(serviceKey), "[REDACTED]");
+        }
+        return redacted.replaceAll("[\\r\\n]+", " ");
     }
 
     // 로그가 에러 페이지 전체(HTML 등)로 도배되지 않도록 응답 바디를 앞부분만 잘라내는 기능

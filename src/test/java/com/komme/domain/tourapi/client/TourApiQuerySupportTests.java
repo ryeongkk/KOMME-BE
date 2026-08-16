@@ -65,6 +65,43 @@ class TourApiQuerySupportTests {
         assertThat(support.encode("강남역")).isEqualTo("%EA%B0%95%EB%82%A8%EC%97%AD");
     }
 
+    // 응답 바디에 원본 서비스키가 그대로 반사돼 있으면 마스킹하는지 검증
+    @Test
+    void redactServiceKeyMasksRawServiceKey() {
+        String body = "{\"message\":\"invalid request: serviceKey=service-key\"}";
+
+        String redacted = support.redactServiceKey(body);
+
+        assertThat(redacted).doesNotContain("service-key").contains("[REDACTED]");
+    }
+
+    // 응답 바디에 URL 인코딩된 서비스키가 반사돼 있어도 마스킹하는지 검증
+    @Test
+    void redactServiceKeyMasksEncodedServiceKey() {
+        TourApiQuerySupport supportWithPlusKey = new TourApiQuerySupport(
+                new TourApiProperties("jWlN+WMj+abcd==", "ETC", "KOMME")
+        );
+        String body = "invalid request: serviceKey=jWlN%2BWMj%2Babcd%3D%3D";
+
+        String redacted = supportWithPlusKey.redactServiceKey(body);
+
+        assertThat(redacted).doesNotContain("jWlN%2BWMj%2Babcd%3D%3D").contains("[REDACTED]");
+    }
+
+    // 개행 문자를 제거해 로그 위조/여러 줄 스팸을 막는지 검증
+    @Test
+    void redactServiceKeyStripsNewlines() {
+        String redacted = support.redactServiceKey("line1\nline2\r\nline3");
+
+        assertThat(redacted).doesNotContain("\n").doesNotContain("\r");
+    }
+
+    // null 응답 바디는 그대로 null을 반환하는지 검증
+    @Test
+    void redactServiceKeyReturnsNullForNullBody() {
+        assertThat(support.redactServiceKey(null)).isNull();
+    }
+
     // 정상 응답에서 item 목록을 그대로 반환하는지 검증
     @Test
     void unwrapItemsReturnsItemsOnSuccess() {
