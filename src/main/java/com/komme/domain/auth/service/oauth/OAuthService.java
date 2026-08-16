@@ -32,7 +32,8 @@ public class OAuthService {
     private final UserReader userReader;
 
     // Apple identity token 로그인 흐름 조율 기능
-    @Transactional(readOnly = true)
+    // 로그인마다 클라이언트의 Language Setting 값으로 선호 언어를 최신화한다.
+    @Transactional
     public LoginResponse loginWithApple(OAuthAppleLoginRequest request) {
         OAuthIdentity identity = oAuthAppleClient.verifyIdentityToken(request.identityToken());
         User user = oAuthAccountService.resolveUser(
@@ -40,6 +41,7 @@ public class OAuthService {
                 identity.subject(),
                 identity.email()
         );
+        user.changePreferredLanguage(request.preferredLanguage());
         return authTokenService.issueLoginResponse(user);
     }
 
@@ -60,7 +62,8 @@ public class OAuthService {
     }
 
     // Google identity token 로그인 흐름 조율 기능
-    @Transactional(readOnly = true)
+    // 로그인마다 클라이언트의 Language Setting 값으로 선호 언어를 최신화한다.
+    @Transactional
     public LoginResponse loginWithGoogle(OAuthGoogleLoginRequest request) {
         OAuthIdentity identity = oAuthGoogleClient.verifyIdentityToken(request.idToken());
         User user = oAuthAccountService.resolveUser(
@@ -68,6 +71,7 @@ public class OAuthService {
                 identity.subject(),
                 identity.email()
         );
+        user.changePreferredLanguage(request.preferredLanguage());
         return authTokenService.issueLoginResponse(user);
     }
 }
