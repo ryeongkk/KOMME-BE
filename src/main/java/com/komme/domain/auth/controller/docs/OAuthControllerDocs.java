@@ -27,7 +27,8 @@ public interface OAuthControllerDocs {
             summary = "Apple 로그인",
             description = "Apple identity token의 서명, 발급자, 대상, 만료를 검증합니다. "
                     + "연결된 계정은 로그인하고, 검증된 이메일의 기존 계정은 Apple 계정을 연결하며, "
-                    + "가입 이력이 없으면 최소 프로필의 Apple 계정을 생성합니다."
+                    + "가입 이력이 없으면 최소 프로필의 Apple 계정을 생성합니다. "
+                    + "요청에 담긴 선호 언어로 사용자의 preferred_language를 매 로그인마다 최신화합니다."
     )
     @io.swagger.v3.oas.annotations.parameters.RequestBody(
             required = true,
@@ -92,7 +93,8 @@ public interface OAuthControllerDocs {
             summary = "Google 로그인",
             description = "Google ID token의 서명, 발급자, 대상, 만료를 검증합니다. "
                     + "연결된 계정은 로그인하고, 검증된 이메일의 기존 계정은 Google 계정을 연결하며, "
-                    + "가입 이력이 없으면 최소 프로필의 Google 계정을 생성합니다."
+                    + "가입 이력이 없으면 최소 프로필의 Google 계정을 생성합니다. "
+                    + "요청에 담긴 선호 언어로 사용자의 preferred_language를 매 로그인마다 최신화합니다."
     )
     @io.swagger.v3.oas.annotations.parameters.RequestBody(
             required = true,

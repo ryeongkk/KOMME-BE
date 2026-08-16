@@ -16,6 +16,7 @@ import com.komme.domain.auth.repository.OAuthAccountRepository;
 import com.komme.domain.auth.service.AuthConstraintExceptionMapper;
 import com.komme.domain.auth.service.token.AuthTokenService;
 import com.komme.domain.auth.service.token.WithdrawalStore;
+import com.komme.domain.i18n.enums.Language;
 import com.komme.domain.user.repository.UserRepository;
 import com.komme.domain.user.service.UserReader;
 
@@ -145,6 +146,23 @@ class OAuthServiceTests {
         verify(oAuthAccountRepository).saveAndFlush(any(OAuthAccount.class));
     }
 
+    // Apple 로그인마다 선호 언어를 최신값으로 반영하는지 검증
+    @Test
+    void loginWithAppleUpdatesPreferredLanguage() {
+        User user = createUserMock();
+        OAuthAccount account = OAuthAccount.create(user, Provider.APPLE, APPLE_SUBJECT);
+        prepareIdentity(null);
+        when(oAuthAccountRepository.findByProviderAndProviderId(
+                Provider.APPLE,
+                APPLE_SUBJECT
+        )).thenReturn(Optional.of(account));
+        prepareTokenResponse();
+
+        oAuthService.loginWithApple(createRequest());
+
+        verify(user).changePreferredLanguage(Language.ENGLISH);
+    }
+
     // 이메일 없는 미연결 Apple 계정 로그인 거부 검증
     @Test
     void loginWithAppleRejectsUnknownAccountWithoutEmail() {
@@ -173,11 +191,29 @@ class OAuthServiceTests {
         prepareTokenResponse();
 
         LoginResponse response = oAuthService.loginWithGoogle(
-                new OAuthGoogleLoginRequest("google-id-token")
+                new OAuthGoogleLoginRequest("google-id-token", Language.ENGLISH)
         );
 
         assertThat(response.accessToken()).isEqualTo("access-token");
         verify(authTokenService).issueLoginResponse(user);
+    }
+
+    // Google 로그인마다 선호 언어를 최신값으로 반영하는지 검증
+    @Test
+    void loginWithGoogleUpdatesPreferredLanguage() {
+        User user = createUserMock();
+        OAuthAccount account = OAuthAccount.create(user, Provider.GOOGLE, APPLE_SUBJECT);
+        when(oAuthGoogleClient.verifyIdentityToken("google-id-token"))
+                .thenReturn(new OAuthIdentity(APPLE_SUBJECT, EMAIL));
+        when(oAuthAccountRepository.findByProviderAndProviderId(
+                Provider.GOOGLE,
+                APPLE_SUBJECT
+        )).thenReturn(Optional.of(account));
+        prepareTokenResponse();
+
+        oAuthService.loginWithGoogle(new OAuthGoogleLoginRequest("google-id-token", Language.ENGLISH));
+
+        verify(user).changePreferredLanguage(Language.ENGLISH);
     }
 
     // 동시 OAuth 이메일 생성 충돌 도메인 오류 변환 검증
@@ -190,7 +226,7 @@ class OAuthServiceTests {
                 .thenThrow(new DataIntegrityViolationException("duplicate email"));
 
         assertThatThrownBy(() -> oAuthService.loginWithGoogle(
-                new OAuthGoogleLoginRequest("google-id-token")
+                new OAuthGoogleLoginRequest("google-id-token", Language.ENGLISH)
         ))
                 .isInstanceOf(GeneralException.class)
                 .extracting(exception -> ((GeneralException) exception).getErrorStatus())
@@ -208,7 +244,7 @@ class OAuthServiceTests {
         when(redisTemplate.hasKey("withdrawn:email:" + EMAIL)).thenReturn(true);
 
         assertThatThrownBy(() -> oAuthService.loginWithGoogle(
-                new OAuthGoogleLoginRequest("google-id-token")
+                new OAuthGoogleLoginRequest("google-id-token", Language.ENGLISH)
         ))
                 .isInstanceOf(GeneralException.class)
                 .extracting(exception -> ((GeneralException) exception).getErrorStatus())
@@ -248,7 +284,7 @@ class OAuthServiceTests {
 
     // Apple 로그인 요청 생성
     private OAuthAppleLoginRequest createRequest() {
-        return new OAuthAppleLoginRequest(IDENTITY_TOKEN);
+        return new OAuthAppleLoginRequest(IDENTITY_TOKEN, Language.ENGLISH);
     }
 
     // 사용자 Mock 생성

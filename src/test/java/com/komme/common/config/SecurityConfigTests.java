@@ -67,7 +67,7 @@ class SecurityConfigTests {
     // 공개 인증 API 보안 통과 검증
     @Test
     void publicAuthEndpointIsPermittedWithoutAccessToken() throws Exception {
-        LoginRequest request = new LoginRequest("user@example.com", "password123");
+        LoginRequest request = new LoginRequest("user@example.com", "password123", Language.ENGLISH);
         when(authService.login(request))
                 .thenReturn(LoginResponse.of("access-token", "refresh-token"));
 

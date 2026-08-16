@@ -110,25 +110,28 @@ class AuthRequestValidationTests {
     // 로그인 요청 필수값 검증
     @Test
     void loginRequestRejectsInvalidValues() {
-        LoginRequest request = new LoginRequest("invalid-email", "");
+        LoginRequest request = new LoginRequest("invalid-email", "", null);
 
-        assertThat(propertyNames(validator.validate(request))).contains("email", "password");
+        assertThat(propertyNames(validator.validate(request)))
+                .contains("email", "password", "preferredLanguage");
     }
 
-    // Apple 로그인 요청 identity token 필수값 검증
+    // Apple 로그인 요청 identity token과 선호 언어 필수값 검증
     @Test
-    void oAuthAppleLoginRequestRejectsBlankIdentityToken() {
-        OAuthAppleLoginRequest request = new OAuthAppleLoginRequest("");
+    void oAuthAppleLoginRequestRejectsInvalidValues() {
+        OAuthAppleLoginRequest request = new OAuthAppleLoginRequest("", null);
 
-        assertThat(propertyNames(validator.validate(request))).contains("identityToken");
+        assertThat(propertyNames(validator.validate(request)))
+                .contains("identityToken", "preferredLanguage");
     }
 
-    // Google 로그인 요청 ID token 필수값 검증
+    // Google 로그인 요청 ID token과 선호 언어 필수값 검증
     @Test
-    void oAuthGoogleLoginRequestRejectsBlankIdToken() {
-        OAuthGoogleLoginRequest request = new OAuthGoogleLoginRequest("");
+    void oAuthGoogleLoginRequestRejectsInvalidValues() {
+        OAuthGoogleLoginRequest request = new OAuthGoogleLoginRequest("", null);
 
-        assertThat(propertyNames(validator.validate(request))).contains("idToken");
+        assertThat(propertyNames(validator.validate(request)))
+                .contains("idToken", "preferredLanguage");
     }
 
     // OAuth 프로필 완성 요청 올바른 값 검증 통과 확인

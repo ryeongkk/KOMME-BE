@@ -59,11 +59,13 @@ public class AuthService {
     }
 
     // 이메일 기반 LOCAL 사용자 로그인 기능
-    @Transactional(readOnly = true)
+    // 로그인마다 클라이언트의 Language Setting 값으로 선호 언어를 최신화한다.
+    @Transactional
     public LoginResponse login(LoginRequest request) {
         String email = EmailNormalizer.normalize(request.email());
         User user = authUserReader.findLocalByEmailOrThrow(email);
         validatePassword(request.password(), user.getPassword());
+        user.changePreferredLanguage(request.preferredLanguage());
 
         return authTokenService.issueLoginResponse(user);
     }

@@ -6,6 +6,7 @@ import com.komme.domain.auth.dto.request.OAuthAppleLoginRequest;
 import com.komme.domain.auth.dto.request.OAuthGoogleLoginRequest;
 import com.komme.domain.auth.dto.response.LoginResponse;
 import com.komme.domain.auth.service.oauth.OAuthService;
+import com.komme.domain.i18n.enums.Language;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -37,7 +38,7 @@ class OAuthControllerTests {
     // Google 로그인 API 성공 응답 검증
     @Test
     void loginWithGoogleReturnsLoginResponse() throws Exception {
-        OAuthGoogleLoginRequest request = new OAuthGoogleLoginRequest("identity-token");
+        OAuthGoogleLoginRequest request = new OAuthGoogleLoginRequest("identity-token", Language.ENGLISH);
         when(oAuthService.loginWithGoogle(request))
                 .thenReturn(LoginResponse.of("access-token", "refresh-token"));
 
@@ -53,7 +54,7 @@ class OAuthControllerTests {
     // Apple 로그인 API 성공 응답 검증
     @Test
     void loginWithAppleReturnsLoginResponse() throws Exception {
-        OAuthAppleLoginRequest request = new OAuthAppleLoginRequest("identity-token");
+        OAuthAppleLoginRequest request = new OAuthAppleLoginRequest("identity-token", Language.ENGLISH);
         when(oAuthService.loginWithApple(request))
                 .thenReturn(LoginResponse.of("apple-access-token", "apple-refresh-token"));
 
@@ -69,7 +70,7 @@ class OAuthControllerTests {
     // Google 로그인 API 입력값 오류 응답 검증
     @Test
     void loginWithGoogleRejectsBlankToken() throws Exception {
-        OAuthGoogleLoginRequest request = new OAuthGoogleLoginRequest("");
+        OAuthGoogleLoginRequest request = new OAuthGoogleLoginRequest("", Language.ENGLISH);
 
         mockMvc.perform(post("/api/v1/auth/oauth/google")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -81,7 +82,7 @@ class OAuthControllerTests {
     // Apple 로그인 API 입력값 오류 응답 검증
     @Test
     void loginWithAppleRejectsBlankToken() throws Exception {
-        OAuthAppleLoginRequest request = new OAuthAppleLoginRequest("");
+        OAuthAppleLoginRequest request = new OAuthAppleLoginRequest("", Language.ENGLISH);
 
         mockMvc.perform(post("/api/v1/auth/oauth/apple")
                         .contentType(MediaType.APPLICATION_JSON)

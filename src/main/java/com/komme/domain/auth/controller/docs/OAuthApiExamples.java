@@ -4,7 +4,8 @@ public final class OAuthApiExamples {
 
     public static final String APPLE_LOGIN_REQUEST = """
             {
-              "identityToken": "eyJraWQiOiJ..."
+              "identityToken": "eyJraWQiOiJ...",
+              "preferredLanguage": "ENGLISH"
             }
             """;
 
@@ -54,7 +55,8 @@ public final class OAuthApiExamples {
 
     public static final String GOOGLE_LOGIN_REQUEST = """
             {
-              "idToken": "eyJhbGciOiJSUzI1NiIs..."
+              "idToken": "eyJhbGciOiJSUzI1NiIs...",
+              "preferredLanguage": "ENGLISH"
             }
             """;
 
