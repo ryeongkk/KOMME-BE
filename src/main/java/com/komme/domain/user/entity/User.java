@@ -103,24 +103,21 @@ public class User extends BaseEntity {
     }
 
     // LOCAL 사용자 생성 기능
+    // 국적/성별/선호 언어/관심 서비스는 회원가입 시점에 받지 않으며 OAuth 사용자와 동일하게 null/빈 값으로 시작한다.
     public static User createLocal(
             String email,
             String encodedPassword,
-            String nickname,
-            String nationality,
-            Gender gender,
-            Language preferredLanguage,
-            Set<ServiceInterest> serviceInterests
+            String nickname
     ) {
         return User.builder()
                 .email(email)
                 .password(encodedPassword)
                 .nickname(nickname)
                 .provider(Provider.LOCAL)
-                .nationality(nationality)
-                .gender(gender)
-                .preferredLanguage(preferredLanguage)
-                .serviceInterests(serviceInterests)
+                .nationality(null)
+                .gender(null)
+                .preferredLanguage(null)
+                .serviceInterests(Set.of())
                 .build();
     }
 
