@@ -55,6 +55,7 @@ public class KakaoLocalClient {
 
     private List<KakaoPlaceDocument> call(String keyword) {
         KakaoLocalSearchResponse response = tourApiQuerySupport.get(
+                "kakao-local-search",
                 kakaoLocalApiWebClient,
                 uriBuilder -> uriBuilder
                         .path("/v2/local/search/keyword.json")

@@ -63,6 +63,7 @@ public class MultilingualTourInfoClient {
         }
 
         TourApiEnvelope<DetailCommonItem> envelope = tourApiQuerySupport.get(
+                "tourapi-multilingual-detail-common",
                 webClient,
                 uriBuilder -> tourApiQuerySupport.withCommonParams(uriBuilder)
                         .path("/detailCommon2")

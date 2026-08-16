@@ -47,6 +47,7 @@ public class KorServiceDetailClient {
 
     private List<DetailCommonItem> callDetailCommon(String contentId, String contentTypeId) {
         TourApiEnvelope<DetailCommonItem> envelope = tourApiQuerySupport.get(
+                "tourapi-detail-common",
                 korServiceApiWebClient,
                 uriBuilder -> tourApiQuerySupport.withCommonParams(uriBuilder)
                         .path("/detailCommon2")
@@ -76,6 +77,7 @@ public class KorServiceDetailClient {
 
     private List<DetailIntroItem> callDetailIntro(String contentId, String contentTypeId) {
         TourApiEnvelope<DetailIntroItem> envelope = tourApiQuerySupport.get(
+                "tourapi-detail-intro",
                 korServiceApiWebClient,
                 uriBuilder -> tourApiQuerySupport.withCommonParams(uriBuilder)
                         .path("/detailIntro2")
@@ -102,6 +104,7 @@ public class KorServiceDetailClient {
 
     private List<DetailImageItem> callDetailImages(String contentId) {
         TourApiEnvelope<DetailImageItem> envelope = tourApiQuerySupport.get(
+                "tourapi-detail-images",
                 korServiceApiWebClient,
                 uriBuilder -> tourApiQuerySupport.withCommonParams(uriBuilder)
                         .path("/detailImage2")

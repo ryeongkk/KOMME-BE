@@ -48,6 +48,7 @@ public class RelatedSpotClient {
 
     private List<RelatedSpotItem> callByArea(String areaCode, String sigunguCode) {
         TourApiEnvelope<RelatedSpotItem> envelope = tourApiQuerySupport.get(
+                "tourapi-related-spot-by-area",
                 relatedSpotApiWebClient,
                 uriBuilder -> tourApiQuerySupport.withCommonParams(uriBuilder)
                         .path("/areaBasedList1")
@@ -76,10 +77,11 @@ public class RelatedSpotClient {
 
     private List<RelatedSpotItem> callByKeyword(String keyword) {
         TourApiEnvelope<RelatedSpotItem> envelope = tourApiQuerySupport.get(
+                "tourapi-related-spot-by-keyword",
                 relatedSpotApiWebClient,
                 uriBuilder -> tourApiQuerySupport.withCommonParams(uriBuilder)
                         .path("/searchKeyword1")
-                        .queryParam("keyword", keyword)
+                        .queryParam("keyword", tourApiQuerySupport.encode(keyword))
                         .queryParam("numOfRows", 50)
                         .queryParam("pageNo", 1)
                         .build(),

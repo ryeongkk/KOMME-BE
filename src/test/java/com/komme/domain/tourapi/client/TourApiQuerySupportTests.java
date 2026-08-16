@@ -11,6 +11,8 @@ import org.junit.jupiter.api.Test;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.reactive.function.client.ClientResponse;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.reactive.function.client.WebClientRequestException;
 import org.springframework.web.util.DefaultUriBuilderFactory;
@@ -38,6 +40,66 @@ class TourApiQuerySupportTests {
                 .contains("MobileOS=ETC")
                 .contains("MobileApp=KOMME")
                 .contains("_type=json");
+    }
+
+    // 서비스키에 '+'가 있어도(base64) 인코딩 없음 모드(WebClientConfig의 관광공사 WebClient 설정)에서
+    // 공백으로 깨지지 않고 %2B로 살아남는지 검증 - SERVICE_KEY_IS_NOT_REGISTERED_ERROR 재발 방지
+    @Test
+    void withCommonParamsEncodesServiceKeyContainingPlusForNoEncodingWebClient() {
+        TourApiQuerySupport supportWithPlusKey = new TourApiQuerySupport(
+                new TourApiProperties("jWlN+WMj+abcd==", "ETC", "KOMME")
+        );
+        DefaultUriBuilderFactory noEncodingFactory = new DefaultUriBuilderFactory("http://example.com");
+        noEncodingFactory.setEncodingMode(DefaultUriBuilderFactory.EncodingMode.NONE);
+        UriBuilder uriBuilder = noEncodingFactory.uriString("");
+
+        String rawQuery = supportWithPlusKey.withCommonParams(uriBuilder).build().getRawQuery();
+
+        assertThat(rawQuery).contains("serviceKey=jWlN%2BWMj%2Babcd%3D%3D");
+    }
+
+    // 쿼리파라미터 값 인코딩 기능이 특수문자를 UTF-8로 퍼센트 인코딩하는지 검증
+    @Test
+    void encodeUrlEncodesValue() {
+        assertThat(support.encode("jWlN+WMj/abcd==")).isEqualTo("jWlN%2BWMj%2Fabcd%3D%3D");
+        assertThat(support.encode("강남역")).isEqualTo("%EA%B0%95%EB%82%A8%EC%97%AD");
+    }
+
+    // 응답 바디에 원본 서비스키가 그대로 반사돼 있으면 마스킹하는지 검증
+    @Test
+    void redactServiceKeyMasksRawServiceKey() {
+        String body = "{\"message\":\"invalid request: serviceKey=service-key\"}";
+
+        String redacted = support.redactServiceKey(body);
+
+        assertThat(redacted).doesNotContain("service-key").contains("[REDACTED]");
+    }
+
+    // 응답 바디에 URL 인코딩된 서비스키가 반사돼 있어도 마스킹하는지 검증
+    @Test
+    void redactServiceKeyMasksEncodedServiceKey() {
+        TourApiQuerySupport supportWithPlusKey = new TourApiQuerySupport(
+                new TourApiProperties("jWlN+WMj+abcd==", "ETC", "KOMME")
+        );
+        String body = "invalid request: serviceKey=jWlN%2BWMj%2Babcd%3D%3D";
+
+        String redacted = supportWithPlusKey.redactServiceKey(body);
+
+        assertThat(redacted).doesNotContain("jWlN%2BWMj%2Babcd%3D%3D").contains("[REDACTED]");
+    }
+
+    // 개행 문자를 제거해 로그 위조/여러 줄 스팸을 막는지 검증
+    @Test
+    void redactServiceKeyStripsNewlines() {
+        String redacted = support.redactServiceKey("line1\nline2\r\nline3");
+
+        assertThat(redacted).doesNotContain("\n").doesNotContain("\r");
+    }
+
+    // null 응답 바디는 그대로 null을 반환하는지 검증
+    @Test
+    void redactServiceKeyReturnsNullForNullBody() {
+        assertThat(support.redactServiceKey(null)).isNull();
     }
 
     // 정상 응답에서 item 목록을 그대로 반환하는지 검증
@@ -162,6 +224,32 @@ class TourApiQuerySupportTests {
                 .build();
 
         assertThatThrownBy(() -> support.get(
+                "test-caller",
+                webClient,
+                uriBuilder -> uriBuilder.build(),
+                new ParameterizedTypeReference<String>() {
+                },
+                TourApiErrorStatus.KOR_SERVICE_CONNECTION_FAILED
+        ))
+                .isInstanceOf(GeneralException.class)
+                .extracting(exception -> ((GeneralException) exception).getErrorStatus())
+                .isEqualTo(TourApiErrorStatus.KOR_SERVICE_CONNECTION_FAILED);
+    }
+
+    // HTTP 응답은 받았지만 실패 상태 코드(WebClientResponseException)인 경우도 GeneralException으로 변환되는지 검증
+    @Test
+    void getMapsResponseErrorWithBody() {
+        WebClient webClient = WebClient.builder()
+                .exchangeFunction(request -> Mono.just(
+                        ClientResponse.create(HttpStatus.FORBIDDEN)
+                                .header("Content-Type", "application/json")
+                                .body("{\"errorType\":\"NotAuthorizedError\"}")
+                                .build()
+                ))
+                .build();
+
+        assertThatThrownBy(() -> support.get(
+                "test-caller",
                 webClient,
                 uriBuilder -> uriBuilder.build(),
                 new ParameterizedTypeReference<String>() {
