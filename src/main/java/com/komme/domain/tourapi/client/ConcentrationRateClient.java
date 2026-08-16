@@ -52,6 +52,7 @@ public class ConcentrationRateClient {
 
     private List<ConcentrationRateItem> call(String areaCode, String sigunguCode, String touristSpotName) {
         TourApiEnvelope<ConcentrationRateItem> envelope = tourApiQuerySupport.get(
+                "tourapi-concentration-rate",
                 concentrationRateApiWebClient,
                 uriBuilder -> {
                     UriBuilder withCommonParams = tourApiQuerySupport.withCommonParams(uriBuilder)

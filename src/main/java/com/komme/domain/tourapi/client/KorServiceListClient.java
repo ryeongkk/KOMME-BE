@@ -48,6 +48,7 @@ public class KorServiceListClient {
 
     private List<AreaBasedListItem> callAreaBasedList(String areaCode, String sigunguCode, String contentTypeId) {
         TourApiEnvelope<AreaBasedListItem> envelope = tourApiQuerySupport.get(
+                "tourapi-area-based-list",
                 korServiceApiWebClient,
                 uriBuilder -> tourApiQuerySupport.withCommonParams(uriBuilder)
                         .path("/areaBasedList2")
@@ -88,6 +89,7 @@ public class KorServiceListClient {
             String contentTypeId
     ) {
         TourApiEnvelope<LocationBasedListItem> envelope = tourApiQuerySupport.get(
+                "tourapi-location-based-list",
                 korServiceApiWebClient,
                 uriBuilder -> tourApiQuerySupport.withCommonParams(uriBuilder)
                         .path("/locationBasedList2")
@@ -109,6 +111,7 @@ public class KorServiceListClient {
     // 키워드 검색조회 (searchKeyword2) - 캐시하지 않음(호출부에서 필요시 자체 캐시)
     public List<AreaBasedListItem> searchByKeyword(String keyword, String areaCode) {
         TourApiEnvelope<AreaBasedListItem> envelope = tourApiQuerySupport.get(
+                "tourapi-keyword-search",
                 korServiceApiWebClient,
                 uriBuilder -> tourApiQuerySupport.withCommonParams(uriBuilder)
                         .path("/searchKeyword2")

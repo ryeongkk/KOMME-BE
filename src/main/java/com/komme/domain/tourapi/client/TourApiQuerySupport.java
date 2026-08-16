@@ -9,6 +9,7 @@ import com.komme.common.base.status.BaseStatus;
 import com.komme.common.exception.GeneralException;
 import com.komme.domain.tourapi.properties.TourApiProperties;
 
+import org.springframework.core.NestedExceptionUtils;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpHeaders;
 import org.springframework.stereotype.Component;
@@ -41,18 +42,21 @@ public class TourApiQuerySupport {
     }
 
     // 외부 API 공통 GET 호출 - 연결 실패는 지정된 상태로 GeneralException 변환
+    // callerLabel은 이 헬퍼를 공유하는 여러 클라이언트/오퍼레이션 중 어디서 실패했는지 로그로 구분하기 위한 식별자다.
     public <T> T get(
+            String callerLabel,
             WebClient webClient,
             Function<UriBuilder, URI> uriFunction,
             ParameterizedTypeReference<T> responseType,
             BaseStatus connectionFailedStatus
     ) {
-        return get(webClient, uriFunction, responseType, connectionFailedStatus, headers -> {
+        return get(callerLabel, webClient, uriFunction, responseType, connectionFailedStatus, headers -> {
         });
     }
 
     // 요청 헤더 커스터마이징이 필요한 경우(예: 카카오 Authorization 헤더)의 외부 API 공통 GET 호출
     public <T> T get(
+            String callerLabel,
             WebClient webClient,
             Function<UriBuilder, URI> uriFunction,
             ParameterizedTypeReference<T> responseType,
@@ -69,17 +73,29 @@ public class TourApiQuerySupport {
         } catch (WebClientException exception) {
             // WebClientException의 메시지/toString은 요청 URI(서비스키 쿼리파라미터 포함)를 그대로 담고 있어
             // 절대 로그에 찍지 않는다 - 원인 예외를 cause로도 넘기지 않고, 안전한 필드만 따로 로그로 남긴다.
-            logConnectionFailure(exception);
+            logConnectionFailure(callerLabel, exception);
             throw new GeneralException(connectionFailedStatus);
         }
     }
 
     // 서비스키가 담긴 원본 예외 메시지를 노출하지 않고, 안전한 필드만 골라 로그로 남기는 기능
-    private void logConnectionFailure(WebClientException exception) {
+    private void logConnectionFailure(String callerLabel, WebClientException exception) {
         if (exception instanceof WebClientResponseException responseException) {
-            log.warn("[*] TourApi 외부 호출 실패 - httpStatus={}", responseException.getStatusCode());
+            log.warn(
+                    "[*] TourApi 외부 호출 실패 - caller={}, httpStatus={}",
+                    callerLabel,
+                    responseException.getStatusCode()
+            );
         } else {
-            log.warn("[*] TourApi 외부 호출 실패 - {}", exception.getClass().getSimpleName());
+            // 최하위 원인(NestedExceptionUtils)은 ConnectException/SocketTimeoutException 등 순수 I/O 예외라
+            // 요청 URI를 담고 있지 않다 - WebClientException 자체의 메시지 대신 이쪽만 골라 로그로 남긴다.
+            Throwable rootCause = NestedExceptionUtils.getMostSpecificCause(exception);
+            log.warn(
+                    "[*] TourApi 외부 호출 실패 - caller={}, cause={}: {}",
+                    callerLabel,
+                    rootCause.getClass().getSimpleName(),
+                    rootCause.getMessage()
+            );
         }
     }
 
