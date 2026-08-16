@@ -29,6 +29,7 @@ import lombok.extern.slf4j.Slf4j;
 public class TourApiQuerySupport {
 
     private static final String JSON_RESPONSE_TYPE = "json";
+    private static final int RESPONSE_BODY_LOG_MAX_LENGTH = 500;
 
     private final TourApiProperties tourApiProperties;
 
@@ -81,10 +82,13 @@ public class TourApiQuerySupport {
     // 서비스키가 담긴 원본 예외 메시지를 노출하지 않고, 안전한 필드만 골라 로그로 남기는 기능
     private void logConnectionFailure(String callerLabel, WebClientException exception) {
         if (exception instanceof WebClientResponseException responseException) {
+            // 응답 바디는 우리가 보낸 요청이 아니라 상대 서버(카카오/관광공사)가 돌려준 응답이라
+            // 서비스키를 담고 있지 않다 - 구체적인 거부 사유(예: 서비스 미활성화)가 여기 담겨오는 경우가 많다.
             log.warn(
-                    "[*] TourApi 외부 호출 실패 - caller={}, httpStatus={}",
+                    "[*] TourApi 외부 호출 실패 - caller={}, httpStatus={}, body={}",
                     callerLabel,
-                    responseException.getStatusCode()
+                    responseException.getStatusCode(),
+                    truncate(responseException.getResponseBodyAsString())
             );
         } else {
             // 최하위 원인(NestedExceptionUtils)은 ConnectException/SocketTimeoutException 등 순수 I/O 예외라
@@ -97,6 +101,14 @@ public class TourApiQuerySupport {
                     rootCause.getMessage()
             );
         }
+    }
+
+    // 로그가 에러 페이지 전체(HTML 등)로 도배되지 않도록 응답 바디를 앞부분만 잘라내는 기능
+    private String truncate(String responseBody) {
+        if (responseBody == null || responseBody.length() <= RESPONSE_BODY_LOG_MAX_LENGTH) {
+            return responseBody;
+        }
+        return responseBody.substring(0, RESPONSE_BODY_LOG_MAX_LENGTH) + "...(truncated)";
     }
 
     // 공통 응답 봉투에서 item 목록만 꺼내고, 실패 응답이면 지정된 상태로 예외 발생

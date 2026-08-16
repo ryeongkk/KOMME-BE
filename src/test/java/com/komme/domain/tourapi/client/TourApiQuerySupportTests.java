@@ -11,6 +11,8 @@ import org.junit.jupiter.api.Test;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.reactive.function.client.ClientResponse;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.reactive.function.client.WebClientRequestException;
 import org.springframework.web.util.DefaultUriBuilderFactory;
@@ -162,6 +164,32 @@ class TourApiQuerySupportTests {
                 .build();
 
         assertThatThrownBy(() -> support.get(
+                "test-caller",
+                webClient,
+                uriBuilder -> uriBuilder.build(),
+                new ParameterizedTypeReference<String>() {
+                },
+                TourApiErrorStatus.KOR_SERVICE_CONNECTION_FAILED
+        ))
+                .isInstanceOf(GeneralException.class)
+                .extracting(exception -> ((GeneralException) exception).getErrorStatus())
+                .isEqualTo(TourApiErrorStatus.KOR_SERVICE_CONNECTION_FAILED);
+    }
+
+    // HTTP 응답은 받았지만 실패 상태 코드(WebClientResponseException)인 경우도 GeneralException으로 변환되는지 검증
+    @Test
+    void getMapsResponseErrorWithBody() {
+        WebClient webClient = WebClient.builder()
+                .exchangeFunction(request -> Mono.just(
+                        ClientResponse.create(HttpStatus.FORBIDDEN)
+                                .header("Content-Type", "application/json")
+                                .body("{\"errorType\":\"NotAuthorizedError\"}")
+                                .build()
+                ))
+                .build();
+
+        assertThatThrownBy(() -> support.get(
+                "test-caller",
                 webClient,
                 uriBuilder -> uriBuilder.build(),
                 new ParameterizedTypeReference<String>() {
