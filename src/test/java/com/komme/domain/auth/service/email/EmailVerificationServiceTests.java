@@ -10,13 +10,9 @@ import com.komme.domain.auth.enums.EmailVerificationPurpose;
 import com.komme.domain.auth.exception.AuthErrorStatus;
 import com.komme.domain.auth.service.AuthUserReader;
 import com.komme.domain.user.entity.User;
-import com.komme.domain.user.enums.Gender;
-import com.komme.domain.user.enums.ServiceInterest;
 import com.komme.domain.user.repository.UserRepository;
-import com.komme.domain.i18n.enums.Language;
 
 import java.util.Optional;
-import java.util.Set;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -227,11 +223,7 @@ class EmailVerificationServiceTests {
         return User.createLocal(
                 EMAIL,
                 "encoded-password",
-                "nickname",
-                "KR",
-                Gender.FEMALE,
-                Language.ENGLISH,
-                Set.of(ServiceInterest.COURSE)
+                "nickname"
         );
     }
 }

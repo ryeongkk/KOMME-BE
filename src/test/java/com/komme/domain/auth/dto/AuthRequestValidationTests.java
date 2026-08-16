@@ -13,9 +13,6 @@ import com.komme.domain.auth.dto.request.PasswordResetRequest;
 import com.komme.domain.auth.dto.request.PasswordResetSendRequest;
 import com.komme.domain.auth.dto.request.SignUpRequest;
 import com.komme.domain.auth.dto.request.TokenReissueRequest;
-import com.komme.domain.user.enums.Gender;
-import com.komme.domain.user.enums.ServiceInterest;
-import com.komme.domain.i18n.enums.Language;
 
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -61,11 +58,7 @@ class AuthRequestValidationTests {
         SignUpRequest request = new SignUpRequest(
                 "user@example.com",
                 "password",
-                "nickname",
-                "KR",
-                Gender.FEMALE,
-                Language.ENGLISH,
-                Set.of(ServiceInterest.COURSE)
+                "nickname"
         );
 
         assertThat(propertyNames(validator.validate(request))).contains("password");
@@ -77,11 +70,7 @@ class AuthRequestValidationTests {
         SignUpRequest request = new SignUpRequest(
                 "user@example.com",
                 "newpassword2!",
-                "nickname",
-                "KR",
-                Gender.FEMALE,
-                Language.ENGLISH,
-                Set.of(ServiceInterest.COURSE)
+                "nickname"
         );
 
         assertThat(propertyNames(validator.validate(request))).doesNotContain("password");
@@ -93,31 +82,10 @@ class AuthRequestValidationTests {
         SignUpRequest request = new SignUpRequest(
                 "user@example.com",
                 "password1",
-                "n",
-                "KR",
-                Gender.FEMALE,
-                Language.ENGLISH,
-                Set.of(ServiceInterest.COURSE)
+                "n"
         );
 
         assertThat(propertyNames(validator.validate(request))).contains("nickname");
-    }
-
-    // 잘못된 국적과 필수 선택값 거부 검증
-    @Test
-    void signUpRequestRejectsInvalidProfileValues() {
-        SignUpRequest request = new SignUpRequest(
-                "user@example.com",
-                "password1",
-                "nickname",
-                "KOR",
-                null,
-                null,
-                Set.of()
-        );
-
-        assertThat(propertyNames(validator.validate(request)))
-                .contains("nationality", "gender", "preferredLanguage", "serviceInterests");
     }
 
     // 이메일 인증 전송 요청 이메일 형식 검증
@@ -240,11 +208,7 @@ class AuthRequestValidationTests {
         return new SignUpRequest(
                 "user@example.com",
                 "password1!",
-                "nickname",
-                "KR",
-                Gender.FEMALE,
-                Language.ENGLISH,
-                Set.of(ServiceInterest.COURSE)
+                "nickname"
         );
     }
 

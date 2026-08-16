@@ -10,9 +10,7 @@ import com.komme.domain.auth.dto.request.TokenReissueRequest;
 import com.komme.domain.auth.dto.response.LoginResponse;
 import com.komme.domain.auth.dto.response.TokenReissueResponse;
 import com.komme.domain.user.entity.User;
-import com.komme.domain.user.enums.Gender;
 import com.komme.domain.user.enums.Provider;
-import com.komme.domain.user.enums.ServiceInterest;
 import com.komme.domain.auth.exception.AuthErrorStatus;
 import com.komme.domain.auth.jwt.JwtProvider;
 import com.komme.domain.auth.jwt.JwtProvider.TokenClaims;
@@ -25,7 +23,6 @@ import com.komme.domain.auth.service.token.RefreshTokenStore;
 import com.komme.domain.auth.service.token.WithdrawalStore;
 import com.komme.domain.user.repository.UserRepository;
 import com.komme.domain.user.service.UserReader;
-import com.komme.domain.i18n.enums.Language;
 
 import java.time.Duration;
 import java.time.Instant;
@@ -130,10 +127,11 @@ class AuthServiceTests {
         assertThat(savedUser.getEmail()).isEqualTo(EMAIL);
         assertThat(savedUser.getPassword()).isEqualTo("encoded-password");
         assertThat(savedUser.getNickname()).isEqualTo("nickname");
-        assertThat(savedUser.getNationality()).isEqualTo("KR");
         assertThat(savedUser.getProvider()).isEqualTo(Provider.LOCAL);
-        assertThat(savedUser.getPreferredLanguage()).isEqualTo(Language.ENGLISH);
-        assertThat(savedUser.getServiceInterests()).containsExactly(ServiceInterest.COURSE);
+        assertThat(savedUser.getNationality()).isNull();
+        assertThat(savedUser.getGender()).isNull();
+        assertThat(savedUser.getPreferredLanguage()).isNull();
+        assertThat(savedUser.getServiceInterests()).isEmpty();
         verify(emailVerificationService).validateVerifiedEmail(EMAIL);
         verify(emailVerificationService).deleteVerifiedEmail(EMAIL);
     }
@@ -573,11 +571,7 @@ class AuthServiceTests {
         return new SignUpRequest(
                 " USER@example.com ",
                 "password1",
-                " nickname ",
-                "kr",
-                Gender.FEMALE,
-                Language.ENGLISH,
-                Set.of(ServiceInterest.COURSE)
+                " nickname "
         );
     }
 
@@ -593,11 +587,7 @@ class AuthServiceTests {
         return User.createLocal(
                 EMAIL,
                 "encoded-password",
-                "nickname",
-                "KR",
-                Gender.FEMALE,
-                Language.ENGLISH,
-                Set.of(ServiceInterest.COURSE)
+                "nickname"
         );
     }
 

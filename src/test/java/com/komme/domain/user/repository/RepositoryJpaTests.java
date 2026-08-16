@@ -2,13 +2,8 @@ package com.komme.domain.user.repository;
 
 import com.komme.domain.auth.entity.OAuthAccount;
 import com.komme.domain.auth.repository.OAuthAccountRepository;
-import com.komme.domain.i18n.enums.Language;
 import com.komme.domain.user.entity.User;
-import com.komme.domain.user.enums.Gender;
 import com.komme.domain.user.enums.Provider;
-import com.komme.domain.user.enums.ServiceInterest;
-
-import java.util.Set;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -120,11 +115,7 @@ class RepositoryJpaTests {
         return User.createLocal(
                 email,
                 "encoded-password",
-                nickname,
-                "KR",
-                Gender.FEMALE,
-                Language.ENGLISH,
-                Set.of(ServiceInterest.COURSE)
+                nickname
         );
     }
 }

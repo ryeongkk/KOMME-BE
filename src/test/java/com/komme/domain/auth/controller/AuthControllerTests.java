@@ -21,12 +21,8 @@ import com.komme.domain.auth.exception.AuthErrorStatus;
 import com.komme.domain.auth.jwt.JwtProvider.TokenClaims;
 import com.komme.domain.auth.service.AuthService;
 import com.komme.domain.auth.service.email.EmailVerificationService;
-import com.komme.domain.user.enums.Gender;
-import com.komme.domain.user.enums.ServiceInterest;
-import com.komme.domain.i18n.enums.Language;
 
 import java.time.Instant;
-import java.util.Set;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -193,8 +189,7 @@ class AuthControllerTests {
     @Test
     void signUpReturnsSuccess() throws Exception {
         SignUpRequest request = new SignUpRequest(
-                "user@example.com", "password123!", "nickname", "kr",
-                Gender.FEMALE, Language.ENGLISH, Set.of(ServiceInterest.COURSE)
+                "user@example.com", "password123!", "nickname"
         );
 
         mockMvc.perform(post("/api/v1/auth/signup")
