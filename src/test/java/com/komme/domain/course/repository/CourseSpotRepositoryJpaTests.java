@@ -8,13 +8,10 @@ import java.util.Set;
 import com.komme.domain.course.entity.Course;
 import com.komme.domain.course.entity.CourseSpot;
 import com.komme.domain.course.enums.Topic;
-import com.komme.domain.i18n.enums.Language;
 import com.komme.domain.spot.entity.Spot;
 import com.komme.domain.spot.enums.TimeSlot;
 import com.komme.domain.spot.repository.SpotRepository;
 import com.komme.domain.user.entity.User;
-import com.komme.domain.user.enums.Gender;
-import com.komme.domain.user.enums.ServiceInterest;
 import com.komme.domain.user.repository.UserRepository;
 
 import org.junit.jupiter.api.Test;
@@ -50,10 +47,9 @@ class CourseSpotRepositoryJpaTests {
     // 코스 상세 조회용 방문 순서(sequence) 정렬이 실제로 동작하는지 검증
     @Test
     void findByCourseIdOrdersBySequence() {
-        User user = userRepository.saveAndFlush(User.createLocal(
-                "user@example.com", "encoded-password", "nickname",
-                "KR", Gender.FEMALE, Language.ENGLISH, Set.of(ServiceInterest.COURSE)
-        ));
+        User user = userRepository.saveAndFlush(
+                User.createLocal("user@example.com", "encoded-password", "nickname")
+        );
         Course course = courseRepository.saveAndFlush(Course.create(
                 user, "성동구", "11", "11200",
                 Set.of(Topic.FOOD), LocalDate.of(2026, 8, 10)
@@ -73,10 +69,9 @@ class CourseSpotRepositoryJpaTests {
     // deleteByCourse_Id로 코스 스팟을 먼저 지우면 course_spot -> course FK 제약 위반 없이 Course도 지울 수 있는지 검증
     @Test
     void deleteByCourseIdAllowsSubsequentCourseDeletionWithoutForeignKeyViolation() {
-        User user = userRepository.saveAndFlush(User.createLocal(
-                "user2@example.com", "encoded-password", "nickname2",
-                "KR", Gender.FEMALE, Language.ENGLISH, Set.of(ServiceInterest.COURSE)
-        ));
+        User user = userRepository.saveAndFlush(
+                User.createLocal("user2@example.com", "encoded-password", "nickname2")
+        );
         Course course = courseRepository.saveAndFlush(Course.create(
                 user, "성동구", "11", "11200",
                 Set.of(Topic.FOOD), LocalDate.of(2026, 8, 10)

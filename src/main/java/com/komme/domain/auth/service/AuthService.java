@@ -19,15 +19,9 @@ import com.komme.domain.auth.service.token.AuthTokenService;
 import com.komme.domain.auth.service.token.RefreshTokenStore;
 import com.komme.domain.auth.service.token.WithdrawalStore;
 import com.komme.domain.auth.util.EmailNormalizer;
-import com.komme.domain.i18n.enums.Language;
 import com.komme.domain.user.entity.User;
-import com.komme.domain.user.enums.Gender;
-import com.komme.domain.user.enums.ServiceInterest;
 import com.komme.domain.user.repository.UserRepository;
 import com.komme.domain.user.service.UserReader;
-
-import java.util.Locale;
-import java.util.Set;
 
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -152,11 +146,7 @@ public class AuthService {
     private NormalizedSignUpData normalizeSignUpData(SignUpRequest request) {
         return new NormalizedSignUpData(
                 EmailNormalizer.normalize(request.email()),
-                request.nickname().trim(),
-                request.nationality().toUpperCase(Locale.ROOT),
-                request.gender(),
-                request.preferredLanguage(),
-                request.serviceInterests()
+                request.nickname().trim()
         );
     }
 
@@ -173,11 +163,7 @@ public class AuthService {
         return User.createLocal(
                 data.email(),
                 passwordEncoder.encode(password),
-                data.nickname(),
-                data.nationality(),
-                data.gender(),
-                data.preferredLanguage(),
-                data.serviceInterests()
+                data.nickname()
         );
     }
 
@@ -220,11 +206,7 @@ public class AuthService {
 
     private record NormalizedSignUpData(
             String email,
-            String nickname,
-            String nationality,
-            Gender gender,
-            Language preferredLanguage,
-            Set<ServiceInterest> serviceInterests
+            String nickname
     ) {
     }
 }

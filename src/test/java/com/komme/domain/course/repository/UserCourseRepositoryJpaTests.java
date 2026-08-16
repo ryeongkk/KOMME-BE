@@ -7,10 +7,7 @@ import java.util.Set;
 import com.komme.domain.course.entity.Course;
 import com.komme.domain.course.entity.UserCourse;
 import com.komme.domain.course.enums.Topic;
-import com.komme.domain.i18n.enums.Language;
 import com.komme.domain.user.entity.User;
-import com.komme.domain.user.enums.Gender;
-import com.komme.domain.user.enums.ServiceInterest;
 import com.komme.domain.user.repository.UserRepository;
 
 import org.junit.jupiter.api.Test;
@@ -111,9 +108,6 @@ class UserCourseRepositoryJpaTests {
     }
 
     private User createLocalUser() {
-        return User.createLocal(
-                "user@example.com", "encoded-password", "nickname",
-                "KR", Gender.FEMALE, Language.ENGLISH, Set.of(ServiceInterest.COURSE)
-        );
+        return User.createLocal("user@example.com", "encoded-password", "nickname");
     }
 }

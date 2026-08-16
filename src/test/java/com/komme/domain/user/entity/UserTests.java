@@ -1,11 +1,7 @@
 package com.komme.domain.user.entity;
 
-import com.komme.domain.user.enums.Gender;
 import com.komme.domain.user.enums.Provider;
-import com.komme.domain.user.enums.ServiceInterest;
 import com.komme.domain.i18n.enums.Language;
-
-import java.util.Set;
 
 import org.junit.jupiter.api.Test;
 
@@ -22,10 +18,10 @@ class UserTests {
         assertThat(user.getPassword()).isEqualTo("encoded-password");
         assertThat(user.getNickname()).isEqualTo("nickname");
         assertThat(user.getProvider()).isEqualTo(Provider.LOCAL);
-        assertThat(user.getNationality()).isEqualTo("KR");
-        assertThat(user.getGender()).isEqualTo(Gender.FEMALE);
-        assertThat(user.getPreferredLanguage()).isEqualTo(Language.ENGLISH);
-        assertThat(user.getServiceInterests()).containsExactly(ServiceInterest.COURSE);
+        assertThat(user.getNationality()).isNull();
+        assertThat(user.getGender()).isNull();
+        assertThat(user.getPreferredLanguage()).isNull();
+        assertThat(user.getServiceInterests()).isEmpty();
     }
 
     // 사용자 비밀번호 변경 검증
@@ -119,11 +115,7 @@ class UserTests {
         return User.createLocal(
                 "user@example.com",
                 "encoded-password",
-                "nickname",
-                "KR",
-                Gender.FEMALE,
-                Language.ENGLISH,
-                Set.of(ServiceInterest.COURSE)
+                "nickname"
         );
     }
 }

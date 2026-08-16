@@ -1,13 +1,9 @@
 package com.komme.common.base;
 
-import com.komme.domain.i18n.enums.Language;
 import com.komme.domain.user.entity.User;
-import com.komme.domain.user.enums.Gender;
-import com.komme.domain.user.enums.ServiceInterest;
 import com.komme.domain.user.repository.UserRepository;
 
 import java.time.LocalDateTime;
-import java.util.Set;
 
 import jakarta.persistence.EntityManager;
 
@@ -80,11 +76,7 @@ class BaseEntityJpaTests {
         return User.createLocal(
                 "user@example.com",
                 "encoded-password",
-                "nickname",
-                "KR",
-                Gender.FEMALE,
-                Language.ENGLISH,
-                Set.of(ServiceInterest.COURSE)
+                "nickname"
         );
     }
 }
