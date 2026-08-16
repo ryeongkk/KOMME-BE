@@ -21,6 +21,7 @@ import com.komme.domain.auth.exception.AuthErrorStatus;
 import com.komme.domain.auth.jwt.JwtProvider.TokenClaims;
 import com.komme.domain.auth.service.AuthService;
 import com.komme.domain.auth.service.email.EmailVerificationService;
+import com.komme.domain.i18n.enums.Language;
 
 import java.time.Instant;
 
@@ -114,7 +115,7 @@ class AuthControllerTests {
     // 로그인 API 성공 응답 검증
     @Test
     void loginReturnsLoginResponse() throws Exception {
-        LoginRequest request = new LoginRequest("user@example.com", "password123");
+        LoginRequest request = new LoginRequest("user@example.com", "password123", Language.ENGLISH);
         when(authService.login(request))
                 .thenReturn(LoginResponse.of("access-token", "refresh-token", true));
 
@@ -131,7 +132,7 @@ class AuthControllerTests {
     // 로그인 API 입력값 오류 응답 검증
     @Test
     void loginRejectsInvalidRequest() throws Exception {
-        LoginRequest request = new LoginRequest("invalid-email", "");
+        LoginRequest request = new LoginRequest("invalid-email", "", null);
 
         mockMvc.perform(post("/api/v1/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)

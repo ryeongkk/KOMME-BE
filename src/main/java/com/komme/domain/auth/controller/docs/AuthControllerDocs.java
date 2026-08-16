@@ -276,7 +276,8 @@ public interface AuthControllerDocs {
     // 이메일 로그인 API
     @Operation(
             summary = "이메일 로그인",
-            description = "LOCAL 계정의 이메일과 비밀번호를 검증하고 Access Token과 Refresh Token을 발급합니다."
+            description = "LOCAL 계정의 이메일과 비밀번호를 검증하고 Access Token과 Refresh Token을 발급합니다. "
+                    + "요청에 담긴 선호 언어로 사용자의 preferred_language를 매 로그인마다 최신화합니다."
     )
     @io.swagger.v3.oas.annotations.responses.ApiResponse(
             responseCode = "200",

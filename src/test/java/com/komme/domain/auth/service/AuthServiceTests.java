@@ -21,6 +21,7 @@ import com.komme.domain.auth.service.token.AccessTokenBlacklistStore;
 import com.komme.domain.auth.service.token.AuthTokenService;
 import com.komme.domain.auth.service.token.RefreshTokenStore;
 import com.komme.domain.auth.service.token.WithdrawalStore;
+import com.komme.domain.i18n.enums.Language;
 import com.komme.domain.user.repository.UserRepository;
 import com.komme.domain.user.service.UserReader;
 
@@ -236,12 +237,26 @@ class AuthServiceTests {
                 .thenReturn(LoginResponse.of("access-token", "refresh-token"));
 
         LoginResponse response = authService.login(
-                new LoginRequest(" USER@example.com ", "password1")
+                new LoginRequest(" USER@example.com ", "password1", Language.ENGLISH)
         );
 
         assertThat(response.accessToken()).isEqualTo("access-token");
         assertThat(response.refreshToken()).isEqualTo("refresh-token");
         verify(authTokenService).issueLoginResponse(user);
+    }
+
+    // 로그인마다 선호 언어를 최신값으로 반영하는지 검증
+    @Test
+    void loginUpdatesPreferredLanguage() {
+        User user = createLocalUserMock();
+        when(authUserReader.findLocalByEmailOrThrow(EMAIL)).thenReturn(user);
+        when(passwordEncoder.matches("password1", "encoded-password")).thenReturn(true);
+        when(authTokenService.issueLoginResponse(user))
+                .thenReturn(LoginResponse.of("access-token", "refresh-token"));
+
+        authService.login(new LoginRequest(EMAIL, "password1", Language.JAPANESE));
+
+        verify(user).changePreferredLanguage(Language.JAPANESE);
     }
 
     // 잘못된 로그인 비밀번호 거부 검증
@@ -253,7 +268,7 @@ class AuthServiceTests {
                 .thenReturn(false);
 
         assertThatThrownBy(() -> authService.login(
-                new LoginRequest(EMAIL, "wrong-password")
+                new LoginRequest(EMAIL, "wrong-password", Language.ENGLISH)
         ))
                 .isInstanceOf(GeneralException.class)
                 .extracting(exception -> ((GeneralException) exception).getErrorStatus())
