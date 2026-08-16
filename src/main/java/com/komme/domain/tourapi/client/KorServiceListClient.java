@@ -115,7 +115,7 @@ public class KorServiceListClient {
                 korServiceApiWebClient,
                 uriBuilder -> tourApiQuerySupport.withCommonParams(uriBuilder)
                         .path("/searchKeyword2")
-                        .queryParam("keyword", keyword)
+                        .queryParam("keyword", tourApiQuerySupport.encode(keyword))
                         .queryParam("areaCode", areaCode)
                         .queryParam("arrange", "A")
                         .queryParam("numOfRows", DEFAULT_NUM_OF_ROWS)

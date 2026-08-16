@@ -42,6 +42,29 @@ class TourApiQuerySupportTests {
                 .contains("_type=json");
     }
 
+    // 서비스키에 '+'가 있어도(base64) 인코딩 없음 모드(WebClientConfig의 관광공사 WebClient 설정)에서
+    // 공백으로 깨지지 않고 %2B로 살아남는지 검증 - SERVICE_KEY_IS_NOT_REGISTERED_ERROR 재발 방지
+    @Test
+    void withCommonParamsEncodesServiceKeyContainingPlusForNoEncodingWebClient() {
+        TourApiQuerySupport supportWithPlusKey = new TourApiQuerySupport(
+                new TourApiProperties("jWlN+WMj+abcd==", "ETC", "KOMME")
+        );
+        DefaultUriBuilderFactory noEncodingFactory = new DefaultUriBuilderFactory("http://example.com");
+        noEncodingFactory.setEncodingMode(DefaultUriBuilderFactory.EncodingMode.NONE);
+        UriBuilder uriBuilder = noEncodingFactory.uriString("");
+
+        String rawQuery = supportWithPlusKey.withCommonParams(uriBuilder).build().getRawQuery();
+
+        assertThat(rawQuery).contains("serviceKey=jWlN%2BWMj%2Babcd%3D%3D");
+    }
+
+    // 쿼리파라미터 값 인코딩 기능이 특수문자를 UTF-8로 퍼센트 인코딩하는지 검증
+    @Test
+    void encodeUrlEncodesValue() {
+        assertThat(support.encode("jWlN+WMj/abcd==")).isEqualTo("jWlN%2BWMj%2Fabcd%3D%3D");
+        assertThat(support.encode("강남역")).isEqualTo("%EA%B0%95%EB%82%A8%EC%97%AD");
+    }
+
     // 정상 응답에서 item 목록을 그대로 반환하는지 검증
     @Test
     void unwrapItemsReturnsItemsOnSuccess() {

@@ -1,6 +1,8 @@
 package com.komme.domain.tourapi.client;
 
 import java.net.URI;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -34,12 +36,19 @@ public class TourApiQuerySupport {
     private final TourApiProperties tourApiProperties;
 
     // serviceKey/MobileOS/MobileApp/_type 등 모든 오퍼레이션에 공통으로 필요한 요청 파라미터 부착
+    // 관광공사 WebClient는 URI 자동 인코딩을 꺼뒀기 때문에(WebClientConfig 참고) 값을 직접 인코딩해서 넣는다 -
+    // serviceKey는 base64(+, /, = 포함)라 Spring 기본 인코더가 '+'를 놓치는 문제가 있었다.
     public UriBuilder withCommonParams(UriBuilder uriBuilder) {
         return uriBuilder
-                .queryParam("serviceKey", tourApiProperties.getServiceKey())
-                .queryParam("MobileOS", tourApiProperties.getMobileOs())
-                .queryParam("MobileApp", tourApiProperties.getMobileApp())
+                .queryParam("serviceKey", encode(tourApiProperties.getServiceKey()))
+                .queryParam("MobileOS", encode(tourApiProperties.getMobileOs()))
+                .queryParam("MobileApp", encode(tourApiProperties.getMobileApp()))
                 .queryParam("_type", JSON_RESPONSE_TYPE);
+    }
+
+    // 관광공사 WebClient(인코딩 없음 모드)에 넣을 쿼리파라미터 값을 UTF-8로 URL 인코딩하는 기능
+    public String encode(String value) {
+        return URLEncoder.encode(value, StandardCharsets.UTF_8);
     }
 
     // 외부 API 공통 GET 호출 - 연결 실패는 지정된 상태로 GeneralException 변환

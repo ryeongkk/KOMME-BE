@@ -81,7 +81,7 @@ public class RelatedSpotClient {
                 relatedSpotApiWebClient,
                 uriBuilder -> tourApiQuerySupport.withCommonParams(uriBuilder)
                         .path("/searchKeyword1")
-                        .queryParam("keyword", keyword)
+                        .queryParam("keyword", tourApiQuerySupport.encode(keyword))
                         .queryParam("numOfRows", 50)
                         .queryParam("pageNo", 1)
                         .build(),

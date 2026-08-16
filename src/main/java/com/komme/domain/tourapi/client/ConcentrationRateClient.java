@@ -62,7 +62,10 @@ public class ConcentrationRateClient {
                             .queryParam("numOfRows", 30)
                             .queryParam("pageNo", 1);
                     if (touristSpotName != null && !touristSpotName.isBlank()) {
-                        withCommonParams = withCommonParams.queryParam("tAtsNm", touristSpotName);
+                        withCommonParams = withCommonParams.queryParam(
+                                "tAtsNm",
+                                tourApiQuerySupport.encode(touristSpotName)
+                        );
                     }
                     return withCommonParams.build();
                 },
