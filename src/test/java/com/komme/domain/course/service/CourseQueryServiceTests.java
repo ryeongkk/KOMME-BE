@@ -98,6 +98,23 @@ class CourseQueryServiceTests {
         assertThat(response.regionName()).isEqualTo("성동구");
     }
 
+    // 생성만 하고 아직 저장하지 않은 코스는 제목이 null로 응답되는지 검증
+    @Test
+    void findDetailReturnsNullTitleWhenNotSaved() {
+        CourseQueryService service = new CourseQueryService(courseRepository, courseSpotRepository, userCourseRepository);
+        User owner = Mockito.mock(User.class);
+        when(owner.getId()).thenReturn(USER_ID);
+        Course course = course(owner, LocalDate.of(2026, 8, 10));
+        when(courseRepository.findById(COURSE_ID)).thenReturn(Optional.of(course));
+        when(userCourseRepository.findByUser_IdAndCourse_Id(USER_ID, COURSE_ID)).thenReturn(Optional.empty());
+        when(courseSpotRepository.findByCourse_IdOrderBySequenceAsc(COURSE_ID)).thenReturn(List.of());
+
+        CourseDetailResponse response = service.findDetail(USER_ID, COURSE_ID);
+
+        assertThat(response.title()).isNull();
+        assertThat(response.regionName()).isEqualTo("성동구");
+    }
+
     // 본인 코스가 아니면 존재 여부를 숨기기 위해 404(COURSE_NOT_FOUND)로 처리되는지 검증
     @Test
     void findDetailThrowsNotFoundWhenNotOwnedByUser() {

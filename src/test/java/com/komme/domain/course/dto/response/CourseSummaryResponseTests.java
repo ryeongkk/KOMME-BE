@@ -24,7 +24,7 @@ class CourseSummaryResponseTests {
         );
         UserCourse userCourse = UserCourse.create(Mockito.mock(User.class), course, "성동구 음식 Day");
 
-        CourseSummaryResponse response = CourseSummaryResponse.of(userCourse);
+        CourseSummaryResponse response = CourseSummaryResponse.of(userCourse, 0L);
 
         assertThat(response.title()).isEqualTo("성동구 음식 Day");
         assertThat(response.regionName()).isEqualTo("성동구");
