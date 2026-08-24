@@ -78,7 +78,8 @@ REDIS_SSL_ENABLED=false
 2. 위 Required 값을 모두 등록한다.
 3. `SPRING_PROFILES_ACTIVE`가 반드시 `prod`인지 확인한다.
 4. Health Check Path는 `/health`로 등록한다.
-5. 배포 후 Swagger 또는 API 문서 경로로 응답을 확인한다.
+5. 제출 전 `docs/SUBMISSION_SECURITY_CHECKLIST.md`를 기준으로 민감값 노출 여부를 점검한다.
+6. 배포 후 Swagger 또는 API 문서 경로로 응답을 확인한다.
 
 ```text
 https://{render-service-domain}/v3/api-docs
