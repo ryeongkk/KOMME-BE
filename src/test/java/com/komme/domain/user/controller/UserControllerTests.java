@@ -1,5 +1,6 @@
 package com.komme.domain.user.controller;
 
+import com.komme.common.alert.ServerErrorAlertService;
 import com.komme.common.exception.GeneralExceptionAdvice;
 import com.komme.common.response.ApiResponse;
 import com.komme.domain.i18n.enums.Language;
@@ -37,7 +38,7 @@ class UserControllerTests {
         userProfileService = mock(UserProfileService.class);
         userController = new UserController(userProfileService);
         mockMvc = MockMvcBuilders.standaloneSetup(userController)
-                .setControllerAdvice(new GeneralExceptionAdvice())
+                .setControllerAdvice(new GeneralExceptionAdvice(mock(ServerErrorAlertService.class)))
                 .build();
     }
 

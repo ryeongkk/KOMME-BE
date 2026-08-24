@@ -1,6 +1,7 @@
 package com.komme.domain.auth.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.komme.common.alert.ServerErrorAlertService;
 import com.komme.common.exception.GeneralExceptionAdvice;
 import com.komme.domain.auth.dto.request.OAuthAppleLoginRequest;
 import com.komme.domain.auth.dto.request.OAuthGoogleLoginRequest;
@@ -31,7 +32,7 @@ class OAuthControllerTests {
     void setUp() {
         oAuthService = mock(OAuthService.class);
         mockMvc = MockMvcBuilders.standaloneSetup(new OAuthController(oAuthService))
-                .setControllerAdvice(new GeneralExceptionAdvice())
+                .setControllerAdvice(new GeneralExceptionAdvice(mock(ServerErrorAlertService.class)))
                 .build();
     }
 
