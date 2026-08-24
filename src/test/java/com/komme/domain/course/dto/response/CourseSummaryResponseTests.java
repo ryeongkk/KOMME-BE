@@ -30,5 +30,20 @@ class CourseSummaryResponseTests {
         assertThat(response.regionName()).isEqualTo("성동구");
         assertThat(response.visitDate()).isEqualTo(LocalDate.of(2026, 8, 10));
         assertThat(response.topics()).containsExactly(Topic.FOOD);
+        assertThat(response.spotCount()).isZero();
+    }
+
+    // 스팟 개수가 목록용 응답으로 매핑되는지 검증
+    @Test
+    void ofMapsSpotCount() {
+        Course course = Course.create(
+                Mockito.mock(User.class), "성동구", "11", "11200",
+                Set.of(Topic.FOOD), LocalDate.of(2026, 8, 10)
+        );
+        UserCourse userCourse = UserCourse.create(Mockito.mock(User.class), course, "성동구 음식 Day");
+
+        CourseSummaryResponse response = CourseSummaryResponse.of(userCourse, 4L);
+
+        assertThat(response.spotCount()).isEqualTo(4L);
     }
 }
