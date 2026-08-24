@@ -20,8 +20,10 @@ Render 자체도 MySQL private service 배포는 가능하지만, 관리형 MySQ
 1. Railway에서 프로젝트를 생성한다.
 2. `+ New` 또는 command menu에서 MySQL database를 추가한다.
 3. MySQL 서비스의 Settings > Networking에서 Public Access를 켠다.
-4. 생성된 public 접속 정보를 확인한다.
-5. Render 환경변수에 다음 값을 등록한다.
+4. MySQL 제공자가 IP allow-list 또는 firewall rule을 지원하는지 확인한다.
+5. 지원한다면 Render Web Service의 outbound IP range 또는 dedicated outbound IP만 허용한다.
+6. 생성된 public 접속 정보를 확인한다.
+7. Render 환경변수에 다음 값을 등록한다.
 
 ```text
 DB_URL=jdbc:mysql://{MYSQL_PUBLIC_HOST}:{MYSQL_PUBLIC_PORT}/{MYSQLDATABASE}?serverTimezone=Asia/Seoul&characterEncoding=UTF-8
@@ -50,6 +52,9 @@ private URL은 같은 Railway 프로젝트 내부 서비스용이므로 Render W
 - [ ] `DB_URL`은 `jdbc:mysql://...` 형식으로 변환한다.
 - [ ] DB 이름은 `komme` 또는 운영용으로 확정한 이름과 일치시킨다.
 - [ ] public TCP proxy host/port를 사용한다.
+- [ ] IP allow-list 또는 firewall rule 지원 여부를 확인한다.
+- [ ] 지원 시 Render Web Service outbound IP range 또는 dedicated outbound IP만 허용한다.
+- [ ] IP 제한이 불가능하면 강한 비밀번호, 주기적 비밀번호 교체, 접속 로그 확인 일정을 정한다.
 - [ ] Flyway migration이 운영 DB에 처음 적용될 수 있도록 빈 DB 또는 호환 스키마를 준비한다.
 
 ### Local Connection Test
@@ -136,13 +141,20 @@ PONG
 ## Notes
 
 - 운영 DB 비밀번호와 Redis password는 저장소, PR, 이슈 댓글에 남기지 않는다.
-- public TCP 접속을 켠 MySQL은 강한 비밀번호를 사용하고, 제출 종료 후 접근 정책을 다시 점검한다.
+- public TCP 접속을 켠 MySQL은 가능하면 Render outbound IP만 접근하도록 제한한다.
+- Render Dashboard의 Web Service > Connect > Outbound 탭에서 outbound IP range를 확인한다.
+- DB 제공자가 CIDR allow-list를 지원하지 않거나 공유 outbound range 허용이 부담되면 Render dedicated outbound IP 사용을 검토한다.
+- IP 제한이 불가능한 요금제라면 강한 비밀번호, 주기적 비밀번호 교체, 접속 로그 모니터링으로 보완하고 그 이유를 이슈/PR에 남긴다.
+- 제출 종료 후 public TCP 접근 정책을 다시 점검하거나 비활성화한다.
 - Redis 데이터는 토큰/인증 상태를 담으므로 운영 DB와 동일하게 secret으로 취급한다.
 
 ## References
 
 - Render Service Types: https://render.com/docs/service-types
 - Render Deploy MySQL: https://render.com/docs/deploy-mysql
+- Render Outbound IP Addresses: https://render.com/docs/outbound-ip-addresses
+- Render Dedicated IPs: https://render.com/docs/dedicated-ips
 - Railway MySQL: https://docs.railway.com/databases/mysql
+- Railway TCP Proxy: https://docs.railway.com/networking/tcp-proxy
 - Upstash Redis Security: https://upstash.com/docs/redis/features/security
 - Upstash Redis Getting Started: https://upstash.com/docs/redis/overall/getstarted
