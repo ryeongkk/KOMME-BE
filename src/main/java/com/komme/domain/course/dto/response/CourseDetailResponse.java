@@ -11,6 +11,7 @@ import com.komme.domain.course.service.CourseGenerationResult;
 
 public record CourseDetailResponse(
         Long courseId,
+        String title,
         String regionName,
         Set<Topic> topics,
         LocalDate visitDate,
@@ -19,8 +20,14 @@ public record CourseDetailResponse(
 
     // 코스 상세 응답 생성 기능
     public static CourseDetailResponse of(Course course, List<CourseSpot> courseSpots) {
+        return of(course, null, courseSpots);
+    }
+
+    // 저장된 코스 제목을 포함한 코스 상세 응답 생성 기능
+    public static CourseDetailResponse of(Course course, String title, List<CourseSpot> courseSpots) {
         return new CourseDetailResponse(
                 course.getId(),
+                title,
                 course.getRegionName(),
                 course.getTopics(),
                 course.getVisitDate(),

@@ -74,7 +74,14 @@ class CourseControllerTests {
     @Test
     void getCoursesReturnsQueryServiceResult() {
         List<CourseSummaryResponse> summaries = List.of(
-                new CourseSummaryResponse(1L, "성동구 음식 Day", "성동구", LocalDate.of(2026, 8, 10), Set.of(Topic.FOOD))
+                new CourseSummaryResponse(
+                        1L,
+                        "성동구 음식 Day",
+                        "성동구",
+                        LocalDate.of(2026, 8, 10),
+                        Set.of(Topic.FOOD),
+                        4L
+                )
         );
         when(courseQueryService.findList(1L, CourseStatus.UPCOMING)).thenReturn(summaries);
 
@@ -89,7 +96,7 @@ class CourseControllerTests {
     @Test
     void getCourseDetailReturnsQueryServiceResult() {
         CourseDetailResponse detail = new CourseDetailResponse(
-                1L, "성동구", Set.of(Topic.FOOD), LocalDate.of(2026, 8, 10), List.of()
+                1L, "성동구 음식 Day", "성동구", Set.of(Topic.FOOD), LocalDate.of(2026, 8, 10), List.of()
         );
         when(courseQueryService.findDetail(1L, 10L)).thenReturn(detail);
 

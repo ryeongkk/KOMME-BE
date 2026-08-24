@@ -26,8 +26,22 @@ class CourseDetailResponseTests {
 
         CourseDetailResponse response = CourseDetailResponse.of(course, List.of());
 
+        assertThat(response.title()).isNull();
         assertThat(response.regionName()).isEqualTo("성동구");
         assertThat(response.spots()).isEmpty();
+    }
+
+    // 저장된 코스 제목이 상세 응답으로 매핑되는지 검증
+    @Test
+    void ofMapsSavedCourseTitle() {
+        Course course = Course.create(
+                Mockito.mock(User.class), "성동구", "11", "11200",
+                Set.of(Topic.FOOD), LocalDate.of(2026, 8, 10)
+        );
+
+        CourseDetailResponse response = CourseDetailResponse.of(course, "성동구 음식 Day", List.of());
+
+        assertThat(response.title()).isEqualTo("성동구 음식 Day");
     }
 
     // CourseGenerationResult로부터 응답이 생성되는지 검증 (생성 API 응답 경로)
@@ -41,6 +55,7 @@ class CourseDetailResponseTests {
 
         CourseDetailResponse response = CourseDetailResponse.from(result);
 
+        assertThat(response.title()).isNull();
         assertThat(response.regionName()).isEqualTo("성동구");
         assertThat(response.spots()).isEmpty();
     }

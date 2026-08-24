@@ -88,6 +88,37 @@ class CourseSpotRepositoryJpaTests {
         assertThat(courseSpotRepository.findByCourse_IdOrderBySequenceAsc(course.getId())).isEmpty();
     }
 
+    // 여러 코스의 스팟 개수를 한 번에 집계하는지 검증
+    @Test
+    void countByCourseIdsReturnsSpotCounts() {
+        User user = userRepository.saveAndFlush(
+                User.createLocal("user3@example.com", "encoded-password", "nickname3")
+        );
+        Course firstCourse = courseRepository.saveAndFlush(Course.create(
+                user, "성동구", "11", "11200",
+                Set.of(Topic.FOOD), LocalDate.of(2026, 8, 10)
+        ));
+        Course secondCourse = courseRepository.saveAndFlush(Course.create(
+                user, "중구", "11", "11140",
+                Set.of(Topic.HEALING), LocalDate.of(2026, 8, 11)
+        ));
+        Spot firstSpot = spotRepository.saveAndFlush(spot("4"));
+        Spot secondSpot = spotRepository.saveAndFlush(spot("5"));
+        Spot thirdSpot = spotRepository.saveAndFlush(spot("6"));
+        courseSpotRepository.saveAndFlush(CourseSpot.create(firstCourse, firstSpot, 1, TimeSlot.MORNING, null));
+        courseSpotRepository.saveAndFlush(CourseSpot.create(firstCourse, secondSpot, 2, TimeSlot.LUNCH, null));
+        courseSpotRepository.saveAndFlush(CourseSpot.create(secondCourse, thirdSpot, 1, TimeSlot.MORNING, null));
+
+        List<CourseSpotCount> result = courseSpotRepository.countByCourseIds(
+                List.of(firstCourse.getId(), secondCourse.getId())
+        );
+
+        assertThat(result).containsExactlyInAnyOrder(
+                new CourseSpotCount(firstCourse.getId(), 2L),
+                new CourseSpotCount(secondCourse.getId(), 1L)
+        );
+    }
+
     private Spot spot(String contentId) {
         return Spot.create(contentId, new Spot.Attributes(
                 "spot-" + contentId, "A05", "A0502", "A05020900", TimeSlot.MORNING,
