@@ -40,7 +40,7 @@ Render Web Service에서 `SPRING_PROFILES_ACTIVE=prod`로 실행할 때 필요�
 
 | Name | Example | Description |
 | --- | --- | --- |
-| `PORT` | `8080` | Render가 자동 주입한다. 직접 지정하지 않으면 기본값 `8080`을 사용한다. |
+| `PORT` | `10000` | Render Web Service가 자동 주입한다. 애플리케이션은 `PORT`가 없을 때 로컬 fallback으로 `8080`을 사용한다. |
 | `JAVA_OPTS` | `-Xms256m -Xmx512m` | Docker 실행 시 JVM 옵션을 추가할 때 사용한다. |
 
 ## CORS
