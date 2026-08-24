@@ -66,6 +66,33 @@ class ServerErrorAlertServiceTests {
         assertThat(description).doesNotContain("access-token");
     }
 
+    // JSON 및 헤더 형태 민감 정보 마스킹 검증
+    @Test
+    void buildMessageMasksJsonAndHeaderStyleSensitiveValues() {
+        when(environment.getActiveProfiles()).thenReturn(new String[] { "prod" });
+        RequestContext requestContext = new RequestContext(
+                "GET",
+                "https://api.example.com/error",
+                "127.0.0.1",
+                null,
+                "JUnit"
+        );
+        RuntimeException exception = new RuntimeException(
+                "Cookie: sessionId=abc123; refreshToken=refresh-secret "
+                        + "{\"error\":\"invalid_client\",\"client_secret\":\"client-secret-value\"}"
+        );
+
+        DiscordMessage message = serverErrorAlertService.buildMessage(500, exception, requestContext);
+
+        String description = message.embeds().getFirst().description();
+        assertThat(description).contains("Cookie: ***");
+        assertThat(description).contains("refreshToken=***");
+        assertThat(description).contains("\"client_secret\":\"***");
+        assertThat(description).doesNotContain("sessionId=abc123");
+        assertThat(description).doesNotContain("refresh-secret");
+        assertThat(description).doesNotContain("client-secret-value");
+    }
+
     // Discord 알림 클라이언트 위임 검증
     @Test
     void notifyDelegatesToDiscordAlertClient() {

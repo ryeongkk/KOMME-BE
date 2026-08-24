@@ -123,7 +123,10 @@ public class ServerErrorAlertService {
     private String maskSensitiveValues(String value) {
         return value
                 .replaceAll("(?i)(bearer)\\s+\\S+", "$1 ***")
-                .replaceAll("(?i)(authorization|cookie|token|secret|password)=[^\\s&]+", "$1=***");
+                .replaceAll(
+                        "(?i)([\"']?[a-z0-9_-]*(authorization|cookie|token|secret|password)[a-z0-9_-]*[\"']?\\s*[:=]\\s*[\"']?)[^\\s&\"',;}]+",
+                        "$1***"
+                );
     }
 
     // 최대 길이 제한 기능
