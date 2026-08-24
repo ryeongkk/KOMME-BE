@@ -142,6 +142,7 @@ class CourseQueryServiceTests {
                 .isEqualTo(CourseErrorStatus.COURSE_NOT_FOUND);
     }
 
+    // 테스트 코스 생성
     private Course course(User user, LocalDate visitDate) {
         Course course = Course.create(
                 user, "성동구", "11", "11200",

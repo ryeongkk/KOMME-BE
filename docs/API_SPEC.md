@@ -706,6 +706,7 @@ Response `200`:
   "message": "성공적으로 처리되었습니다.",
   "data": {
     "courseId": 1,
+    "title": null,
     "regionName": "성동구",
     "topics": ["FOOD"],
     "visitDate": "2026-08-10",
@@ -766,7 +767,8 @@ Response `200`:
       "title": "성동구 음식 Day",
       "regionName": "성동구",
       "visitDate": "2026-08-10",
-      "topics": ["FOOD"]
+      "topics": ["FOOD"],
+      "spotCount": 4
     }
   ]
 }
