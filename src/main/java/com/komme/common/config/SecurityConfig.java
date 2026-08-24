@@ -42,10 +42,15 @@ public class SecurityConfig {
             "/swagger-ui.html"
     };
 
+    private static final String[] HEALTH_PUBLIC_ENDPOINTS = {
+            "/health"
+    };
+
     private static final String[] PUBLIC_ENDPOINTS = Stream.of(
                     AUTH_PUBLIC_ENDPOINTS,
                     USER_PUBLIC_ENDPOINTS,
-                    DOCS_PUBLIC_ENDPOINTS
+                    DOCS_PUBLIC_ENDPOINTS,
+                    HEALTH_PUBLIC_ENDPOINTS
             )
             .flatMap(Arrays::stream)
             .toArray(String[]::new);

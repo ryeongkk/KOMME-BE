@@ -78,6 +78,15 @@ class SecurityConfigTests {
                 .andExpect(jsonPath("$.isSuccess").value(true));
     }
 
+    // 서버 상태 확인 API 보안 통과 검증
+    @Test
+    void healthEndpointIsPermittedWithoutAccessToken() throws Exception {
+        mockMvc.perform(get("/health"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.isSuccess").value(true))
+                .andExpect(jsonPath("$.data.status").value("UP"));
+    }
+
     // 보호 인증 API Access Token 누락 거부 검증
     @Test
     void protectedAuthEndpointRejectsMissingAccessToken() throws Exception {
