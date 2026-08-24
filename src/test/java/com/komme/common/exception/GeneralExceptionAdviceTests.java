@@ -1,5 +1,7 @@
 package com.komme.common.exception;
 
+import com.komme.common.alert.RequestContext;
+import com.komme.common.alert.ServerErrorAlertService;
 import com.komme.common.base.status.ErrorStatus;
 import com.komme.common.response.ApiResponse;
 import com.komme.domain.user.util.NicknamePolicy;
@@ -7,6 +9,7 @@ import com.komme.domain.user.util.NicknamePolicy;
 import java.lang.reflect.Method;
 import java.util.Set;
 
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.ConstraintViolationException;
 import jakarta.validation.Validation;
@@ -29,14 +32,20 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.context.request.WebRequest;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 class GeneralExceptionAdviceTests {
 
     private static ValidatorFactory validatorFactory;
     private static Validator validator;
 
-    private final GeneralExceptionAdvice generalExceptionAdvice = new GeneralExceptionAdvice();
+    private final ServerErrorAlertService serverErrorAlertService = mock(ServerErrorAlertService.class);
+    private final GeneralExceptionAdvice generalExceptionAdvice = new GeneralExceptionAdvice(serverErrorAlertService);
 
     // Bean Validation 테스트 환경 구성
     @BeforeAll
@@ -88,24 +97,32 @@ class GeneralExceptionAdviceTests {
     @Test
     void handleGeneralExceptionReturnsServerErrorStatus() {
         GeneralException exception = new GeneralException(ErrorStatus.INTERNAL_SERVER_ERROR);
+        HttpServletRequest request = mockRequest();
 
         ResponseEntity<ApiResponse<Void>> response =
-                generalExceptionAdvice.handleGeneralException(exception);
+                generalExceptionAdvice.handleGeneralException(exception, request);
 
         assertThat(response.getStatusCode()).isEqualTo(ErrorStatus.INTERNAL_SERVER_ERROR.getHttpStatus());
         assertThat(response.getBody().getCode()).isEqualTo(ErrorStatus.INTERNAL_SERVER_ERROR.getCode());
+        verify(serverErrorAlertService).notify(
+                ErrorStatus.INTERNAL_SERVER_ERROR.getHttpStatus().value(),
+                exception,
+                RequestContext.from(request)
+        );
     }
 
     // GeneralException 4xx 상태를 그대로 응답에 반영하는지 검증 (WARN 로그 분기)
     @Test
     void handleGeneralExceptionReturnsClientErrorStatus() {
         GeneralException exception = new GeneralException(ErrorStatus.NOT_FOUND);
+        HttpServletRequest request = mockRequest();
 
         ResponseEntity<ApiResponse<Void>> response =
-                generalExceptionAdvice.handleGeneralException(exception);
+                generalExceptionAdvice.handleGeneralException(exception, request);
 
         assertThat(response.getStatusCode()).isEqualTo(ErrorStatus.NOT_FOUND.getHttpStatus());
         assertThat(response.getBody().getCode()).isEqualTo(ErrorStatus.NOT_FOUND.getCode());
+        verify(serverErrorAlertService, never()).notify(anyInt(), any(), any());
     }
 
     // 잘못된 인자 예외가 400 + 메시지 접두사와 함께 응답되는지 검증
@@ -124,24 +141,36 @@ class GeneralExceptionAdviceTests {
     @Test
     void handleNullPointerExceptionReturnsInternalServerError() {
         NullPointerException exception = new NullPointerException("user is null");
+        HttpServletRequest request = mockRequest();
 
         ResponseEntity<ApiResponse<Void>> response =
-                generalExceptionAdvice.handleNullPointerException(exception);
+                generalExceptionAdvice.handleNullPointerException(exception, request);
 
         assertThat(response.getStatusCode()).isEqualTo(ErrorStatus.INTERNAL_SERVER_ERROR.getHttpStatus());
         assertThat(response.getBody().getCode()).isEqualTo(ErrorStatus.INTERNAL_SERVER_ERROR.getCode());
+        verify(serverErrorAlertService).notify(
+                ErrorStatus.INTERNAL_SERVER_ERROR.getHttpStatus().value(),
+                exception,
+                RequestContext.from(request)
+        );
     }
 
     // 처리되지 않은 임의의 예외가 500으로 변환되는지 검증 (catch-all)
     @Test
     void handleExceptionReturnsInternalServerErrorForUnknownException() {
         RuntimeException exception = new RuntimeException("예상치 못한 오류");
+        HttpServletRequest request = mockRequest();
 
         ResponseEntity<ApiResponse<Void>> response =
-                generalExceptionAdvice.handleException(exception);
+                generalExceptionAdvice.handleException(exception, request);
 
         assertThat(response.getStatusCode()).isEqualTo(ErrorStatus.INTERNAL_SERVER_ERROR.getHttpStatus());
         assertThat(response.getBody().getCode()).isEqualTo(ErrorStatus.INTERNAL_SERVER_ERROR.getCode());
+        verify(serverErrorAlertService).notify(
+                ErrorStatus.INTERNAL_SERVER_ERROR.getHttpStatus().value(),
+                exception,
+                RequestContext.from(request)
+        );
     }
 
     // @Valid 필드 에러가 있으면 필드명 기반 메시지로 응답되는지 검증
@@ -176,11 +205,22 @@ class GeneralExceptionAdviceTests {
                 .isEqualTo("signUpRequest: 비밀번호와 비밀번호 확인이 일치하지 않습니다.");
     }
 
+    // MethodArgumentNotValidException 테스트 객체 생성
     private MethodArgumentNotValidException methodArgumentNotValidException(BindingResult bindingResult)
             throws NoSuchMethodException {
         Method dummyMethod = DummyTarget.class.getDeclaredMethod("dummyMethod", String.class);
         MethodParameter methodParameter = new MethodParameter(dummyMethod, 0);
         return new MethodArgumentNotValidException(methodParameter, bindingResult);
+    }
+
+    // 테스트 HTTP 요청 생성
+    private HttpServletRequest mockRequest() {
+        HttpServletRequest request = mock(HttpServletRequest.class);
+        when(request.getMethod()).thenReturn("GET");
+        when(request.getRequestURL()).thenReturn(new StringBuffer("https://api.example.com/health"));
+        when(request.getRemoteAddr()).thenReturn("127.0.0.1");
+        when(request.getHeader("User-Agent")).thenReturn("JUnit");
+        return request;
     }
 
     private record NicknameParameter(
