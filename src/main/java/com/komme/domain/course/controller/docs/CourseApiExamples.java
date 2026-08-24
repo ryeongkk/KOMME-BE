@@ -9,6 +9,34 @@ public final class CourseApiExamples {
               "message": "성공적으로 처리되었습니다.",
               "data": {
                 "courseId": 1,
+                "title": null,
+                "regionName": "성동구",
+                "topics": ["FOOD"],
+                "visitDate": "2026-08-10",
+                "spots": [
+                  {
+                    "spotId": 10,
+                    "name": "성수동 카페",
+                    "sequence": 1,
+                    "timeSlot": "MORNING",
+                    "latitude": 37.54433,
+                    "longitude": 127.05578,
+                    "thumbnailUrl": "https://tong.visitkorea.or.kr/thumb.jpg",
+                    "distanceToNextMeters": 500
+                  }
+                ]
+              }
+            }
+            """;
+
+    public static final String DETAIL_SUCCESS = """
+            {
+              "isSuccess": true,
+              "code": "COM_200",
+              "message": "성공적으로 처리되었습니다.",
+              "data": {
+                "courseId": 1,
+                "title": "성동구 음식 Day",
                 "regionName": "성동구",
                 "topics": ["FOOD"],
                 "visitDate": "2026-08-10",
@@ -47,7 +75,8 @@ public final class CourseApiExamples {
                   "title": "성동구 음식 Day",
                   "regionName": "성동구",
                   "visitDate": "2026-08-10",
-                  "topics": ["FOOD"]
+                  "topics": ["FOOD"],
+                  "spotCount": 4
                 }
               ]
             }

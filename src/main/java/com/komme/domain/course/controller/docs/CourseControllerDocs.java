@@ -112,7 +112,7 @@ public interface CourseControllerDocs {
             description = "코스 상세 조회 성공",
             content = @Content(
                     schema = @Schema(implementation = CourseDetailResponse.class),
-                    examples = @ExampleObject(value = CourseApiExamples.CREATE_COURSE_SUCCESS)
+                    examples = @ExampleObject(value = CourseApiExamples.DETAIL_SUCCESS)
             )
     )
     @io.swagger.v3.oas.annotations.responses.ApiResponse(

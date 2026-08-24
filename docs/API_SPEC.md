@@ -780,7 +780,7 @@ Errors:
 
 ### 코스 상세 조회
 
-코스의 스팟 타임라인을 포함한 상세 정보를 조회한다. 본인 코스가 아니면 존재 여부를 숨기기 위해 404로 응답한다.
+코스의 저장 제목과 스팟 타임라인을 포함한 상세 정보를 조회한다. 본인 코스가 아니면 존재 여부를 숨기기 위해 404로 응답한다.
 
 | 항목 | 값 |
 | --- | --- |
@@ -907,6 +907,7 @@ Errors:
 | Field | Type | Description |
 | --- | --- | --- |
 | courseId | number | 코스 ID |
+| title | string/null | 사용자가 저장한 코스명, 저장 전 생성 응답에서는 null 가능 |
 | regionName | string | 지역명 |
 | topics | enum array | 코스 주제 목록 |
 | visitDate | date | 방문 날짜 |
@@ -934,6 +935,7 @@ Errors:
 | regionName | string | 지역명 |
 | visitDate | date | 방문 날짜 |
 | topics | enum array | 코스 주제 목록 |
+| spotCount | number | 코스에 포함된 스팟 개수 |
 
 ---
 
