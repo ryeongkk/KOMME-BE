@@ -68,6 +68,10 @@ REDIS_SSL_ENABLED=true
 REDIS_SSL_ENABLED=false
 ```
 
+## MySQL and Redis
+
+운영 MySQL/Redis 생성과 접속 테스트 절차는 `docs/PROD_DATA_STORES.md`를 따른다.
+
 ## Render Setup
 
 1. Render Web Service의 Environment 탭을 연다.
