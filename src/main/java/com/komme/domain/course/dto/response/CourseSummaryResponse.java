@@ -11,17 +11,24 @@ public record CourseSummaryResponse(
         String title,
         String regionName,
         LocalDate visitDate,
-        Set<Topic> topics
+        Set<Topic> topics,
+        long spotCount
 ) {
 
     // 코스 목록 아이템 응답 생성 기능 - 목록은 저장된 코스(UserCourse) 기준이라 제목은 사용자가 저장 시 입력한 값이다
     public static CourseSummaryResponse of(UserCourse userCourse) {
+        return of(userCourse, 0L);
+    }
+
+    // 스팟 개수를 포함한 코스 목록 아이템 응답 생성 기능
+    public static CourseSummaryResponse of(UserCourse userCourse, long spotCount) {
         return new CourseSummaryResponse(
                 userCourse.getCourse().getId(),
                 userCourse.getTitle(),
                 userCourse.getCourse().getRegionName(),
                 userCourse.getCourse().getVisitDate(),
-                userCourse.getCourse().getTopics()
+                userCourse.getCourse().getTopics(),
+                spotCount
         );
     }
 }
