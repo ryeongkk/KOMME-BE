@@ -4,10 +4,14 @@ import com.komme.domain.auth.jwt.JwtAuthenticationEntryPoint;
 import com.komme.domain.auth.jwt.JwtAuthenticationFilter;
 
 import java.util.Arrays;
+import java.util.List;
 import java.util.stream.Stream;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
+import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
@@ -15,6 +19,9 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 import lombok.RequiredArgsConstructor;
 
@@ -46,6 +53,21 @@ public class SecurityConfig {
             "/health"
     };
 
+    private static final List<String> CORS_ALLOWED_METHODS = List.of(
+            HttpMethod.GET.name(),
+            HttpMethod.POST.name(),
+            HttpMethod.PATCH.name(),
+            HttpMethod.DELETE.name(),
+            HttpMethod.OPTIONS.name()
+    );
+
+    private static final List<String> CORS_ALLOWED_HEADERS = List.of(
+            HttpHeaders.AUTHORIZATION,
+            HttpHeaders.CONTENT_TYPE,
+            HttpHeaders.ACCEPT,
+            HttpHeaders.ORIGIN
+    );
+
     private static final String[] PUBLIC_ENDPOINTS = Stream.of(
                     AUTH_PUBLIC_ENDPOINTS,
                     USER_PUBLIC_ENDPOINTS,
@@ -57,6 +79,7 @@ public class SecurityConfig {
 
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
     private final JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint;
+    private final CorsProperties corsProperties;
 
     // BCrypt 비밀번호 인코더 생성
     @Bean
@@ -64,10 +87,26 @@ public class SecurityConfig {
         return new BCryptPasswordEncoder();
     }
 
+    // 환경변수 기반 CORS 설정 소스 생성
+    @Bean
+    public CorsConfigurationSource corsConfigurationSource() {
+        CorsConfiguration configuration = new CorsConfiguration();
+        configuration.setAllowedOrigins(corsProperties.getAllowedOriginList());
+        configuration.setAllowedMethods(CORS_ALLOWED_METHODS);
+        configuration.setAllowedHeaders(CORS_ALLOWED_HEADERS);
+        configuration.setAllowCredentials(true);
+        configuration.setMaxAge(3600L);
+
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/**", configuration);
+        return source;
+    }
+
     // Stateless 기반 기본 보안 필터 체인 생성
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
+                .cors(Customizer.withDefaults())
                 .csrf(AbstractHttpConfigurer::disable)
                 .formLogin(AbstractHttpConfigurer::disable)
                 .httpBasic(AbstractHttpConfigurer::disable)
