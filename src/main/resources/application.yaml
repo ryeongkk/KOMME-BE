@@ -3,3 +3,7 @@ spring:
     name: KOMME-BE
   profiles:
     active: local
+
+app:
+  cors:
+    allowed-origins: ${CORS_ALLOWED_ORIGINS:}
