@@ -14,6 +14,13 @@ import reactor.netty.http.client.HttpClient;
 @Configuration
 public class WebClientConfig {
 
+    // 기본 WebClient Builder 생성
+    @Bean
+    public WebClient.Builder webClientBuilder() {
+        return WebClient.builder()
+                .clientConnector(clientConnector());
+    }
+
     // Apple API WebClient 생성
     @Bean
     public WebClient appleApiWebClient() {

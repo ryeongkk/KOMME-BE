@@ -9,6 +9,14 @@ class WebClientConfigTests {
 
     private final WebClientConfig webClientConfig = new WebClientConfig();
 
+    // 기본 WebClient Builder Bean 생성 검증
+    @Test
+    void webClientBuilderCreatesBuilder() {
+        WebClient.Builder webClientBuilder = webClientConfig.webClientBuilder();
+
+        assertThat(webClientBuilder).isNotNull();
+    }
+
     // Apple API WebClient Bean 생성 검증
     @Test
     void appleApiWebClientCreatesWebClient() {
