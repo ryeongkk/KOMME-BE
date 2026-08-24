@@ -2,7 +2,8 @@
 
 ## 공통
 
-- Base URL: `/api/v1`
+- Base URL: `{server-origin}`
+- 모든 엔드포인트 경로는 `/api/v1` 접두사를 포함한 전체 경로로 표기한다.
 - 인증 방식: `Authorization: Bearer {accessToken}`
 - Content-Type: `application/json`
 - 성공 응답 공통 코드: `COM_200`
@@ -938,6 +939,4 @@ Errors:
 
 ## 확인 필요 메모
 
-- `UserApiExamples.USER_PROFILE_SUCCESS` 예시는 `preferredLanguage`를 `KOREAN`으로 표시하지만, 현재 `Language` enum에는 `ENGLISH`, `JAPANESE`, `CHINESE_SIMPLIFIED`만 존재한다. Notion 명세에는 실제 코드 기준 enum 값을 사용했다.
-- `LoginResponse`에는 `profileCompleted` 필드가 있으나 일부 Swagger 예제에는 이 필드가 빠져 있다. 실제 record 기준으로 명세에는 포함했다.
 - `CourseErrorStatus` enum 선언 순서는 HTTP 코드 오름차순이 아니지만, 명세의 에러 표는 HTTP 코드 기준으로 정리했다.

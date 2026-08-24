@@ -17,7 +17,8 @@ public final class AuthApiExamples {
               "message": "성공적으로 처리되었습니다.",
               "data": {
                 "accessToken": "eyJhbGciOiJIUzI1NiJ9...",
-                "refreshToken": "eyJhbGciOiJIUzI1NiJ9..."
+                "refreshToken": "eyJhbGciOiJIUzI1NiJ9...",
+                "profileCompleted": true
               }
             }
             """;
@@ -29,7 +30,8 @@ public final class AuthApiExamples {
               "message": "성공적으로 처리되었습니다.",
               "data": {
                 "accessToken": "eyJhbGciOiJIUzI1NiJ9...",
-                "refreshToken": "eyJhbGciOiJIUzI1NiJ9..."
+                "refreshToken": "eyJhbGciOiJIUzI1NiJ9...",
+                "profileCompleted": true
               }
             }
             """;

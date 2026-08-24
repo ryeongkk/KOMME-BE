@@ -11,7 +11,7 @@ COPY src src
 
 RUN ./gradlew bootJar --no-daemon && \
     cp "$(find build/libs -name '*.jar' ! -name '*-plain.jar' | head -n 1)" app.jar
-가
+
 FROM eclipse-temurin:21-jre-alpine
 
 WORKDIR /app
@@ -23,4 +23,4 @@ COPY --from=builder /workspace/app.jar app.jar
 
 EXPOSE 8080
 
-ENTRYPOINT ["sh", "-c", "java $JAVA_OPTS -jar app.jar"]
+ENTRYPOINT ["sh", "-c", "exec java $JAVA_OPTS -jar app.jar"]
