@@ -60,3 +60,6 @@ tour-api:
 
 kakao:
   rest-api-key: ${KAKAO_REST_API_KEY}
+
+server:
+  port: ${PORT:8080}

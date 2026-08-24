@@ -16,7 +16,8 @@ public final class OAuthApiExamples {
               "message": "성공적으로 처리되었습니다.",
               "data": {
                 "accessToken": "eyJhbGciOiJIUzI1NiJ9...",
-                "refreshToken": "eyJhbGciOiJIUzI1NiJ9..."
+                "refreshToken": "eyJhbGciOiJIUzI1NiJ9...",
+                "profileCompleted": true
               }
             }
             """;
