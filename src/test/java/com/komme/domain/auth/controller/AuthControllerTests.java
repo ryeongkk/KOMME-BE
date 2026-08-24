@@ -1,6 +1,7 @@
 package com.komme.domain.auth.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.komme.common.alert.ServerErrorAlertService;
 import com.komme.common.exception.GeneralException;
 import com.komme.common.exception.GeneralExceptionAdvice;
 import com.komme.common.response.ApiResponse;
@@ -58,7 +59,7 @@ class AuthControllerTests {
         emailVerificationService = mock(EmailVerificationService.class);
         authController = new AuthController(authService, emailVerificationService);
         mockMvc = MockMvcBuilders.standaloneSetup(authController)
-                .setControllerAdvice(new GeneralExceptionAdvice())
+                .setControllerAdvice(new GeneralExceptionAdvice(mock(ServerErrorAlertService.class)))
                 .build();
     }
 

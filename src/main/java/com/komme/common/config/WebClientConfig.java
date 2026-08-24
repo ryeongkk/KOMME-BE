@@ -14,6 +14,12 @@ import reactor.netty.http.client.HttpClient;
 @Configuration
 public class WebClientConfig {
 
+    // Discord Webhook WebClient 생성
+    @Bean
+    public WebClient discordAlertWebClient() {
+        return createWebClient();
+    }
+
     // Apple API WebClient 생성
     @Bean
     public WebClient appleApiWebClient() {
@@ -75,9 +81,14 @@ public class WebClientConfig {
 
     // 외부 OAuth/카카오 API WebClient 생성 (기본 URI 인코딩 사용)
     private WebClient createWebClient(String baseUrl) {
-        return WebClient.builder()
+        return webClientBuilder()
                 .baseUrl(baseUrl)
-                .clientConnector(clientConnector())
+                .build();
+    }
+
+    // 기본 URI 인코딩 WebClient 생성
+    private WebClient createWebClient() {
+        return webClientBuilder()
                 .build();
     }
 
@@ -86,10 +97,15 @@ public class WebClientConfig {
         DefaultUriBuilderFactory uriBuilderFactory = new DefaultUriBuilderFactory(baseUrl);
         uriBuilderFactory.setEncodingMode(DefaultUriBuilderFactory.EncodingMode.NONE);
 
-        return WebClient.builder()
+        return webClientBuilder()
                 .uriBuilderFactory(uriBuilderFactory)
-                .clientConnector(clientConnector())
                 .build();
+    }
+
+    // 공통 WebClient Builder 생성
+    private WebClient.Builder webClientBuilder() {
+        return WebClient.builder()
+                .clientConnector(clientConnector());
     }
 
     // 연결/응답 타임아웃이 설정된 공통 HTTP 커넥터 생성 기능

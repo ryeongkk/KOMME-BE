@@ -1,9 +1,12 @@
 package com.komme.common.exception;
 
+import com.komme.common.alert.RequestContext;
+import com.komme.common.alert.ServerErrorAlertService;
 import com.komme.common.base.status.BaseStatus;
 import com.komme.common.base.status.ErrorStatus;
 import com.komme.common.response.ApiResponse;
 
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.ConstraintViolationException;
 
 import org.springframework.http.HttpHeaders;
@@ -15,19 +18,29 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.context.request.WebRequest;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
 
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @RestControllerAdvice
+@RequiredArgsConstructor
 public class GeneralExceptionAdvice extends ResponseEntityExceptionHandler {
+
+    private final ServerErrorAlertService serverErrorAlertService;
 
     // 커스텀 예외(GeneralException)를 잡아서 정의된 에러 상태로 응답 반환
     @ExceptionHandler(GeneralException.class)
     public ResponseEntity<ApiResponse<Void>> handleGeneralException(
-            GeneralException e
+            GeneralException e,
+            HttpServletRequest request
     ) {
         if (e.getErrorStatus().getHttpStatus().is5xxServerError()) {
             log.error("[*] GeneralException :", e);
+            serverErrorAlertService.notify(
+                    e.getErrorStatus().getHttpStatus().value(),
+                    e,
+                    RequestContext.from(request)
+            );
         } else {
             log.warn("[*] GeneralException : {}", e.getMessage());
         }
@@ -64,18 +77,30 @@ public class GeneralExceptionAdvice extends ResponseEntityExceptionHandler {
     // null 참조로 발생한 서버 오류를 500 에러로 응답
     @ExceptionHandler(NullPointerException.class)
     public ResponseEntity<ApiResponse<Void>> handleNullPointerException(
-            NullPointerException e
+            NullPointerException e,
+            HttpServletRequest request
     ) {
         log.error("[*] NullPointerException :", e);
+        serverErrorAlertService.notify(
+                ErrorStatus.INTERNAL_SERVER_ERROR.getHttpStatus().value(),
+                e,
+                RequestContext.from(request)
+        );
         return ApiResponse.error(ErrorStatus.INTERNAL_SERVER_ERROR);
     }
 
     // 처리되지 않은 모든 예외를 잡아 500 서버 오류로 응답
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ApiResponse<Void>> handleException(
-            Exception e
+            Exception e,
+            HttpServletRequest request
     ) {
         log.error("[*] Internal Server Error :", e);
+        serverErrorAlertService.notify(
+                ErrorStatus.INTERNAL_SERVER_ERROR.getHttpStatus().value(),
+                e,
+                RequestContext.from(request)
+        );
         return ApiResponse.error(ErrorStatus.INTERNAL_SERVER_ERROR);
     }
 

@@ -9,6 +9,14 @@ class WebClientConfigTests {
 
     private final WebClientConfig webClientConfig = new WebClientConfig();
 
+    // Discord Webhook WebClient Bean 생성 검증
+    @Test
+    void discordAlertWebClientCreatesWebClient() {
+        WebClient webClient = webClientConfig.discordAlertWebClient();
+
+        assertThat(webClient).isNotNull();
+    }
+
     // Apple API WebClient Bean 생성 검증
     @Test
     void appleApiWebClientCreatesWebClient() {
