@@ -67,12 +67,12 @@ class AuthPropertiesValidationTests {
     @Test
     void oAuthPropertiesRejectsBlankClientIdAndNullTtl() {
         AppleProperties appleProperties = new AppleProperties("", null);
-        GoogleProperties googleProperties = new GoogleProperties("", null);
+        GoogleProperties googleProperties = new GoogleProperties("", "", "", null);
 
         assertThat(propertyNames(validator.validate(appleProperties)))
                 .contains("clientId", "jwksCacheTtl");
         assertThat(propertyNames(validator.validate(googleProperties)))
-                .contains("clientId", "jwksCacheTtl");
+                .contains("clientId", "clientSecret", "redirectUri", "jwksCacheTtl");
     }
 
     // 인증 메일 설정 필수값 검증
@@ -104,6 +104,8 @@ class AuthPropertiesValidationTests {
         ))).isEmpty();
         assertThat(validator.validate(new GoogleProperties(
                 "google-client-id",
+                "google-client-secret",
+                "http://localhost:3000/callback",
                 Duration.ofHours(1)
         ))).isEmpty();
         assertThat(validator.validate(new AuthMailProperties("noreply@example.com"))).isEmpty();

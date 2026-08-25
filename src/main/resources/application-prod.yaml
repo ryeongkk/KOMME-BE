@@ -39,6 +39,8 @@ auth:
     jwks-cache-ttl: ${APPLE_JWKS_CACHE_TTL}
   google:
     client-id: ${GOOGLE_CLIENT_ID}
+    client-secret: ${GOOGLE_CLIENT_SECRET}
+    redirect-uri: ${GOOGLE_REDIRECT_URI}
     jwks-cache-ttl: ${GOOGLE_JWKS_CACHE_TTL}
   email-verification:
     code-expiration: ${EMAIL_VERIFICATION_CODE_EXPIRATION}

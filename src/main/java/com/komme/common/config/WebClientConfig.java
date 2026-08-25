@@ -32,6 +32,12 @@ public class WebClientConfig {
         return createWebClient("https://www.googleapis.com");
     }
 
+    // Google OAuth 토큰 교환 WebClient 생성
+    @Bean
+    public WebClient googleOAuthWebClient() {
+        return createWebClient("https://oauth2.googleapis.com");
+    }
+
     // 한국관광공사 국문 관광정보 서비스(KorService2) WebClient 생성
     // 관광공사 서비스키가 base64(+, /, = 포함)라서 Spring의 자동 URI 인코딩이 '+'를 안전한 문자로 보고
     // 인코딩하지 않는 문제가 있다(서버는 '+'를 공백으로 해석해 SERVICE_KEY_IS_NOT_REGISTERED_ERROR 발생).
