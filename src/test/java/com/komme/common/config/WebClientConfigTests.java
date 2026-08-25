@@ -33,12 +33,22 @@ class WebClientConfigTests {
         assertThat(webClient).isNotNull();
     }
 
+    // Google OAuth WebClient Bean 생성 검증
+    @Test
+    void googleOAuthWebClientCreatesWebClient() {
+        WebClient webClient = webClientConfig.googleOAuthWebClient();
+
+        assertThat(webClient).isNotNull();
+    }
+
     // OAuth API WebClient Bean 분리 생성 검증
     @Test
     void oAuthApiWebClientsAreCreatedSeparately() {
         WebClient appleWebClient = webClientConfig.appleApiWebClient();
         WebClient googleWebClient = webClientConfig.googleApiWebClient();
+        WebClient googleOAuthWebClient = webClientConfig.googleOAuthWebClient();
 
         assertThat(appleWebClient).isNotSameAs(googleWebClient);
+        assertThat(googleWebClient).isNotSameAs(googleOAuthWebClient);
     }
 }

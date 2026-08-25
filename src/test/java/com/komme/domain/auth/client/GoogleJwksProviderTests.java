@@ -159,7 +159,12 @@ class GoogleJwksProviderTests {
     private GoogleJwksProvider createProvider(WebClient webClient, Duration cacheTtl) {
         return new GoogleJwksProvider(
                 webClient,
-                new GoogleProperties("google-client-id", cacheTtl)
+                new GoogleProperties(
+                        "google-client-id",
+                        "google-client-secret",
+                        "http://localhost:3000/callback",
+                        cacheTtl
+                )
         );
     }
 

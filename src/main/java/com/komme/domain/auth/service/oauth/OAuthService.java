@@ -8,6 +8,7 @@ import com.komme.domain.auth.dto.request.OAuthAppleLoginRequest;
 import com.komme.domain.auth.dto.request.OAuthGoogleLoginRequest;
 import com.komme.domain.auth.dto.request.OAuthProfileCompleteRequest;
 import com.komme.domain.auth.dto.response.LoginResponse;
+import com.komme.domain.i18n.enums.Language;
 import com.komme.domain.user.entity.User;
 import com.komme.domain.user.enums.Provider;
 import com.komme.domain.auth.exception.AuthErrorStatus;
@@ -32,16 +33,23 @@ public class OAuthService {
     private final UserReader userReader;
 
     // Apple identity token 로그인 흐름 조율 기능
-    // 로그인마다 클라이언트의 Language Setting 값으로 선호 언어를 최신화한다.
     @Transactional
     public LoginResponse loginWithApple(OAuthAppleLoginRequest request) {
         OAuthIdentity identity = oAuthAppleClient.verifyIdentityToken(request.identityToken());
-        User user = oAuthAccountService.resolveUser(
-                Provider.APPLE,
-                identity.subject(),
-                identity.email()
-        );
-        user.changePreferredLanguage(request.preferredLanguage());
+        return finishOAuthLogin(Provider.APPLE, identity, request.preferredLanguage());
+    }
+
+    // Google authorization code 로그인 흐름 조율 기능
+    @Transactional
+    public LoginResponse loginWithGoogle(OAuthGoogleLoginRequest request) {
+        OAuthIdentity identity = oAuthGoogleClient.verifyAuthorizationCode(request.code());
+        return finishOAuthLogin(Provider.GOOGLE, identity, request.preferredLanguage());
+    }
+
+    // OAuth 로그인 사용자 확정 및 토큰 발급 공통 기능
+    private LoginResponse finishOAuthLogin(Provider provider, OAuthIdentity identity, Language preferredLanguage) {
+        User user = oAuthAccountService.resolveUser(provider, identity.subject(), identity.email());
+        user.changePreferredLanguage(preferredLanguage);
         return authTokenService.issueLoginResponse(user);
     }
 
@@ -59,19 +67,5 @@ public class OAuthService {
                     exception
             );
         }
-    }
-
-    // Google identity token 로그인 흐름 조율 기능
-    // 로그인마다 클라이언트의 Language Setting 값으로 선호 언어를 최신화한다.
-    @Transactional
-    public LoginResponse loginWithGoogle(OAuthGoogleLoginRequest request) {
-        OAuthIdentity identity = oAuthGoogleClient.verifyIdentityToken(request.idToken());
-        User user = oAuthAccountService.resolveUser(
-                Provider.GOOGLE,
-                identity.subject(),
-                identity.email()
-        );
-        user.changePreferredLanguage(request.preferredLanguage());
-        return authTokenService.issueLoginResponse(user);
     }
 }

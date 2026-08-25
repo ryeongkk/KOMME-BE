@@ -56,7 +56,7 @@ public final class OAuthApiExamples {
 
     public static final String GOOGLE_LOGIN_REQUEST = """
             {
-              "idToken": "eyJhbGciOiJSUzI1NiIs...",
+              "code": "4/0AfJohX...",
               "preferredLanguage": "ENGLISH"
             }
             """;
@@ -68,6 +68,14 @@ public final class OAuthApiExamples {
               "isSuccess": false,
               "code": "AUTH_400_6",
               "message": "Google 계정의 이메일 정보가 필요합니다."
+            }
+            """;
+
+    public static final String INVALID_GOOGLE_AUTH_CODE = """
+            {
+              "isSuccess": false,
+              "code": "AUTH_400_7",
+              "message": "유효하지 않은 Google authorization code입니다."
             }
             """;
 
