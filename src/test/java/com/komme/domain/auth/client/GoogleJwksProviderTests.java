@@ -162,6 +162,7 @@ class GoogleJwksProviderTests {
                 new GoogleProperties(
                         "google-client-id",
                         "google-client-secret",
+                        "http://localhost:3000",
                         cacheTtl
                 )
         );

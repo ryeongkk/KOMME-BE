@@ -5,6 +5,8 @@ import com.komme.domain.auth.exception.AuthErrorStatus;
 import com.komme.domain.auth.properties.GoogleProperties;
 
 import java.math.BigInteger;
+import java.net.URLDecoder;
+import java.nio.charset.StandardCharsets;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
 import java.security.NoSuchAlgorithmException;
@@ -45,6 +47,7 @@ class OAuthGoogleClientTests {
 
     private static final String CLIENT_ID = "com.komme.google.app";
     private static final String CLIENT_SECRET = "google-client-secret";
+    private static final String REDIRECT_URI = "https://app.komme.com";
     private static final String AUTHORIZATION_CODE = "google-auth-code";
     private static final String KEY_ID = "google-key-id";
     private static final String SUBJECT = "google-sub";
@@ -62,6 +65,7 @@ class OAuthGoogleClientTests {
         GoogleProperties properties = new GoogleProperties(
                 CLIENT_ID,
                 CLIENT_SECRET,
+                REDIRECT_URI,
                 Duration.ofHours(1)
         );
         oAuthGoogleClient = new OAuthGoogleClient(
@@ -88,9 +92,9 @@ class OAuthGoogleClientTests {
         assertThat(identity.email()).isEqualTo(EMAIL);
     }
 
-    // Google 토큰 교환 요청의 redirect_uri 고정값(postmessage) 검증
+    // Google 토큰 교환 요청의 redirect_uri에 설정된 origin 전송 검증
     @Test
-    void verifyAuthorizationCodeSendsPostmessageRedirectUri() {
+    void verifyAuthorizationCodeSendsConfiguredRedirectUri() {
         AtomicReference<String> capturedBody = new AtomicReference<>();
         GoogleProperties properties = createGoogleProperties();
         OAuthGoogleClient client = new OAuthGoogleClient(
@@ -102,7 +106,17 @@ class OAuthGoogleClientTests {
 
         client.verifyAuthorizationCode(AUTHORIZATION_CODE);
 
-        assertThat(capturedBody.get()).contains("redirect_uri=postmessage");
+        assertThat(formValue(capturedBody.get(), "redirect_uri")).isEqualTo(REDIRECT_URI);
+    }
+
+    // 테스트 form-urlencoded 바디에서 특정 파라미터 값 추출
+    private String formValue(String formBody, String key) {
+        return Arrays.stream(formBody.split("&"))
+                .map(pair -> pair.split("=", 2))
+                .filter(pair -> pair[0].equals(key))
+                .map(pair -> URLDecoder.decode(pair[1], StandardCharsets.UTF_8))
+                .findFirst()
+                .orElseThrow();
     }
 
     // 잘못된 Google identity token 발급자 거부 검증
@@ -227,6 +241,7 @@ class OAuthGoogleClientTests {
         return new GoogleProperties(
                 CLIENT_ID,
                 CLIENT_SECRET,
+                REDIRECT_URI,
                 Duration.ofHours(1)
         );
     }
