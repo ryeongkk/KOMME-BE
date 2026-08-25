@@ -66,9 +66,13 @@ public class OAuthGoogleClient {
                             .with("redirect_uri", googleProperties.getRedirectUri())
                             .with("grant_type", AUTHORIZATION_CODE_GRANT_TYPE))
                     .retrieve()
-                    .onStatus(HttpStatusCode::is4xxClientError, response -> Mono.error(
-                            new GeneralException(AuthErrorStatus.INVALID_GOOGLE_AUTH_CODE)
-                    ))
+                    .onStatus(
+                            HttpStatusCode::is4xxClientError,
+                            response -> response.bodyToMono(GoogleTokenErrorResponse.class)
+                                    .defaultIfEmpty(new GoogleTokenErrorResponse(null))
+                                    .map(this::mapClientError)
+                                    .flatMap(Mono::error)
+                    )
                     .onStatus(HttpStatusCode::is5xxServerError, response -> Mono.error(
                             new GeneralException(AuthErrorStatus.GOOGLE_SERVER_CONNECTION_FAILED)
                     ))
@@ -90,5 +94,14 @@ public class OAuthGoogleClient {
                 || tokenResponse.idToken().isBlank()) {
             throw new GeneralException(AuthErrorStatus.GOOGLE_SERVER_CONNECTION_FAILED);
         }
+    }
+
+    // Google 토큰 교환 4xx 오류 매핑 기능
+    private GeneralException mapClientError(GoogleTokenErrorResponse errorResponse) {
+        String error = errorResponse.error();
+        if ("invalid_client".equals(error) || "unauthorized_client".equals(error)) {
+            return new GeneralException(AuthErrorStatus.GOOGLE_SERVER_CONNECTION_FAILED);
+        }
+        return new GeneralException(AuthErrorStatus.INVALID_GOOGLE_AUTH_CODE);
     }
 }

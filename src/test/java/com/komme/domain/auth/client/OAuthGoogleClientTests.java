@@ -120,17 +120,41 @@ class OAuthGoogleClientTests {
     void verifyAuthorizationCodeMapsInvalidGrant() {
         OAuthGoogleClient client = createClientWithTokenResponse(
                 HttpStatus.BAD_REQUEST,
-                """
-                        {
-                          "error": "invalid_grant"
-                        }
-                        """
+                createTokenErrorResponseJson("invalid_grant")
         );
 
         assertThatThrownBy(() -> client.verifyAuthorizationCode(AUTHORIZATION_CODE))
                 .isInstanceOf(GeneralException.class)
                 .extracting(exception -> ((GeneralException) exception).getErrorStatus())
                 .isEqualTo(AuthErrorStatus.INVALID_GOOGLE_AUTH_CODE);
+    }
+
+    // Google OAuth 클라이언트 설정 오류 매핑 검증
+    @Test
+    void verifyAuthorizationCodeMapsInvalidClient() {
+        OAuthGoogleClient client = createClientWithTokenResponse(
+                HttpStatus.BAD_REQUEST,
+                createTokenErrorResponseJson("invalid_client")
+        );
+
+        assertThatThrownBy(() -> client.verifyAuthorizationCode(AUTHORIZATION_CODE))
+                .isInstanceOf(GeneralException.class)
+                .extracting(exception -> ((GeneralException) exception).getErrorStatus())
+                .isEqualTo(AuthErrorStatus.GOOGLE_SERVER_CONNECTION_FAILED);
+    }
+
+    // Google OAuth 클라이언트 권한 오류 매핑 검증
+    @Test
+    void verifyAuthorizationCodeMapsUnauthorizedClient() {
+        OAuthGoogleClient client = createClientWithTokenResponse(
+                HttpStatus.BAD_REQUEST,
+                createTokenErrorResponseJson("unauthorized_client")
+        );
+
+        assertThatThrownBy(() -> client.verifyAuthorizationCode(AUTHORIZATION_CODE))
+                .isInstanceOf(GeneralException.class)
+                .extracting(exception -> ((GeneralException) exception).getErrorStatus())
+                .isEqualTo(AuthErrorStatus.GOOGLE_SERVER_CONNECTION_FAILED);
     }
 
     // Google 토큰 교환 네트워크 실패 매핑 검증
@@ -219,6 +243,15 @@ class OAuthGoogleClientTests {
                   "expires_in": 3599
                 }
                 """.formatted(identityToken);
+    }
+
+    // 테스트 Google 토큰 오류 응답 JSON 생성
+    private String createTokenErrorResponseJson(String error) {
+        return """
+                {
+                  "error": "%s"
+                }
+                """.formatted(error);
     }
 
     // 테스트 Google identity token 생성
