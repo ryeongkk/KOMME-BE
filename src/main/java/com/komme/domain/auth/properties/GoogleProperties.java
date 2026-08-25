@@ -21,9 +21,6 @@ public class GoogleProperties {
     @NotBlank
     private final String clientSecret;
 
-    @NotBlank
-    private final String redirectUri;
-
     @NotNull
     private final Duration jwksCacheTtl;
 
@@ -31,12 +28,10 @@ public class GoogleProperties {
     public GoogleProperties(
             String clientId,
             String clientSecret,
-            String redirectUri,
             Duration jwksCacheTtl
     ) {
         this.clientId = clientId;
         this.clientSecret = clientSecret;
-        this.redirectUri = redirectUri;
         this.jwksCacheTtl = jwksCacheTtl;
     }
 }

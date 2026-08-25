@@ -13,16 +13,27 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.Arrays;
 import java.util.Base64;
+import java.util.Collections;
 import java.util.Date;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.concurrent.atomic.AtomicReference;
 
 import io.jsonwebtoken.Jwts;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.springframework.http.codec.HttpMessageWriter;
+import org.springframework.mock.http.client.reactive.MockClientHttpRequest;
+import org.springframework.web.reactive.function.BodyInserter;
+import org.springframework.web.reactive.function.client.ClientRequest;
 import org.springframework.web.reactive.function.client.ClientResponse;
+import org.springframework.web.reactive.function.client.ExchangeStrategies;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.reactive.function.client.WebClientException;
 import reactor.core.publisher.Mono;
@@ -34,7 +45,6 @@ class OAuthGoogleClientTests {
 
     private static final String CLIENT_ID = "com.komme.google.app";
     private static final String CLIENT_SECRET = "google-client-secret";
-    private static final String REDIRECT_URI = "http://localhost:3000/callback";
     private static final String AUTHORIZATION_CODE = "google-auth-code";
     private static final String KEY_ID = "google-key-id";
     private static final String SUBJECT = "google-sub";
@@ -52,7 +62,6 @@ class OAuthGoogleClientTests {
         GoogleProperties properties = new GoogleProperties(
                 CLIENT_ID,
                 CLIENT_SECRET,
-                REDIRECT_URI,
                 Duration.ofHours(1)
         );
         oAuthGoogleClient = new OAuthGoogleClient(
@@ -77,6 +86,23 @@ class OAuthGoogleClientTests {
 
         assertThat(identity.subject()).isEqualTo(SUBJECT);
         assertThat(identity.email()).isEqualTo(EMAIL);
+    }
+
+    // Google 토큰 교환 요청의 redirect_uri 고정값(postmessage) 검증
+    @Test
+    void verifyAuthorizationCodeSendsPostmessageRedirectUri() {
+        AtomicReference<String> capturedBody = new AtomicReference<>();
+        GoogleProperties properties = createGoogleProperties();
+        OAuthGoogleClient client = new OAuthGoogleClient(
+                createCapturingTokenWebClient(capturedBody),
+                new GoogleJwksProvider(createGoogleWebClient(), properties),
+                properties,
+                new OAuthIdentityTokenVerifier(new OAuthPublicKeyFactory())
+        );
+
+        client.verifyAuthorizationCode(AUTHORIZATION_CODE);
+
+        assertThat(capturedBody.get()).contains("redirect_uri=postmessage");
     }
 
     // 잘못된 Google identity token 발급자 거부 검증
@@ -201,7 +227,6 @@ class OAuthGoogleClientTests {
         return new GoogleProperties(
                 CLIENT_ID,
                 CLIENT_SECRET,
-                REDIRECT_URI,
                 Duration.ofHours(1)
         );
     }
@@ -219,6 +244,47 @@ class OAuthGoogleClientTests {
                                 .build()
                 ))
                 .build();
+    }
+
+    // 테스트 토큰 교환 요청 바디 캡처 WebClient 생성
+    private WebClient createCapturingTokenWebClient(AtomicReference<String> capturedBody) {
+        return WebClient.builder()
+                .exchangeFunction(request -> {
+                    capturedBody.set(readFormBody(request));
+                    return Mono.just(
+                            ClientResponse.create(HttpStatus.OK)
+                                    .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
+                                    .body(createTokenResponseJson(createIdentityToken(
+                                            CLIENT_ID,
+                                            "https://accounts.google.com",
+                                            true
+                                    )))
+                                    .build()
+                    );
+                })
+                .build();
+    }
+
+    // 테스트 form-urlencoded 요청 바디 읽기
+    private String readFormBody(ClientRequest request) {
+        MockClientHttpRequest httpRequest = new MockClientHttpRequest(HttpMethod.POST, request.url());
+        request.body().insert(httpRequest, new BodyInserter.Context() {
+            @Override
+            public List<HttpMessageWriter<?>> messageWriters() {
+                return ExchangeStrategies.withDefaults().messageWriters();
+            }
+
+            @Override
+            public Optional<org.springframework.http.server.reactive.ServerHttpRequest> serverRequest() {
+                return Optional.empty();
+            }
+
+            @Override
+            public Map<String, Object> hints() {
+                return Collections.emptyMap();
+            }
+        }).block();
+        return httpRequest.getBodyAsString().block();
     }
 
     // 테스트 Google JWKS WebClient 생성

@@ -22,6 +22,9 @@ public class OAuthGoogleClient {
     private static final String GOOGLE_ISSUER = "https://accounts.google.com";
     private static final String LEGACY_GOOGLE_ISSUER = "accounts.google.com";
     private static final String AUTHORIZATION_CODE_GRANT_TYPE = "authorization_code";
+    // Google Identity Services의 initCodeClient(ux_mode: 'popup')는 리다이렉트가 없어
+    // redirect_uri에 실제 URL 대신 고정 문자열 "postmessage"를 요구한다.
+    private static final String POPUP_REDIRECT_URI = "postmessage";
 
     private final WebClient googleOAuthWebClient;
     private final GoogleJwksProvider googleJwksProvider;
@@ -63,7 +66,7 @@ public class OAuthGoogleClient {
                     .body(BodyInserters.fromFormData("code", code)
                             .with("client_id", googleProperties.getClientId())
                             .with("client_secret", googleProperties.getClientSecret())
-                            .with("redirect_uri", googleProperties.getRedirectUri())
+                            .with("redirect_uri", POPUP_REDIRECT_URI)
                             .with("grant_type", AUTHORIZATION_CODE_GRANT_TYPE))
                     .retrieve()
                     .onStatus(
