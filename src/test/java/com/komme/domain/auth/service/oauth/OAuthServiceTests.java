@@ -43,6 +43,7 @@ class OAuthServiceTests {
 
     private static final Long USER_ID = 1L;
     private static final String IDENTITY_TOKEN = "identity-token";
+    private static final String GOOGLE_AUTH_CODE = "google-auth-code";
     private static final String APPLE_SUBJECT = "apple-sub";
     private static final String EMAIL = "user@example.com";
 
@@ -182,7 +183,7 @@ class OAuthServiceTests {
     void loginWithGoogleLogsInLinkedUser() {
         User user = createUserMock();
         OAuthAccount account = OAuthAccount.create(user, Provider.GOOGLE, APPLE_SUBJECT);
-        when(oAuthGoogleClient.verifyIdentityToken("google-id-token"))
+        when(oAuthGoogleClient.verifyAuthorizationCode(GOOGLE_AUTH_CODE))
                 .thenReturn(new OAuthIdentity(APPLE_SUBJECT, EMAIL));
         when(oAuthAccountRepository.findByProviderAndProviderId(
                 Provider.GOOGLE,
@@ -191,7 +192,7 @@ class OAuthServiceTests {
         prepareTokenResponse();
 
         LoginResponse response = oAuthService.loginWithGoogle(
-                new OAuthGoogleLoginRequest("google-id-token", Language.ENGLISH)
+                new OAuthGoogleLoginRequest(GOOGLE_AUTH_CODE, Language.ENGLISH)
         );
 
         assertThat(response.accessToken()).isEqualTo("access-token");
@@ -203,7 +204,7 @@ class OAuthServiceTests {
     void loginWithGoogleUpdatesPreferredLanguage() {
         User user = createUserMock();
         OAuthAccount account = OAuthAccount.create(user, Provider.GOOGLE, APPLE_SUBJECT);
-        when(oAuthGoogleClient.verifyIdentityToken("google-id-token"))
+        when(oAuthGoogleClient.verifyAuthorizationCode(GOOGLE_AUTH_CODE))
                 .thenReturn(new OAuthIdentity(APPLE_SUBJECT, EMAIL));
         when(oAuthAccountRepository.findByProviderAndProviderId(
                 Provider.GOOGLE,
@@ -211,7 +212,7 @@ class OAuthServiceTests {
         )).thenReturn(Optional.of(account));
         prepareTokenResponse();
 
-        oAuthService.loginWithGoogle(new OAuthGoogleLoginRequest("google-id-token", Language.ENGLISH));
+        oAuthService.loginWithGoogle(new OAuthGoogleLoginRequest(GOOGLE_AUTH_CODE, Language.ENGLISH));
 
         verify(user).changePreferredLanguage(Language.ENGLISH);
     }
@@ -219,14 +220,14 @@ class OAuthServiceTests {
     // 동시 OAuth 이메일 생성 충돌 도메인 오류 변환 검증
     @Test
     void loginWithGoogleMapsConcurrentEmailConflict() {
-        when(oAuthGoogleClient.verifyIdentityToken("google-id-token"))
+        when(oAuthGoogleClient.verifyAuthorizationCode(GOOGLE_AUTH_CODE))
                 .thenReturn(new OAuthIdentity(APPLE_SUBJECT, EMAIL));
         when(userReader.findByEmail(EMAIL)).thenReturn(Optional.empty());
         when(userRepository.saveAndFlush(any(User.class)))
                 .thenThrow(new DataIntegrityViolationException("duplicate email"));
 
         assertThatThrownBy(() -> oAuthService.loginWithGoogle(
-                new OAuthGoogleLoginRequest("google-id-token", Language.ENGLISH)
+                new OAuthGoogleLoginRequest(GOOGLE_AUTH_CODE, Language.ENGLISH)
         ))
                 .isInstanceOf(GeneralException.class)
                 .extracting(exception -> ((GeneralException) exception).getErrorStatus())
@@ -238,13 +239,13 @@ class OAuthServiceTests {
     // 탈퇴 유예기간 OAuth 신규 가입 거부 검증
     @Test
     void loginWithGoogleRejectsWithdrawnEmailForNewUser() {
-        when(oAuthGoogleClient.verifyIdentityToken("google-id-token"))
+        when(oAuthGoogleClient.verifyAuthorizationCode(GOOGLE_AUTH_CODE))
                 .thenReturn(new OAuthIdentity(APPLE_SUBJECT, EMAIL));
         when(userReader.findByEmail(EMAIL)).thenReturn(Optional.empty());
         when(redisTemplate.hasKey("withdrawn:email:" + EMAIL)).thenReturn(true);
 
         assertThatThrownBy(() -> oAuthService.loginWithGoogle(
-                new OAuthGoogleLoginRequest("google-id-token", Language.ENGLISH)
+                new OAuthGoogleLoginRequest(GOOGLE_AUTH_CODE, Language.ENGLISH)
         ))
                 .isInstanceOf(GeneralException.class)
                 .extracting(exception -> ((GeneralException) exception).getErrorStatus())

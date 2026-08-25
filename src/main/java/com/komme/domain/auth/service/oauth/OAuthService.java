@@ -61,11 +61,11 @@ public class OAuthService {
         }
     }
 
-    // Google identity token 로그인 흐름 조율 기능
+    // Google authorization code 로그인 흐름 조율 기능
     // 로그인마다 클라이언트의 Language Setting 값으로 선호 언어를 최신화한다.
     @Transactional
     public LoginResponse loginWithGoogle(OAuthGoogleLoginRequest request) {
-        OAuthIdentity identity = oAuthGoogleClient.verifyIdentityToken(request.idToken());
+        OAuthIdentity identity = oAuthGoogleClient.verifyAuthorizationCode(request.code());
         User user = oAuthAccountService.resolveUser(
                 Provider.GOOGLE,
                 identity.subject(),

@@ -125,13 +125,13 @@ class AuthRequestValidationTests {
                 .contains("identityToken", "preferredLanguage");
     }
 
-    // Google 로그인 요청 ID token과 선호 언어 필수값 검증
+    // Google 로그인 요청 authorization code와 선호 언어 필수값 검증
     @Test
     void oAuthGoogleLoginRequestRejectsInvalidValues() {
         OAuthGoogleLoginRequest request = new OAuthGoogleLoginRequest("", null);
 
         assertThat(propertyNames(validator.validate(request)))
-                .contains("idToken", "preferredLanguage");
+                .contains("code", "preferredLanguage");
     }
 
     // OAuth 프로필 완성 요청 올바른 값 검증 통과 확인

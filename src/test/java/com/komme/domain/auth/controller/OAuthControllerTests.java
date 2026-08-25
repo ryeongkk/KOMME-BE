@@ -39,7 +39,7 @@ class OAuthControllerTests {
     // Google 로그인 API 성공 응답 검증
     @Test
     void loginWithGoogleReturnsLoginResponse() throws Exception {
-        OAuthGoogleLoginRequest request = new OAuthGoogleLoginRequest("identity-token", Language.ENGLISH);
+        OAuthGoogleLoginRequest request = new OAuthGoogleLoginRequest("google-auth-code", Language.ENGLISH);
         when(oAuthService.loginWithGoogle(request))
                 .thenReturn(LoginResponse.of("access-token", "refresh-token"));
 
@@ -70,7 +70,7 @@ class OAuthControllerTests {
 
     // Google 로그인 API 입력값 오류 응답 검증
     @Test
-    void loginWithGoogleRejectsBlankToken() throws Exception {
+    void loginWithGoogleRejectsBlankCode() throws Exception {
         OAuthGoogleLoginRequest request = new OAuthGoogleLoginRequest("", Language.ENGLISH);
 
         mockMvc.perform(post("/api/v1/auth/oauth/google")
