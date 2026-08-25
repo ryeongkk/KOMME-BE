@@ -105,7 +105,7 @@ class AuthPropertiesValidationTests {
         assertThat(validator.validate(new GoogleProperties(
                 "google-client-id",
                 "google-client-secret",
-                "http://localhost:3000/callback",
+                "http://localhost:3000",
                 Duration.ofHours(1)
         ))).isEmpty();
         assertThat(validator.validate(new AuthMailProperties("noreply@example.com"))).isEmpty();
