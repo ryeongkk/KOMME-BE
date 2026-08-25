@@ -91,7 +91,7 @@ public interface OAuthControllerDocs {
     // Google 로그인 API
     @Operation(
             summary = "Google 로그인",
-            description = "Google ID token의 서명, 발급자, 대상, 만료를 검증합니다. "
+            description = "Google authorization code를 토큰으로 교환한 뒤 ID token의 서명, 발급자, 대상, 만료를 검증합니다. "
                     + "연결된 계정은 로그인하고, 검증된 이메일의 기존 계정은 Google 계정을 연결하며, "
                     + "가입 이력이 없으면 최소 프로필의 Google 계정을 생성합니다. "
                     + "요청에 담긴 선호 언어로 사용자의 preferred_language를 매 로그인마다 최신화합니다."
@@ -113,9 +113,13 @@ public interface OAuthControllerDocs {
     )
     @io.swagger.v3.oas.annotations.responses.ApiResponse(
             responseCode = "400",
-            description = "ID token 누락 또는 이메일 정보 없음",
+            description = "authorization code 누락/오류 또는 이메일 정보 없음",
             content = @Content(examples = {
                     @ExampleObject(name = "입력값 오류", value = AuthApiExamples.BAD_REQUEST),
+                    @ExampleObject(
+                            name = "Google authorization code 오류",
+                            value = OAuthApiExamples.INVALID_GOOGLE_AUTH_CODE
+                    ),
                     @ExampleObject(
                             name = "Google 이메일 없음",
                             value = OAuthApiExamples.GOOGLE_EMAIL_REQUIRED
@@ -124,7 +128,7 @@ public interface OAuthControllerDocs {
     )
     @io.swagger.v3.oas.annotations.responses.ApiResponse(
             responseCode = "401",
-            description = "Google ID token 검증 실패",
+            description = "교환된 Google ID token 검증 실패",
             content = @Content(
                     examples = @ExampleObject(
                             value = OAuthApiExamples.INVALID_GOOGLE_IDENTITY_TOKEN
@@ -142,7 +146,7 @@ public interface OAuthControllerDocs {
     )
     @io.swagger.v3.oas.annotations.responses.ApiResponse(
             responseCode = "502",
-            description = "Google 공개키 서버 연결 실패",
+            description = "Google 토큰 교환 또는 공개키 서버 연결 실패",
             content = @Content(
                     examples = @ExampleObject(
                             value = OAuthApiExamples.GOOGLE_SERVER_CONNECTION_FAILED
